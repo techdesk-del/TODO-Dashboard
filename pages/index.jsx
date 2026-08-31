@@ -43,12 +43,47 @@ export default function Home() {
 
   const socketRef = useRef(null);
 
-  // Toast helper
   const showToast = (title, message, type = 'info') => {
     setToastMessage({ title, message, type });
     setTimeout(() => {
       setToastMessage(null);
     }, 4000);
+  };
+
+  // Fetch full data snapshot via REST API (Vercel compatible)
+  const refreshData = async () => {
+    try {
+      const [uRes, tRes, oRes, aRes, eRes] = await Promise.all([
+        fetch('/api/users'),
+        fetch('/api/tasks'),
+        fetch('/api/overview'),
+        fetch('/api/activity'),
+        fetch('/api/eod-reports')
+      ]);
+
+      if (uRes.ok) {
+        const uData = await uRes.json();
+        setUsers(uData);
+      }
+      if (tRes.ok) {
+        const tData = await tRes.json();
+        setTasks(tData);
+      }
+      if (oRes.ok) {
+        const oData = await oRes.json();
+        setOverview(oData);
+      }
+      if (aRes.ok) {
+        const aData = await aRes.json();
+        setActivityLogs(aData);
+      }
+      if (eRes.ok) {
+        const eData = await eRes.json();
+        setEodReports(eData);
+      }
+    } catch (err) {
+      console.warn('REST Refresh error:', err);
+    }
   };
 
   // Check saved login session in localStorage
@@ -59,106 +94,111 @@ export default function Home() {
         const savedUser = JSON.parse(savedUserStr);
         if (savedUser && savedUser.id) {
           setCurrentUser(savedUser);
+          setSelectedMemberFilter(savedUser.id);
         }
       }
     } catch (e) {}
     setIsAuthReady(true);
+    refreshData();
   }, []);
 
+  // Socket.IO with fallback
   useEffect(() => {
-    const socket = io({
-      transports: ['websocket', 'polling'],
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1000
-    });
-    socketRef.current = socket;
+    let socket;
+    try {
+      socket = io({
+        transports: ['polling', 'websocket'],
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 2000,
+        timeout: 5000
+      });
+      socketRef.current = socket;
 
-    socket.on('connect', () => {
-      setSocketConnected(true);
-    });
+      socket.on('connect', () => {
+        setSocketConnected(true);
+      });
 
-    socket.on('disconnect', () => {
-      setSocketConnected(false);
-    });
+      socket.on('disconnect', () => {
+        setSocketConnected(false);
+      });
 
-    // Initial snapshot from server
-    socket.on('sync:initial', (data) => {
-      if (data.users && data.users.length > 0) {
-        setUsers(data.users);
-      }
-      if (data.tasks) setTasks(data.tasks);
-      if (data.overview) setOverview(data.overview);
-      if (data.activityLogs) setActivityLogs(data.activityLogs);
-      if (data.eodReports) setEodReports(data.eodReports);
-    });
+      socket.on('connect_error', () => {
+        setSocketConnected(false);
+      });
 
-    // Real-time Event: Task Created
-    socket.on('task:created', ({ task, tasks, overview, activityLogs }) => {
-      setTasks(tasks);
-      setOverview(overview);
-      if (activityLogs) setActivityLogs(activityLogs);
-      showToast('⚡ Task Created', `"${task.title}" assigned to ${task.assignee_name}`, 'success');
-      sounds.playClick();
-    });
+      socket.on('sync:initial', (data) => {
+        if (data.users && data.users.length > 0) setUsers(data.users);
+        if (data.tasks) setTasks(data.tasks);
+        if (data.overview) setOverview(data.overview);
+        if (data.activityLogs) setActivityLogs(data.activityLogs);
+        if (data.eodReports) setEodReports(data.eodReports);
+      });
 
-    // Real-time Event: Task Updated
-    socket.on('task:updated', ({ task, tasks, overview, activityLogs }) => {
-      setTasks(tasks);
-      setOverview(overview);
-      if (activityLogs) setActivityLogs(activityLogs);
-      if (task.status === 'completed') {
-        showToast('🎉 Task Completed', `"${task.title}" marked as completed!`, 'success');
-      }
-    });
+      socket.on('task:created', ({ task, tasks: newTasks, overview: newOverview, activityLogs: newLogs }) => {
+        if (newTasks) setTasks(newTasks);
+        if (newOverview) setOverview(newOverview);
+        if (newLogs) setActivityLogs(newLogs);
+        showToast('⚡ Task Created', `"${task.title}" assigned to ${task.assignee_name}`, 'success');
+        sounds.playClick();
+      });
 
-    // Real-time Event: Task Deleted
-    socket.on('task:deleted', ({ tasks, overview, activityLogs }) => {
-      setTasks(tasks);
-      setOverview(overview);
-      if (activityLogs) setActivityLogs(activityLogs);
-    });
+      socket.on('task:updated', ({ task, tasks: newTasks, overview: newOverview, activityLogs: newLogs }) => {
+        if (newTasks) setTasks(newTasks);
+        if (newOverview) setOverview(newOverview);
+        if (newLogs) setActivityLogs(newLogs);
+        if (task.status === 'completed') {
+          showToast('🎉 Task Completed', `"${task.title}" marked as completed!`, 'success');
+        }
+      });
 
-    // Real-time Event: EOD Submitted
-    socket.on('eod:submitted', ({ report, eodReports, users, overview, activityLogs }) => {
-      setEodReports(eodReports);
-      setUsers(users);
-      setOverview(overview);
-      if (activityLogs) setActivityLogs(activityLogs);
-      showToast(
-        '📋 EOD Report Submitted', 
-        `${report.user_name} submitted daily checkout report.`,
-        'eod'
-      );
-    });
+      socket.on('task:deleted', ({ tasks: newTasks, overview: newOverview, activityLogs: newLogs }) => {
+        if (newTasks) setTasks(newTasks);
+        if (newOverview) setOverview(newOverview);
+        if (newLogs) setActivityLogs(newLogs);
+      });
 
-    // Real-time Event: Live Presence Updated
-    socket.on('presence:updated', ({ users, overview, activityLogs }) => {
-      setUsers(users);
-      if (overview) setOverview(overview);
-      if (activityLogs) setActivityLogs(activityLogs);
-    });
+      socket.on('eod:submitted', ({ report, eodReports: newReports, users: newUsers, overview: newOverview, activityLogs: newLogs }) => {
+        if (newReports) setEodReports(newReports);
+        if (newUsers) setUsers(newUsers);
+        if (newOverview) setOverview(newOverview);
+        if (newLogs) setActivityLogs(newLogs);
+        showToast('📋 EOD Report Submitted', `${report.user_name} submitted daily checkout report.`, 'eod');
+      });
+
+      socket.on('presence:updated', ({ users: newUsers, overview: newOverview, activityLogs: newLogs }) => {
+        if (newUsers) setUsers(newUsers);
+        if (newOverview) setOverview(newOverview);
+        if (newLogs) setActivityLogs(newLogs);
+      });
+    } catch (e) {}
 
     return () => {
-      socket.disconnect();
+      if (socket) socket.disconnect();
     };
   }, []);
 
-  // Announce User Join whenever currentUser is authenticated
+  // Background auto-sync (Every 4 seconds for Vercel Serverless resilience)
   useEffect(() => {
-    if (socketRef.current && currentUser) {
-      socketRef.current.emit('user:join', currentUser);
-    }
-  }, [currentUser?.id]);
+    const pollInterval = setInterval(() => {
+      refreshData();
+    }, 4000);
+    return () => clearInterval(pollInterval);
+  }, []);
 
-  // Periodic heartbeat for presence
+  // Announce User Join whenever currentUser changes
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (socketRef.current && currentUser) {
-        socketRef.current.emit('user:ping', currentUser.id);
+    if (currentUser) {
+      if (socketRef.current && socketConnected) {
+        socketRef.current.emit('user:join', currentUser);
       }
-    }, 15000);
-    return () => clearInterval(interval);
-  }, [currentUser?.id]);
+      fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ activeUserIds: [currentUser.id] })
+      }).catch(() => {});
+    }
+  }, [currentUser?.id, socketConnected]);
 
   // Login Success Handler
   const handleLoginSuccess = (authenticatedUser) => {
@@ -167,6 +207,7 @@ export default function Home() {
     } catch (e) {}
     setCurrentUser(authenticatedUser);
     setSelectedMemberFilter(authenticatedUser.id);
+    refreshData();
     if (socketRef.current) {
       socketRef.current.emit('user:join', authenticatedUser);
     }
@@ -185,40 +226,82 @@ export default function Home() {
     setSelectedMemberFilter('all');
   };
 
-  // Task Actions
-  const handleStatusChange = (taskId, newStatus) => {
-    if (!socketRef.current) return;
-    socketRef.current.emit('task:update', {
-      id: taskId,
-      updates: { status: newStatus },
-      user: currentUser
-    });
-  };
+  // Task Actions (REST + Socket Hybrid)
+  const handleStatusChange = async (taskId, newStatus) => {
+    // Optimistic UI update
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
 
-  const handleSaveTask = (taskData) => {
-    if (!socketRef.current) return;
-
-    if (taskData.id) {
+    if (socketRef.current && socketConnected) {
       socketRef.current.emit('task:update', {
-        id: taskData.id,
-        updates: taskData,
+        id: taskId,
+        updates: { status: newStatus },
         user: currentUser
       });
-    } else {
-      socketRef.current.emit('task:create', {
-        ...taskData,
-        creator_name: currentUser?.name || 'Admin'
+    }
+
+    try {
+      await fetch(`/api/tasks/${taskId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ updates: { status: newStatus }, user: currentUser })
       });
+      refreshData();
+    } catch (e) {}
+  };
+
+  const handleSaveTask = async (taskData) => {
+    if (taskData.id) {
+      if (socketRef.current && socketConnected) {
+        socketRef.current.emit('task:update', {
+          id: taskData.id,
+          updates: taskData,
+          user: currentUser
+        });
+      }
+      try {
+        await fetch(`/api/tasks/${taskData.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ updates: taskData, user: currentUser })
+        });
+        refreshData();
+      } catch (e) {}
+    } else {
+      if (socketRef.current && socketConnected) {
+        socketRef.current.emit('task:create', {
+          ...taskData,
+          creator_name: currentUser?.name || 'Admin'
+        });
+      }
+      try {
+        await fetch('/api/tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...taskData, creator_name: currentUser?.name || 'Admin' })
+        });
+        refreshData();
+      } catch (e) {}
     }
   };
 
-  const handleDeleteTask = (taskId) => {
-    if (!socketRef.current) return;
+  const handleDeleteTask = async (taskId) => {
     if (confirm('Are you sure you want to delete this task?')) {
-      socketRef.current.emit('task:delete', {
-        id: taskId,
-        user: currentUser
-      });
+      setTasks(prev => prev.filter(t => t.id !== taskId));
+
+      if (socketRef.current && socketConnected) {
+        socketRef.current.emit('task:delete', {
+          id: taskId,
+          user: currentUser
+        });
+      }
+      try {
+        await fetch(`/api/tasks/${taskId}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user: currentUser })
+        });
+        refreshData();
+      } catch (e) {}
     }
   };
 
@@ -233,12 +316,20 @@ export default function Home() {
     setTaskModalOpen(true);
   };
 
-  const handleSubmitEOD = (reportData) => {
-    if (!socketRef.current) return;
-    socketRef.current.emit('eod:submit', reportData);
+  const handleSubmitEOD = async (reportData) => {
+    if (socketRef.current && socketConnected) {
+      socketRef.current.emit('eod:submit', reportData);
+    }
+    try {
+      await fetch('/api/eod-reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(reportData)
+      });
+      refreshData();
+    } catch (e) {}
   };
 
-  // If Auth check still initializing or user not logged in, show AuthScreen
   if (!isAuthReady || !currentUser) {
     return (
       <AuthScreen 
@@ -423,7 +514,7 @@ export default function Home() {
         currentUser={currentUser}
       />
 
-      {/* EOD Checkout Modal (Locked to Current Authenticated Member) */}
+      {/* EOD Checkout Modal */}
       <EODCheckoutModal
         isOpen={eodModalOpen}
         onClose={() => setEodModalOpen(false)}
