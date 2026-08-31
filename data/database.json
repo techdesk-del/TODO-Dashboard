@@ -1,0 +1,88 @@
+{
+  "users": [
+    {
+      "id": "usr_shyamsundar",
+      "name": "Shyamsundar Varma",
+      "email": "shyamsundar@company.io",
+      "avatar": "SV",
+      "color": "#f59e0b",
+      "status": "offline",
+      "last_active": "2026-08-31T11:28:52.684Z"
+    },
+    {
+      "id": "usr_aakash",
+      "name": "Aakash Das",
+      "email": "aakash.das@company.io",
+      "avatar": "AD",
+      "color": "#6366f1",
+      "status": "offline",
+      "last_active": "2026-08-31T11:19:08.223Z"
+    },
+    {
+      "id": "usr_yudhister",
+      "name": "Yudhister Tiwari",
+      "email": "yudhister.t@company.io",
+      "avatar": "YT",
+      "color": "#10b981",
+      "status": "online",
+      "last_active": "2026-08-31T11:32:52.284Z"
+    },
+    {
+      "id": "usr_rekha",
+      "name": "Dr Rekha Pareek",
+      "email": "rekha.pareek@company.io",
+      "avatar": "RP",
+      "color": "#a855f7",
+      "status": "offline",
+      "last_active": "2026-08-31T11:00:00.000Z"
+    },
+    {
+      "id": "usr_sanjay",
+      "name": "Sanjay",
+      "email": "sanjay@company.io",
+      "avatar": "SJ",
+      "color": "#06b6d4",
+      "status": "offline",
+      "last_active": "2026-08-31T11:00:00.000Z"
+    },
+    {
+      "id": "usr_ayaz",
+      "name": "Ayaz",
+      "email": "ayaz@company.io",
+      "avatar": "AY",
+      "color": "#ec4899",
+      "status": "offline",
+      "last_active": "2026-08-31T11:00:00.000Z"
+    },
+    {
+      "id": "usr_utkarsh",
+      "name": "Utkarsh",
+      "email": "utkarsh@company.io",
+      "avatar": "UT",
+      "color": "#3b82f6",
+      "status": "offline",
+      "last_active": "2026-08-31T11:00:00.000Z"
+    },
+    {
+      "id": "usr_pratap",
+      "name": "Pratap",
+      "email": "pratap@company.io",
+      "avatar": "PR",
+      "color": "#14b8a6",
+      "status": "offline",
+      "last_active": "2026-08-31T11:00:00.000Z"
+    },
+    {
+      "id": "usr_varun",
+      "name": "Varun Mudgal",
+      "email": "varun.mudgal@company.io",
+      "avatar": "VM",
+      "color": "#f97316",
+      "status": "offline",
+      "last_active": "2026-08-31T11:00:00.000Z"
+    }
+  ],
+  "tasks": [],
+  "eod_reports": [],
+  "activity_logs": []
+}
