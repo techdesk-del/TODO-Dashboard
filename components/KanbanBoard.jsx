@@ -10,7 +10,8 @@ import {
   ShieldCheck, 
   ArrowLeft,
   Radio,
-  UserCheck
+  UserCheck,
+  Crown
 } from 'lucide-react';
 import TaskCard from './TaskCard';
 import { sounds } from '../lib/audio';
@@ -36,21 +37,35 @@ export default function KanbanBoard({
 }) {
   const [priorityFilter, setPriorityFilter] = useState('all');
 
+  const isAakash = currentUser?.id === 'usr_aakash' || currentUser?.name?.toLowerCase().includes('aakash');
   const selectedMemberObj = users.find(u => u.id === selectedMemberFilter);
   
-  // STRICT 100% PRIVACY RULE:
-  // If the user taps on anyone other than themselves, tasks are STRICTLY HIDDEN!
-  const isViewingOtherMember = selectedMemberFilter && selectedMemberFilter !== 'all' && selectedMemberFilter !== currentUser?.id;
+  // PRIVACY RULE:
+  // If user is Aakash -> Full Access to inspect and manage ANY member's tasks!
+  // If user is NOT Aakash -> Restricted: Tapping anyone else shows the private lock screen!
+  const isAccessDenied = !isAakash && selectedMemberFilter && selectedMemberFilter !== 'all' && selectedMemberFilter !== currentUser?.id;
 
-  // Filter tasks - Only ever show tasks assigned to the logged-in user
-  const myTasks = tasks.filter(t => t.assigned_to === currentUser?.id);
+  // Determine base task pool based on permissions:
+  let baseTasks = [];
+  if (isAakash) {
+    if (selectedMemberFilter && selectedMemberFilter !== 'all') {
+      baseTasks = tasks.filter(t => t.assigned_to === selectedMemberFilter);
+    } else {
+      baseTasks = tasks;
+    }
+  } else {
+    // Normal members only see their own tasks
+    baseTasks = tasks.filter(t => t.assigned_to === currentUser?.id);
+  }
 
-  const filteredTasks = myTasks.filter(task => {
+  // Filter tasks with search and priority
+  const filteredTasks = baseTasks.filter(task => {
     const query = (searchQuery || '').toLowerCase();
     const matchesSearch = 
       !query ||
       task.title.toLowerCase().includes(query) ||
       (task.description && task.description.toLowerCase().includes(query)) ||
+      (task.assignee_name && task.assignee_name.toLowerCase().includes(query)) ||
       (task.tags && task.tags.some(t => t.toLowerCase().includes(query)));
 
     const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter;
@@ -58,15 +73,14 @@ export default function KanbanBoard({
     return matchesSearch && matchesPriority;
   });
 
-  // When tapping on Shyam or ANY other member: Show ONLY their Live Presence & Lock Screen!
-  if (isViewingOtherMember && selectedMemberObj) {
+  // When normal members tap on someone else -> Show Privacy Lock Screen
+  if (isAccessDenied && selectedMemberObj) {
     const isTargetOnline = selectedMemberObj.status === 'online';
     const isTargetClockedOut = selectedMemberObj.status === 'logged_out';
 
     return (
       <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 text-center shadow-sm space-y-6 max-w-2xl mx-auto my-6 animate-fade-in">
         
-        {/* Target Member Avatar with Live Presence Ring */}
         <div className="relative inline-block">
           <div 
             className="w-20 h-20 rounded-3xl flex items-center justify-center font-extrabold text-white text-2xl shadow-lg mx-auto"
@@ -107,7 +121,6 @@ export default function KanbanBoard({
           </p>
         </div>
 
-        {/* Lock Privacy Notice */}
         <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex items-start sm:items-center gap-3 text-left max-w-lg mx-auto">
           <div className="w-10 h-10 rounded-xl bg-slate-200 text-slate-700 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
             <Lock className="w-5 h-5" />
@@ -115,12 +128,11 @@ export default function KanbanBoard({
           <div>
             <h5 className="text-xs font-bold text-slate-900">Private Task Workspace</h5>
             <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
-              Task lists assigned to <strong>{selectedMemberObj.name}</strong> are strictly private and cannot be viewed from your account.
+              Task lists assigned to <strong>{selectedMemberObj.name}</strong> are strictly confidential to them and executive leadership.
             </p>
           </div>
         </div>
 
-        {/* Action Button to Return */}
         <div>
           <button
             onClick={() => {
@@ -138,6 +150,20 @@ export default function KanbanBoard({
     );
   }
 
+  // Header Title description
+  let boardTitle = 'My Tasks';
+  if (isAakash) {
+    if (selectedMemberObj && selectedMemberObj.id !== currentUser?.id) {
+      boardTitle = `${selectedMemberObj.name}'s Tasks (Executive Control)`;
+    } else if (selectedMemberFilter === 'all') {
+      boardTitle = 'All Company Tasks (Full Executive Workspace)';
+    } else {
+      boardTitle = 'My Personal Tasks (Aakash Das)';
+    }
+  } else {
+    boardTitle = `My Tasks (${currentUser?.name})`;
+  }
+
   return (
     <div className="space-y-4 w-full">
       
@@ -145,14 +171,23 @@ export default function KanbanBoard({
       <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         
         {/* Active Filter Title */}
-        <div className="flex items-center gap-2">
-          <Layers className="w-4 h-4 text-blue-600" />
+        <div className="flex items-center gap-2 flex-wrap">
+          {isAakash ? (
+            <Crown className="w-4 h-4 text-amber-500" />
+          ) : (
+            <Layers className="w-4 h-4 text-blue-600" />
+          )}
           <h2 className="text-sm font-bold text-slate-800">
-            My Tasks ({currentUser?.name})
+            {boardTitle}
           </h2>
           <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
             {filteredTasks.length} tasks
           </span>
+          {isAakash && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 font-extrabold border border-amber-200">
+              Full Admin Mode
+            </span>
+          )}
         </div>
 
         {/* Priority Filter Pills */}
@@ -164,7 +199,7 @@ export default function KanbanBoard({
             <button
               key={p}
               onClick={() => { sounds.playClick(); setPriorityFilter(p); }}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold capitalize transition-all ${
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold capitalize transition-all cursor-pointer ${
                 priorityFilter === p
                   ? 'bg-blue-600 text-white shadow-sm'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -177,16 +212,18 @@ export default function KanbanBoard({
 
       </div>
 
-      {/* Empty State if 0 tasks for current user */}
+      {/* Empty State */}
       {filteredTasks.length === 0 ? (
         <div className="bg-white rounded-2xl p-12 text-center border border-slate-200 shadow-sm space-y-4">
           <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto text-2xl font-bold shadow-sm">
             ✨
           </div>
           <div>
-            <h3 className="text-base font-bold text-slate-900">No Tasks Assigned to You Yet</h3>
+            <h3 className="text-base font-bold text-slate-900">
+              {isAakash && selectedMemberObj ? `No Tasks Found for ${selectedMemberObj.name}` : 'No Tasks in this Workspace'}
+            </h3>
             <p className="text-xs text-slate-500 max-w-md mx-auto mt-1">
-              Your workspace is clean. Create a new task for today or update your existing backlog.
+              Create a new task and assign it to {selectedMemberObj ? selectedMemberObj.name : 'any team member'}.
             </p>
           </div>
           <button
@@ -194,7 +231,7 @@ export default function KanbanBoard({
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 transition-all active:scale-95 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>Create My Task</span>
+            <span>Create Task</span>
           </button>
         </div>
       ) : (
