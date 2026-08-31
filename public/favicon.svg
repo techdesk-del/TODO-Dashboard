@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Blue Circle Background -->
+  <circle cx="32" cy="32" r="30" fill="#2563eb" />
+  
+  <!-- Stylized White House Emblem matching UrbanGaon Logo -->
+  <path d="M32 14 L17 26.5 C16 27.3 16 28.8 17 29.6 L18.5 30.8 C19.3 31.4 20.5 31.4 21.3 30.7 L32 21.8 L42.7 30.7 C43.5 31.4 44.7 31.4 45.5 30.8 L47 29.6 C48 28.8 48 27.3 47 26.5 Z" fill="#ffffff" />
+  <path d="M20 28.5 L20 46 C20 47.7 21.3 49 23 49 L28 49 L28 37 C28 34.8 29.8 33 32 33 C34.2 33 36 34.8 36 37 L36 49 L41 49 C42.7 49 44 47.7 44 46 L44 28.5 L32 18.5 Z" fill="#ffffff" />
+</svg>
