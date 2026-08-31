@@ -50,7 +50,7 @@ export default function Home() {
     }, 4000);
   };
 
-  // Fetch full data snapshot via REST API (Vercel compatible)
+  // Fetch full data snapshot via REST API (Vercel serverless & multi-PC compatible)
   const refreshData = async () => {
     try {
       const [uRes, tRes, oRes, aRes, eRes] = await Promise.all([
@@ -102,7 +102,57 @@ export default function Home() {
     refreshData();
   }, []);
 
-  // Socket.IO with fallback
+  // Heartbeat Mesh: Keep current user status 'online' in Cloud Database
+  useEffect(() => {
+    if (!currentUser?.id) return;
+
+    const sendHeartbeat = () => {
+      fetch('/api/users/heartbeat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser.id })
+      }).catch(() => {});
+    };
+
+    sendHeartbeat();
+    const hbInterval = setInterval(sendHeartbeat, 3000);
+
+    // When tab/window closes, announce disconnect
+    const handleUnload = () => {
+      if (currentUser?.id) {
+        const payload = JSON.stringify({ userId: currentUser.id });
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon('/api/users/logout', payload);
+        } else {
+          fetch('/api/users/logout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: payload,
+            keepalive: true
+          }).catch(() => {});
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleUnload);
+    window.addEventListener('pagehide', handleUnload);
+
+    return () => {
+      clearInterval(hbInterval);
+      window.removeEventListener('beforeunload', handleUnload);
+      window.removeEventListener('pagehide', handleUnload);
+    };
+  }, [currentUser?.id]);
+
+  // Real-Time Multi-PC Auto Sync (Every 2.5s poll for global presence across any device)
+  useEffect(() => {
+    const syncInterval = setInterval(() => {
+      refreshData();
+    }, 2500);
+    return () => clearInterval(syncInterval);
+  }, []);
+
+  // Socket.IO for local node server or direct WebSockets
   useEffect(() => {
     let socket;
     try {
@@ -178,28 +228,6 @@ export default function Home() {
     };
   }, []);
 
-  // Background auto-sync (Every 4 seconds for Vercel Serverless resilience)
-  useEffect(() => {
-    const pollInterval = setInterval(() => {
-      refreshData();
-    }, 4000);
-    return () => clearInterval(pollInterval);
-  }, []);
-
-  // Announce User Join whenever currentUser changes
-  useEffect(() => {
-    if (currentUser) {
-      if (socketRef.current && socketConnected) {
-        socketRef.current.emit('user:join', currentUser);
-      }
-      fetch('/api/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ activeUserIds: [currentUser.id] })
-      }).catch(() => {});
-    }
-  }, [currentUser?.id, socketConnected]);
-
   // Login Success Handler
   const handleLoginSuccess = (authenticatedUser) => {
     try {
@@ -214,7 +242,14 @@ export default function Home() {
   };
 
   // Sign out Handler
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (currentUser?.id) {
+      fetch('/api/users/logout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser.id })
+      }).catch(() => {});
+    }
     if (socketRef.current && currentUser) {
       socketRef.current.emit('user:logout', currentUser.id);
     }
@@ -224,11 +259,11 @@ export default function Home() {
     setCurrentUser(null);
     setActiveTab('workspace');
     setSelectedMemberFilter('all');
+    refreshData();
   };
 
-  // Task Actions (REST + Socket Hybrid)
+  // Task Actions
   const handleStatusChange = async (taskId, newStatus) => {
-    // Optimistic UI update
     setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
 
     if (socketRef.current && socketConnected) {
@@ -496,7 +531,7 @@ export default function Home() {
             <p>© 2026 UrbanGaon • Secure Enterprise Workspace</p>
             <span className="text-emerald-600 font-semibold flex items-center gap-1.5 justify-center">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Protected by Session Lock & MongoDB Atlas
+              Real-Time Multi-PC Cloud Mesh Connected
             </span>
           </div>
         </footer>
