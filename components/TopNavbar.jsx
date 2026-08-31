@@ -18,7 +18,7 @@ export default function TopNavbar({
   searchQuery,
   setSearchQuery
 }) {
-  const isLeader = currentUser?.role === 'ceo' || currentUser?.role === 'admin';
+  const isAakash = currentUser?.id === 'usr_aakash' || currentUser?.name?.toLowerCase().includes('aakash');
 
   return (
     <header className="bg-white border-b border-slate-200 px-6 py-3 sticky top-0 z-20 flex items-center justify-between gap-4 shadow-sm">
@@ -93,7 +93,7 @@ export default function TopNavbar({
           <span className="text-xs font-bold text-slate-800 hidden sm:inline-block max-w-[120px] truncate">
             {currentUser?.name}
           </span>
-          {isLeader && (
+          {isAakash && (
             <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-extrabold border border-amber-200">
               Admin
             </span>

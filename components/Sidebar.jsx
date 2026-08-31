@@ -4,11 +4,9 @@ import {
   Calendar, 
   Settings, 
   LogOut, 
-  ShieldCheck,
-  ChevronRight,
-  Lock,
-  Radio,
-  Clock
+  ShieldCheck, 
+  ChevronRight, 
+  Lock
 } from 'lucide-react';
 import { sounds } from '../lib/audio';
 
@@ -18,10 +16,11 @@ export default function Sidebar({
   users, 
   currentUser, 
   selectedMemberFilter, 
-  setSelectedMemberFilter,
-  onLogout
+  setSelectedMemberFilter, 
+  onLogout 
 }) {
-  const isLeader = currentUser?.role === 'ceo' || currentUser?.role === 'admin';
+  // EXCLUSIVE ACCESS: Only Aakash Das has Executive Overview access
+  const isAakash = currentUser?.id === 'usr_aakash' || currentUser?.name?.toLowerCase().includes('aakash');
   const onlineCount = users.filter(u => u.status === 'online').length;
 
   const handleSelectMember = (userId) => {
@@ -63,8 +62,8 @@ export default function Sidebar({
             <span>My Private Tasks</span>
           </button>
 
-          {/* All Tasks Board (Visible to All or Leadership) */}
-          {isLeader && (
+          {/* All Company Tasks Board (Exclusive to Aakash Das) */}
+          {isAakash && (
             <button
               onClick={() => { sounds.playClick(); setActiveTab('workspace'); setSelectedMemberFilter('all'); }}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
@@ -78,8 +77,8 @@ export default function Sidebar({
             </button>
           )}
 
-          {/* Executive Overview (Restricted to Leadership) */}
-          {isLeader ? (
+          {/* Executive Overview (Restricted EXCLUSIVELY to Aakash Das) */}
+          {isAakash ? (
             <button
               onClick={() => { sounds.playClick(); setActiveTab('ceo'); }}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
@@ -93,7 +92,7 @@ export default function Sidebar({
             </button>
           ) : (
             <div 
-              title="Restricted to Leadership (Shyamsundar & Aakash)"
+              title="Restricted Exclusively to Aakash Das"
               className="w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-medium text-slate-400 opacity-60 cursor-not-allowed"
             >
               <div className="flex items-center gap-3">
@@ -142,7 +141,6 @@ export default function Sidebar({
                   }`}
                 >
                   <div className="flex items-center gap-2 min-w-0 flex-1">
-                    {/* Live Presence Pulse Indicator */}
                     <span 
                       className={`w-2.5 h-2.5 rounded-full shrink-0 ${
                         isOnline 

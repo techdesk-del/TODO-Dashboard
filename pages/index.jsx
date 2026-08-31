@@ -508,8 +508,8 @@ export default function Home() {
             </div>
           )}
 
-          {/* View Tab 2: Executive Overview (Only for Leadership) */}
-          {activeTab === 'ceo' && (
+          {/* View Tab 2: Executive Overview (Restricted EXCLUSIVELY to Aakash Das) */}
+          {activeTab === 'ceo' && (currentUser?.id === 'usr_aakash' || currentUser?.name?.toLowerCase().includes('aakash')) && (
             <CEODashboard
               overview={overview}
               tasks={tasks}
