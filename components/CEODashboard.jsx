@@ -7,7 +7,8 @@ import {
   Eye, 
   Download,
   CheckCircle,
-  FileSpreadsheet
+  FileSpreadsheet,
+  FileText
 } from 'lucide-react';
 import { sounds } from '../lib/audio';
 
@@ -20,6 +21,7 @@ export default function CEODashboard({
   openNewTaskModal 
 }) {
   const [activeReportModal, setActiveReportModal] = useState(null);
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
 
   const stats = overview?.tasks || {
     total: 0,
@@ -59,10 +61,112 @@ export default function CEODashboard({
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Company_Workforce_Report_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("download", `UrbanGaon_Workforce_Report_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  // Export professional PDF report
+  const handleExportPDF = async () => {
+    sounds.playClick();
+    setIsExportingPDF(true);
+    try {
+      const { jsPDF } = await import('jspdf');
+      const { default: autoTable } = await import('jspdf-autotable');
+
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      // Corporate Blue Header Banner
+      doc.setFillColor(37, 99, 235); // #2563eb
+      doc.rect(0, 0, 210, 28, 'F');
+
+      // Title & Subtitle
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(15);
+      doc.setFont('helvetica', 'bold');
+      doc.text('UrbanGaon — Executive Workforce & Team Report', 14, 12);
+
+      doc.setFontSize(8.5);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}  |  Authorized by: Aakash Das (Admin)`, 14, 20);
+
+      // KPI Summary Box
+      doc.setFillColor(248, 250, 252);
+      doc.setDrawColor(226, 232, 240);
+      doc.roundedRect(14, 34, 182, 22, 3, 3, 'FD');
+
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Total Team Members: ${userStats.total}   (Online: ${userStats.online}  |  Clocked Out: ${userStats.checked_out})`, 20, 43);
+      doc.text(`Total Company Tasks: ${stats.total}   |   Completed: ${stats.completed} (${stats.completion_rate}%)   |   Pending: ${stats.total - stats.completed}`, 20, 50);
+
+      // Table of Team Breakdown
+      const tableHeaders = [['#', 'Member Name', 'Department', 'Role', 'Status', 'Completed', 'Pending', 'EOD Status']];
+      const tableData = memberList.map((m, idx) => [
+        idx + 1,
+        m.name,
+        m.department || 'Engineering',
+        (m.role || 'Member').toUpperCase(),
+        m.status === 'online' ? 'Online' : m.status === 'logged_out' ? 'Clocked Out' : 'Offline',
+        m.completed_tasks,
+        m.pending_tasks,
+        m.has_submitted_eod ? 'Submitted (✓)' : 'Pending'
+      ]);
+
+      autoTable(doc, {
+        head: tableHeaders,
+        body: tableData,
+        startY: 62,
+        theme: 'striped',
+        headStyles: {
+          fillColor: [30, 41, 59],
+          textColor: 255,
+          fontStyle: 'bold',
+          fontSize: 8.5
+        },
+        bodyStyles: {
+          fontSize: 8,
+          textColor: [30, 41, 59]
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252]
+        },
+        styles: {
+          cellPadding: 3,
+          halign: 'left'
+        },
+        columnStyles: {
+          0: { cellWidth: 10, halign: 'center' },
+          4: { fontStyle: 'bold' },
+          5: { halign: 'center' },
+          6: { halign: 'center' },
+          7: { fontStyle: 'bold' }
+        }
+      });
+
+      // Footer
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(148, 163, 184);
+        doc.text(`UrbanGaon Confidential Executive Workspace • Page ${i} of ${pageCount}`, 14, 287);
+      }
+
+      const todayStr = new Date().toISOString().split('T')[0];
+      doc.save(`UrbanGaon_Executive_Report_${todayStr}.pdf`);
+    } catch (err) {
+      console.error('PDF export error:', err);
+      alert('Could not generate PDF. Please try again.');
+    } finally {
+      setIsExportingPDF(false);
+    }
   };
 
   return (
@@ -73,7 +177,7 @@ export default function CEODashboard({
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-300">
-              👑 CEO & Executive Command Center
+              👑 Executive Command Center
             </span>
           </div>
           <h2 className="text-xl font-bold text-slate-900">
@@ -84,13 +188,23 @@ export default function CEODashboard({
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        {/* Export Buttons: PDF + CSV */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={handleExportPDF}
+            disabled={isExportingPDF}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold shadow-sm transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+          >
+            <FileText className="w-4 h-4 text-rose-600" />
+            <span>{isExportingPDF ? 'Generating PDF...' : 'Export PDF Report'}</span>
+          </button>
+
           <button
             onClick={handleExportCSV}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs font-semibold shadow-sm transition-all"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold shadow-sm transition-all cursor-pointer active:scale-95"
           >
             <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-            Export CSV Report
+            <span>Export CSV</span>
           </button>
         </div>
       </div>
@@ -110,209 +224,225 @@ export default function CEODashboard({
           </span>
         </div>
 
-        {/* Total Tasks */}
+        {/* Completion Rate */}
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <span className="text-xs font-semibold text-slate-500 block mb-1">Total Sprint Tasks</span>
-          <span className="text-2xl font-bold text-slate-900">{stats.total}</span>
-          <span className="text-[11px] text-slate-400 mt-1 block">Active across team</span>
-        </div>
-
-        {/* Completed */}
-        <div className="bg-white p-4 rounded-xl border border-emerald-200 bg-emerald-50/20 shadow-sm">
-          <span className="text-xs font-semibold text-emerald-800 block mb-1">Completed Tasks</span>
-          <span className="text-2xl font-bold text-emerald-600">{stats.completed}</span>
-          <span className="text-[11px] text-emerald-700 mt-1 block">
-            {stats.completion_rate}% completion rate
+          <span className="text-xs font-semibold text-slate-500 block mb-1">Sprint Completion Rate</span>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-bold text-blue-600">{stats.completion_rate}%</span>
+            <span className="text-xs font-semibold text-slate-500">({stats.completed}/{stats.total})</span>
+          </div>
+          <span className="text-[11px] text-slate-400 mt-1 block">
+            {stats.in_progress} in progress
           </span>
         </div>
 
-        {/* Pending */}
-        <div className="bg-white p-4 rounded-xl border border-amber-200 bg-amber-50/20 shadow-sm">
-          <span className="text-xs font-semibold text-amber-800 block mb-1">Pending Backlog</span>
-          <span className="text-2xl font-bold text-amber-600">{stats.todo + stats.in_progress}</span>
-          <span className="text-[11px] text-amber-700 mt-1 block">
-            {stats.blocked > 0 ? `${stats.blocked} blocked` : 'In progress'}
+        {/* Blocked Tasks */}
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <span className="text-xs font-semibold text-slate-500 block mb-1">Blocked Tasks</span>
+          <div className="flex items-baseline gap-2">
+            <span className={`text-2xl font-bold ${stats.blocked > 0 ? 'text-rose-600' : 'text-slate-900'}`}>
+              {stats.blocked}
+            </span>
+          </div>
+          <span className="text-[11px] text-slate-400 mt-1 block">
+            Requires immediate unblocking
+          </span>
+        </div>
+
+        {/* EOD Checkouts */}
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <span className="text-xs font-semibold text-slate-500 block mb-1">Today's EOD Checkouts</span>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-bold text-purple-600">
+              {memberList.filter(m => m.has_submitted_eod).length}/{userStats.total}
+            </span>
+          </div>
+          <span className="text-[11px] text-slate-400 mt-1 block">
+            Team members clocked out
           </span>
         </div>
 
       </div>
 
-      {/* Main Table: All Members Work Status */}
+      {/* Team Performance & Attendance Table */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-          <h3 className="text-sm font-bold text-slate-800">
-            Team Member Attendance & EOD Submission Status
+        <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+          <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+            Team Workload & Daily EOD Attendance
           </h3>
-          <span className="text-xs text-slate-500 font-medium">Real-Time Data</span>
+          <span className="text-xs text-slate-500">
+            Click any member to open their task board
+          </span>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
-              <tr>
-                <th className="p-3.5">Member Name</th>
-                <th className="p-3.5">Department</th>
-                <th className="p-3.5">Presence Status</th>
-                <th className="p-3.5 text-center">Completed Tasks</th>
-                <th className="p-3.5 text-center">Pending Tasks</th>
-                <th className="p-3.5">EOD Daily Report</th>
-                <th className="p-3.5 text-right">Action</th>
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-100 text-slate-500 font-semibold">
+                <th className="py-3 px-4">Member</th>
+                <th className="py-3 px-4">Live Status</th>
+                <th className="py-3 px-4">Role</th>
+                <th className="py-3 px-4 text-center">Completed</th>
+                <th className="py-3 px-4 text-center">Pending</th>
+                <th className="py-3 px-4">EOD Status</th>
+                <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-              {memberList.map((m) => {
-                const isOnline = m.status === 'online';
-                const isCheckedOut = m.status === 'logged_out';
-
-                return (
-                  <tr key={m.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="p-3.5 flex items-center gap-2.5">
+            <tbody className="divide-y divide-slate-100">
+              {memberList.map((member) => (
+                <tr 
+                  key={member.id}
+                  className="hover:bg-slate-50/70 transition-colors"
+                >
+                  <td className="py-3 px-4">
+                    <div className="flex items-center gap-2.5">
                       <div 
-                        className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white text-xs shadow-sm"
-                        style={{ backgroundColor: m.color || '#4f46e5' }}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white shadow-xs shrink-0 text-xs"
+                        style={{ backgroundColor: member.color || '#2563eb' }}
                       >
-                        {m.avatar}
+                        {member.avatar}
                       </div>
-                      <span className="font-bold text-slate-900">{m.name}</span>
-                    </td>
+                      <div>
+                        <span className="font-bold text-slate-900 block">{member.name}</span>
+                        <span className="text-[11px] text-slate-400">{member.email}</span>
+                      </div>
+                    </div>
+                  </td>
 
-                    <td className="p-3.5 text-slate-600">{m.department}</td>
+                  <td className="py-3 px-4">
+                    {member.status === 'online' ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        Online Now
+                      </span>
+                    ) : member.status === 'logged_out' ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
+                        Clocked Out 🏠
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+                        Offline
+                      </span>
+                    )}
+                  </td>
 
-                    <td className="p-3.5">
-                      {isCheckedOut ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                          Checked Out (EOD)
-                        </span>
-                      ) : isOnline ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                          Online
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-500">
-                          Away
-                        </span>
-                      )}
-                    </td>
+                  <td className="py-3 px-4 text-slate-600 font-medium capitalize">
+                    {member.role || 'Member'}
+                  </td>
 
-                    <td className="p-3.5 text-center font-bold text-emerald-600">
-                      {m.completed_tasks} done
-                    </td>
+                  <td className="py-3 px-4 text-center font-bold text-emerald-600">
+                    {member.completed_tasks}
+                  </td>
 
-                    <td className="p-3.5 text-center font-bold text-amber-600">
-                      {m.pending_tasks} pending
-                    </td>
+                  <td className="py-3 px-4 text-center font-bold text-amber-600">
+                    {member.pending_tasks}
+                  </td>
 
-                    <td className="p-3.5">
-                      {m.has_submitted_eod ? (
-                        <button
-                          onClick={() => { sounds.playClick(); setActiveReportModal(m.eod_report); }}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200 font-semibold text-xs transition-colors"
-                        >
-                          <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
-                          View EOD Report
-                        </button>
-                      ) : (
-                        <span className="text-slate-400 text-xs italic">
-                          Not submitted yet
-                        </span>
-                      )}
-                    </td>
-
-                    <td className="p-3.5 text-right">
+                  <td className="py-3 px-4">
+                    {member.has_submitted_eod ? (
                       <button
-                        onClick={() => {
-                          sounds.playClick();
-                          onSelectMemberFilter(m.id);
-                        }}
-                        className="px-2.5 py-1 rounded-lg text-indigo-600 hover:bg-indigo-50 font-semibold text-xs transition-colors inline-flex items-center gap-1"
+                        onClick={() => { sounds.playClick(); setActiveReportModal(member.eod_report); }}
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 px-2.5 py-1 rounded-lg transition-all cursor-pointer"
                       >
-                        <Eye className="w-3.5 h-3.5" />
-                        Filter Tasks
+                        <CheckCircle className="w-3.5 h-3.5" />
+                        <span>View EOD Report</span>
                       </button>
-                    </td>
-                  </tr>
-                );
-              })}
+                    ) : (
+                      <span className="text-[11px] text-slate-400 italic">
+                        Not submitted yet
+                      </span>
+                    )}
+                  </td>
+
+                  <td className="py-3 px-4 text-right">
+                    <button
+                      onClick={() => onSelectMemberFilter(member.id)}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 font-bold hover:bg-blue-100 transition-all cursor-pointer text-xs"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>Open Board</span>
+                    </button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Modal for viewing single EOD report */}
+      {/* EOD Report View Modal */}
       {activeReportModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="relative w-full max-w-lg bg-white border border-slate-200 rounded-2xl shadow-2xl p-5 space-y-4 animate-slide-up">
-            
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-scale-up">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
-                <h3 className="text-base font-bold text-slate-900">
-                  EOD Checkout Report: {activeReportModal.user_name}
-                </h3>
+                <h4 className="text-base font-bold text-slate-900">
+                  {activeReportModal.user_name}'s EOD Report
+                </h4>
                 <p className="text-xs text-slate-500">
-                  {activeReportModal.department} • Date: {activeReportModal.report_date}
+                  Submitted on {activeReportModal.report_date} at {new Date(activeReportModal.submitted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </p>
               </div>
-              <button
-                onClick={() => setActiveReportModal(null)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
-              >
-                ✕
-              </button>
+              <span className="text-xs px-2.5 py-1 bg-purple-100 text-purple-800 font-bold rounded-lg">
+                Rating: {activeReportModal.day_rating}/5 ⭐
+              </span>
             </div>
 
-            {/* Completed */}
-            <div>
-              <h4 className="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-1.5">
-                Completed Tasks ({activeReportModal.completed_tasks?.length || 0})
-              </h4>
-              <div className="space-y-1 max-h-32 overflow-y-auto">
-                {(activeReportModal.completed_tasks || []).length === 0 ? (
-                  <p className="text-xs text-slate-400 italic">None.</p>
-                ) : (
-                  activeReportModal.completed_tasks.map((t, idx) => (
-                    <div key={idx} className="text-xs p-2 rounded-lg bg-emerald-50 text-emerald-900 font-medium">
-                      ✓ {t.title}
-                    </div>
-                  ))
-                )}
+            <div className="space-y-3 text-xs max-h-96 overflow-y-auto pr-1">
+              <div>
+                <h5 className="font-bold text-slate-700 mb-1">Hours Logged:</h5>
+                <p className="text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                  {activeReportModal.hours_worked} hours
+                </p>
+              </div>
+
+              <div>
+                <h5 className="font-bold text-slate-700 mb-1">Completed Today ({activeReportModal.completed_tasks?.length || 0}):</h5>
+                <ul className="list-disc pl-4 space-y-1 text-slate-600">
+                  {(activeReportModal.completed_tasks || []).map((t, idx) => (
+                    <li key={idx}>{t}</li>
+                  ))}
+                  {(!activeReportModal.completed_tasks || activeReportModal.completed_tasks.length === 0) && (
+                    <li className="text-slate-400 italic">None</li>
+                  )}
+                </ul>
+              </div>
+
+              <div>
+                <h5 className="font-bold text-slate-700 mb-1">Pending Tasks ({activeReportModal.pending_tasks?.length || 0}):</h5>
+                <ul className="list-disc pl-4 space-y-1 text-slate-600">
+                  {(activeReportModal.pending_tasks || []).map((t, idx) => (
+                    <li key={idx}>{t}</li>
+                  ))}
+                  {(!activeReportModal.pending_tasks || activeReportModal.pending_tasks.length === 0) && (
+                    <li className="text-slate-400 italic">None</li>
+                  )}
+                </ul>
+              </div>
+
+              <div>
+                <h5 className="font-bold text-slate-700 mb-1">Blockers / Challenges:</h5>
+                <p className="text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                  {activeReportModal.blockers || 'None'}
+                </p>
+              </div>
+
+              <div>
+                <h5 className="font-bold text-slate-700 mb-1">Tomorrow's Priority:</h5>
+                <p className="text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                  {activeReportModal.tomorrow_plan || 'Not specified'}
+                </p>
               </div>
             </div>
 
-            {/* Pending with Reasons */}
-            <div>
-              <h4 className="text-xs font-bold text-amber-700 uppercase tracking-wider mb-1.5">
-                Pending Tasks & Reasons ({activeReportModal.pending_tasks?.length || 0})
-              </h4>
-              <div className="space-y-1.5 max-h-40 overflow-y-auto">
-                {(activeReportModal.pending_tasks || []).length === 0 ? (
-                  <p className="text-xs text-emerald-700 font-semibold">All tasks were completed!</p>
-                ) : (
-                  activeReportModal.pending_tasks.map((t, idx) => (
-                    <div key={idx} className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
-                      <p className="text-xs font-bold text-slate-800">{t.title}</p>
-                      <p className="text-xs text-slate-600"><strong>Reason:</strong> {t.reason}</p>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-            {/* Blockers */}
-            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-              <span className="font-bold text-slate-700 block mb-0.5">Blockers / Roadblocks:</span>
-              <p className="text-slate-600">{activeReportModal.blockers || 'None reported.'}</p>
-            </div>
-
-            <div className="flex justify-end pt-1">
+            <div className="pt-2 border-t border-slate-100 flex justify-end">
               <button
                 onClick={() => setActiveReportModal(null)}
-                className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold"
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all cursor-pointer"
               >
-                Close
+                Close Report
               </button>
             </div>
-
           </div>
         </div>
       )}
