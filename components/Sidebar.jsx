@@ -104,12 +104,12 @@ export default function Sidebar({
           )}
         </div>
 
-        {/* Live Team Presence Section */}
+        {/* Team Presence Section */}
         <div>
           <div className="px-3 mb-2 flex items-center justify-between">
             <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Live Team ({onlineCount}/{users.length})
+              Team Presence ({onlineCount}/{users.length} Active)
             </span>
             {selectedMemberFilter !== currentUser?.id && selectedMemberFilter !== 'all' && (
               <button
@@ -149,7 +149,7 @@ export default function Sidebar({
                           ? 'bg-amber-400' 
                           : 'bg-slate-300'
                       }`}
-                      title={isOnline ? '🟢 Live Online Now' : isClockedOut ? '🏠 Clocked Out' : '⚪ Offline'}
+                      title={isOnline ? '🟢 Active Now' : isClockedOut ? '🏠 Clocked Out' : '⚪ Offline'}
                     />
                     <span className="truncate">{u.name}</span>
                   </div>
@@ -162,11 +162,11 @@ export default function Sidebar({
                     )}
                     {isOnline ? (
                       <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded">
-                        Live
+                        Active
                       </span>
                     ) : isClockedOut ? (
                       <span className="text-[9px] font-medium text-amber-700 bg-amber-50 px-1 rounded">
-                        Out
+                        Away
                       </span>
                     ) : null}
                   </div>

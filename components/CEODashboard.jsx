@@ -197,7 +197,7 @@ export default function CEODashboard({
       doc.text(`Team Members: ${userStats.total}   (EOD Checkouts: ${filteredEodReports.length}/${userStats.total})   |   Avg Rating: ${avgRating} / 5.0 ⭐`, 20, 43);
       doc.text(`Total Tasks: ${stats.total}   |   Completed: ${stats.completed} (${stats.completion_rate}%)   |   Hours Logged: ${totalHoursWorked} hrs`, 20, 50);
 
-      const tableHeaders = [['#', 'Member Name', 'Role', 'Live Status', 'Completed', 'Pending', `EOD (${selectedDate})`]];
+      const tableHeaders = [['#', 'Member Name', 'Role', 'Activity Status', 'Completed', 'Pending', `EOD (${selectedDate})`]];
       const tableData = memberList.map((m, idx) => [
         idx + 1,
         m.name,
@@ -799,7 +799,7 @@ export default function CEODashboard({
             <thead>
               <tr className="bg-slate-50 border-b border-slate-100 text-slate-500 font-semibold">
                 <th className="py-3 px-4">Member</th>
-                <th className="py-3 px-4">Live Status</th>
+                <th className="py-3 px-4">Presence</th>
                 <th className="py-3 px-4">Role</th>
                 <th className="py-3 px-4 text-center">Completed</th>
                 <th className="py-3 px-4 text-center">Pending</th>
@@ -830,16 +830,16 @@ export default function CEODashboard({
 
                   <td className="py-3 px-4">
                     {member.status === 'online' ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full shadow-2xs">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                        Online Now
+                        Active
                       </span>
                     ) : member.status === 'logged_out' ? (
                       <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
-                        Clocked Out 🏠
+                        Away / Clocked Out
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+                      <span className="inline-flex items-center text-[11px] font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
                         Offline
                       </span>
                     )}

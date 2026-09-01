@@ -124,7 +124,7 @@ export default function KanbanBoard({
             className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white ${
               isTargetOnline ? 'bg-emerald-500 animate-pulse' : isTargetClockedOut ? 'bg-amber-400' : 'bg-slate-300'
             }`}
-            title={isTargetOnline ? '🟢 Live Online Now' : isTargetClockedOut ? '🏠 Clocked Out' : '⚪ Offline'}
+            title={isTargetOnline ? '🟢 Active Now' : isTargetClockedOut ? '🏠 Clocked Out' : '⚪ Offline'}
           />
         </div>
 
@@ -134,13 +134,13 @@ export default function KanbanBoard({
               {selectedMemberObj.name}
             </h3>
             {isTargetOnline ? (
-              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1.5 shadow-2xs">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                Live Online Now
+                Active Now
               </span>
             ) : isTargetClockedOut ? (
               <span className="text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-full">
-                Clocked Out 🏠
+                Away / Clocked Out
               </span>
             ) : (
               <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">
