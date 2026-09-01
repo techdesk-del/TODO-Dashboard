@@ -3,6 +3,7 @@ import { io } from 'socket.io-client';
 import Sidebar from '../components/Sidebar';
 import TopNavbar from '../components/TopNavbar';
 import KanbanBoard from '../components/KanbanBoard';
+import CalendarView from '../components/CalendarView';
 import CEODashboard from '../components/CEODashboard';
 import TaskModal from '../components/TaskModal';
 import EODCheckoutModal from '../components/EODCheckoutModal';
@@ -27,10 +28,23 @@ export default function Home() {
   const [eodReports, setEodReports] = useState([]);
   const [socketConnected, setSocketConnected] = useState(false);
 
-  // Layout & Filters
+  // Layout, View Mode & Filters
   const [activeTab, setActiveTab] = useState('workspace'); // 'workspace' | 'ceo'
+  const [viewMode, setViewMode] = useState('kanban'); // 'kanban' | 'calendar' (Point 3)
   const [selectedMemberFilter, setSelectedMemberFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Notifications State (Point 4)
+  const [notifications, setNotifications] = useState([
+    {
+      id: 'notif_welcome',
+      title: 'Welcome to UrbanGaon 2.0',
+      message: 'Real-Time Multi-PC Cloud Heartbeat Mesh and Sprint Calendar active.',
+      time: 'Just now',
+      type: 'general',
+      read: false
+    }
+  ]);
 
   // Modals
   const [taskModalOpen, setTaskModalOpen] = useState(false);
@@ -41,14 +55,27 @@ export default function Home() {
 
   const socketRef = useRef(null);
 
+  const addNotification = (title, message, type = 'general') => {
+    const newNotif = {
+      id: 'notif_' + Date.now().toString(36),
+      title,
+      message,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      type,
+      read: false
+    };
+    setNotifications(prev => [newNotif, ...prev.slice(0, 20)]);
+  };
+
   const showToast = (title, message, type = 'info') => {
     setToastMessage({ title, message, type });
+    addNotification(title, message, type === 'success' ? 'task_completed' : 'task_assigned');
     setTimeout(() => {
       setToastMessage(null);
     }, 4000);
   };
 
-  // Fetch full data snapshot via REST API (Vercel serverless & multi-PC compatible)
+  // Fetch full data snapshot via REST API
   const refreshData = async () => {
     try {
       const [uRes, tRes, oRes, eRes] = await Promise.all([
@@ -110,7 +137,6 @@ export default function Home() {
     sendHeartbeat();
     const hbInterval = setInterval(sendHeartbeat, 3000);
 
-    // When tab/window closes, announce disconnect
     const handleUnload = () => {
       if (currentUser?.id) {
         const payload = JSON.stringify({ userId: currentUser.id });
@@ -137,7 +163,7 @@ export default function Home() {
     };
   }, [currentUser?.id]);
 
-  // Real-Time Multi-PC Auto Sync (Every 2.5s poll for global presence across any device)
+  // Real-Time Multi-PC Auto Sync (Every 2.5s poll)
   useEffect(() => {
     const syncInterval = setInterval(() => {
       refreshData();
@@ -145,7 +171,7 @@ export default function Home() {
     return () => clearInterval(syncInterval);
   }, []);
 
-  // Socket.IO for local node server or direct WebSockets
+  // Socket.IO
   useEffect(() => {
     let socket;
     try {
@@ -158,17 +184,9 @@ export default function Home() {
       });
       socketRef.current = socket;
 
-      socket.on('connect', () => {
-        setSocketConnected(true);
-      });
-
-      socket.on('disconnect', () => {
-        setSocketConnected(false);
-      });
-
-      socket.on('connect_error', () => {
-        setSocketConnected(false);
-      });
+      socket.on('connect', () => setSocketConnected(true));
+      socket.on('disconnect', () => setSocketConnected(false));
+      socket.on('connect_error', () => setSocketConnected(false));
 
       socket.on('sync:initial', (data) => {
         if (data.users && data.users.length > 0) setUsers(data.users);
@@ -381,7 +399,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex font-sans w-full">
       
-      {/* Left Sidebar with Auth Lockdown */}
+      {/* Left Sidebar */}
       <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -395,7 +413,7 @@ export default function Home() {
       {/* Main App Container */}
       <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
         
-        {/* Top Navbar with Locked Profile */}
+        {/* Top Navbar with Notification Center & Sprint Calendar Toggle */}
         <TopNavbar
           totalTasks={tasks.length}
           currentUser={currentUser}
@@ -404,6 +422,10 @@ export default function Home() {
           eodSubmittedToday={eodSubmittedToday}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+          notifications={notifications}
+          setNotifications={setNotifications}
         />
 
         {/* Real-time Toast Notification */}
@@ -467,21 +489,32 @@ export default function Home() {
             </div>
           </div>
 
-          {/* View Tab 1: Task Board Workspace (Full 100% Width Spacious Kanban Board) */}
+          {/* View Tab 1: Task Board Workspace (Kanban or Sprint Calendar) */}
           {activeTab === 'workspace' && (
             <div className="w-full">
-              <KanbanBoard
-                tasks={tasks}
-                users={users}
-                currentUser={currentUser}
-                onStatusChange={handleStatusChange}
-                onEditTask={handleOpenEditTaskModal}
-                onDeleteTask={handleDeleteTask}
-                openNewTaskModal={handleOpenNewTaskModal}
-                searchQuery={searchQuery}
-                selectedMemberFilter={selectedMemberFilter}
-                setSelectedMemberFilter={setSelectedMemberFilter}
-              />
+              {viewMode === 'kanban' ? (
+                <KanbanBoard
+                  tasks={tasks}
+                  users={users}
+                  currentUser={currentUser}
+                  onStatusChange={handleStatusChange}
+                  onEditTask={handleOpenEditTaskModal}
+                  onDeleteTask={handleDeleteTask}
+                  openNewTaskModal={handleOpenNewTaskModal}
+                  searchQuery={searchQuery}
+                  selectedMemberFilter={selectedMemberFilter}
+                  setSelectedMemberFilter={setSelectedMemberFilter}
+                />
+              ) : (
+                <CalendarView
+                  tasks={tasks}
+                  users={users}
+                  currentUser={currentUser}
+                  selectedMemberFilter={selectedMemberFilter}
+                  openNewTaskModal={handleOpenNewTaskModal}
+                  onEditTask={handleOpenEditTaskModal}
+                />
+              )}
             </div>
           )}
 
