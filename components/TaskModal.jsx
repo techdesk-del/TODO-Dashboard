@@ -14,6 +14,7 @@ export default function TaskModal({
   isOpen, 
   onClose, 
   onSave, 
+  onDelete,
   initialTask = null, 
   defaultStatus = 'todo',
   users = [],
@@ -569,21 +570,43 @@ export default function TaskModal({
           )}
 
           {/* Form Actions */}
-          <div className="pt-2 border-t border-slate-100 flex items-center justify-end gap-2.5">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition-all active:scale-95 cursor-pointer"
-            >
-              <Save className="w-4 h-4" />
-              <span>{initialTask ? 'Save All Books & Details' : 'Save Task'}</span>
-            </button>
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2.5">
+            {initialTask?.id && onDelete ? (
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm(`Are you sure you want to delete "${initialTask.title || 'this task'}"?`)) {
+                    sounds.playTrash();
+                    onDelete(initialTask.id);
+                    onClose();
+                  }
+                }}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs border border-rose-200 transition-all cursor-pointer active:scale-95 shadow-2xs"
+                title="Delete this task completely"
+              >
+                <Trash2 className="w-4 h-4 text-rose-600" />
+                <span>Delete Task</span>
+              </button>
+            ) : (
+              <div />
+            )}
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition-all active:scale-95 cursor-pointer"
+              >
+                <Save className="w-4 h-4" />
+                <span>{initialTask?.id ? 'Save Changes' : 'Create Task'}</span>
+              </button>
+            </div>
           </div>
 
         </form>

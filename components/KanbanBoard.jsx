@@ -13,7 +13,6 @@ import {
   Flame,
   ArrowUpDown,
   LayoutList,
-  Columns,
   ChevronDown,
   ChevronUp,
   BookOpen,
@@ -26,16 +25,8 @@ import {
   Calendar
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import TaskCard from './TaskCard';
 import DailyReadingModal from './DailyReadingModal';
 import { sounds } from '../lib/audio';
-
-const COLUMNS = [
-  { id: 'todo', title: 'To Do', icon: Layers, color: 'text-slate-800', bg: 'bg-slate-50/70 border-slate-200', countBg: 'bg-slate-200 text-slate-700 border border-slate-300', dropBg: 'bg-blue-50/70 border-blue-400 border-dashed' },
-  { id: 'in_progress', title: 'In Progress', icon: Clock, color: 'text-blue-800', bg: 'bg-blue-50/30 border-blue-200/80', countBg: 'bg-blue-100 text-blue-800 border border-blue-200', dropBg: 'bg-blue-100/70 border-blue-500 border-dashed' },
-  { id: 'blocked', title: 'Blocked', icon: Flame, color: 'text-rose-800', bg: 'bg-rose-50/30 border-rose-200/80', countBg: 'bg-rose-100 text-rose-800 border border-rose-200', dropBg: 'bg-rose-100/70 border-rose-500 border-dashed' },
-  { id: 'completed', title: 'Completed', icon: CheckCircle2, color: 'text-emerald-800', bg: 'bg-emerald-50/30 border-emerald-200/80', countBg: 'bg-emerald-100 text-emerald-800 border border-emerald-200', dropBg: 'bg-emerald-100/70 border-emerald-500 border-dashed' }
-];
 
 export default function KanbanBoard({ 
   tasks, 
@@ -50,10 +41,8 @@ export default function KanbanBoard({
   selectedMemberFilter, 
   setSelectedMemberFilter 
 }) {
-  const [viewMode, setViewMode] = useState('table'); // 'table' (Excel matrix) | 'columns'
   const [activeDailyTask, setActiveDailyTask] = useState(null);
   const [priorityFilter, setPriorityFilter] = useState('all');
-  const [dragOverCol, setDragOverCol] = useState(null);
   const todayStr = new Date().toISOString().split('T')[0];
 
   const isAakash = currentUser?.id === 'usr_aakash' || currentUser?.name?.toLowerCase().includes('aakash');
@@ -296,34 +285,6 @@ export default function KanbanBoard({
               </button>
             ))}
           </div>
-
-          {/* View Mode Switcher: Excel Table vs Kanban Columns */}
-          <div className="flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200/80">
-            <button
-              onClick={() => { sounds.playClick(); setViewMode('table'); }}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                viewMode === 'table'
-                  ? 'bg-white text-blue-700 shadow-2xs font-extrabold'
-                  : 'text-slate-500 hover:text-slate-800'
-              }`}
-              title="Excel Spreadsheet Matrix View (Horizontal rows)"
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Excel Matrix</span>
-            </button>
-            <button
-              onClick={() => { sounds.playClick(); setViewMode('columns'); }}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                viewMode === 'columns'
-                  ? 'bg-white text-blue-700 shadow-2xs font-extrabold'
-                  : 'text-slate-500 hover:text-slate-800'
-              }`}
-              title="4-Column Kanban View"
-            >
-              <Columns className="w-3.5 h-3.5" />
-              <span>Kanban</span>
-            </button>
-          </div>
         </div>
 
       </div>
@@ -350,7 +311,7 @@ export default function KanbanBoard({
             <span>Create Task</span>
           </button>
         </div>
-      ) : viewMode === 'table' ? (
+      ) : (
         /* EXCEL SPREADSHEET 4-STATUS MATRIX (To Do, In Progress, Blocked, Completed Columns) */
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden w-full space-y-4 p-0">
           <div className="overflow-x-auto">
@@ -641,7 +602,23 @@ export default function KanbanBoard({
                                   </span>
                                 </div>
                                 <p className="text-[10px] text-rose-700 line-clamp-1">{t.description || 'Action required'}</p>
-                                <div className="pt-1 text-right">
+                                <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-[9.5px]">
+                                  <div className="flex items-center gap-1.5">
+                                    <button
+                                      onClick={() => { sounds.playClick(); onEditTask(t); }}
+                                      className="text-slate-400 hover:text-blue-600 cursor-pointer"
+                                      title="Edit Task"
+                                    >
+                                      <Edit2 className="w-3 h-3" />
+                                    </button>
+                                    <button
+                                      onClick={() => { sounds.playTrash(); onDeleteTask(t.id); }}
+                                      className="text-slate-400 hover:text-rose-600 cursor-pointer"
+                                      title="Delete"
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                    </button>
+                                  </div>
                                   <button
                                     onClick={() => { sounds.playClick(); onStatusChange(t.id, 'in_progress'); }}
                                     className="text-[9.5px] text-blue-600 font-bold hover:underline cursor-pointer"
@@ -663,18 +640,51 @@ export default function KanbanBoard({
                           </div>
                         ) : (
                           <div className="space-y-1.5">
-                            {member.completedTasks.map((t, tIdx) => (
-                              <div key={t.id} className="p-1.5 rounded-lg bg-white border border-emerald-200 shadow-2xs space-y-0.5 text-[10px]">
-                                <div className="flex items-center justify-between gap-1">
-                                  <span className="font-semibold text-slate-700 line-through truncate">
-                                    {tIdx + 1}. {t.title}
-                                  </span>
-                                  <span className="text-[8px] font-black px-1 py-0.2 rounded bg-emerald-100 text-emerald-800 shrink-0">
-                                    ✓ Done
-                                  </span>
+                            {member.completedTasks.map((t, tIdx) => {
+                              const isBook = t.is_book_reading;
+                              return (
+                                <div key={t.id} className="p-1.5 rounded-lg bg-white border border-emerald-200 shadow-2xs space-y-1 text-[10px]">
+                                  <div className="flex items-center justify-between gap-1">
+                                    <span className="font-semibold text-slate-700 line-through truncate">
+                                      {tIdx + 1}. {t.title}
+                                    </span>
+                                    <span className="text-[8px] font-black px-1 py-0.2 rounded bg-emerald-100 text-emerald-800 shrink-0">
+                                      ✓ Done
+                                    </span>
+                                  </div>
+                                  {isBook && t.book_stats?.total_pages && (
+                                    <div className="text-[9px] text-emerald-700 font-bold">
+                                      📖 {t.book_stats.total_pages_read || t.book_stats.total_pages}/{t.book_stats.total_pages} pages completed
+                                    </div>
+                                  )}
+                                  <div className="flex items-center justify-between text-[9px] pt-0.5 text-slate-400">
+                                    <div className="flex items-center gap-1.5">
+                                      <button
+                                        onClick={() => { sounds.playClick(); onEditTask(t); }}
+                                        className="hover:text-blue-600 cursor-pointer"
+                                        title="Edit"
+                                      >
+                                        <Edit2 className="w-2.5 h-2.5" />
+                                      </button>
+                                      <button
+                                        onClick={() => { sounds.playTrash(); onDeleteTask(t.id); }}
+                                        className="hover:text-rose-600 cursor-pointer"
+                                        title="Delete"
+                                      >
+                                        <Trash2 className="w-2.5 h-2.5" />
+                                      </button>
+                                    </div>
+                                    <button
+                                      onClick={() => { sounds.playClick(); onStatusChange(t.id, 'in_progress'); }}
+                                      className="text-slate-500 hover:text-blue-600 font-medium hover:underline cursor-pointer"
+                                      title="Reopen task"
+                                    >
+                                      ↺ Reopen
+                                    </button>
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         )}
                       </td>
@@ -685,92 +695,6 @@ export default function KanbanBoard({
               </tbody>
             </table>
           </div>
-        </div>
-      ) : (
-        /* 4 DRAG-AND-DROP VERTICAL KANBAN COLUMNS */
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-start w-full">
-          {COLUMNS.map(col => {
-            const colTasks = filteredTasks.filter(t => {
-              if (col.id === 'todo') return t.status === 'todo';
-              if (col.id === 'in_progress') return t.status === 'in_progress' || t.status === 'review';
-              if (col.id === 'blocked') return t.status === 'blocked';
-              if (col.id === 'completed') return t.status === 'completed';
-              return false;
-            });
-
-            const isHovered = dragOverCol === col.id;
-
-            return (
-              <div 
-                key={col.id}
-                onDragOver={(e) => { e.preventDefault(); setDragOverCol(col.id); }}
-                onDragLeave={() => setDragOverCol(null)}
-                onDrop={(e) => handleDrop(e, col.id)}
-                className={`rounded-2xl border p-3.5 min-h-[160px] flex flex-col transition-all duration-200 shadow-2xs ${
-                  isHovered ? col.dropBg + ' ring-2 ring-blue-400 scale-[1.01]' : col.bg
-                }`}
-              >
-                {/* Column Header */}
-                <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-slate-200/80">
-                  <div className="flex items-center gap-1.5">
-                    <span className={`w-2 h-2 rounded-full ${
-                      col.id === 'completed' ? 'bg-emerald-500' :
-                      col.id === 'in_progress' ? 'bg-blue-500' :
-                      col.id === 'blocked' ? 'bg-rose-500' : 'bg-slate-400'
-                    }`} />
-                    <h3 className={`text-xs font-extrabold tracking-tight ${col.color}`}>
-                      {col.title}
-                    </h3>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${col.countBg}`}>
-                      {colTasks.length}
-                    </span>
-                    <button
-                      onClick={() => { sounds.playClick(); openNewTaskModal(col.id === 'completed' ? 'todo' : col.id); }}
-                      title={`Add task to ${col.title}`}
-                      className="p-1 rounded-md hover:bg-white text-slate-600 transition-all cursor-pointer"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Tasks List Drop Area (Point 1, Point 2 order) */}
-                <div className="flex-1 space-y-3">
-                  {colTasks.length === 0 ? (
-                    <div className={`py-4 flex flex-col items-center justify-center text-center p-3 border border-dashed rounded-xl transition-colors ${
-                      isHovered ? 'border-blue-500 bg-blue-50/50' : 'border-slate-300/80 bg-white/50'
-                    }`}>
-                      <p className="text-xs text-slate-400 font-medium">
-                        {isHovered ? 'Drop task here' : 'No tasks in this lane'}
-                      </p>
-                      {!isHovered && (
-                        <button
-                          onClick={() => openNewTaskModal(col.id === 'completed' ? 'todo' : col.id)}
-                          className="mt-1 text-xs text-blue-600 font-bold hover:underline flex items-center gap-1 cursor-pointer"
-                        >
-                          <Plus className="w-3.5 h-3.5" /> Add Task
-                        </button>
-                      )}
-                    </div>
-                  ) : (
-                    colTasks.map((task, idx) => (
-                      <TaskCard
-                        key={task.id}
-                        task={task}
-                        itemNumber={idx + 1}
-                        onStatusChange={onStatusChange}
-                        onEditTask={onEditTask}
-                        onDeleteTask={onDeleteTask}
-                        onLogDailyReading={onLogDailyReading}
-                      />
-                    ))
-                  )}
-                </div>
-              </div>
-            );
-          })}
         </div>
       )}
 

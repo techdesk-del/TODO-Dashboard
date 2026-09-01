@@ -626,6 +626,7 @@ export default function Home() {
         isOpen={taskModalOpen}
         onClose={() => setTaskModalOpen(false)}
         onSave={handleSaveTask}
+        onDelete={handleDeleteTask}
         initialTask={editingTask}
         defaultStatus={defaultTaskStatus}
         users={users}
