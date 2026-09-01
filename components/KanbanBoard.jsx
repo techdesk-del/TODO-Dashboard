@@ -111,21 +111,57 @@ export default function KanbanBoard({
     return targetUsers.map(user => {
       const userTasks = filteredTasks.filter(t => t.assigned_to === user.id);
       const todoTasks = userTasks.filter(t => t.status === 'todo');
-      const inProgressTasks = userTasks.filter(t => t.status === 'in_progress' || t.status === 'review');
+      const inProgressTasks = userTasks.filter(t => (t.status === 'in_progress' || t.status === 'review') && !t.is_book_reading);
       const blockedTasks = userTasks.filter(t => t.status === 'blocked');
-      const completedTasks = userTasks.filter(t => t.status === 'completed');
+      const regularCompletedTasks = userTasks.filter(t => t.status === 'completed' && !t.is_book_reading);
       const bookTask = userTasks.find(t => t.is_book_reading);
+
+      // Extract all books (both In Progress and Completed) from bookTask
+      let inProgressBooks = [];
+      let completedBooks = [];
+      if (bookTask) {
+        if (Array.isArray(bookTask.books_list) && bookTask.books_list.length > 0) {
+          inProgressBooks = bookTask.books_list.filter(b => b.status !== 'completed');
+          completedBooks = bookTask.books_list.filter(b => b.status === 'completed');
+        } else {
+          if (bookTask.status === 'completed') {
+            completedBooks = [{
+              id: 'bk_' + bookTask.id,
+              title: bookTask.title,
+              author: bookTask.description,
+              total_pages: Number(bookTask.book_stats?.total_pages) || 0,
+              pages_read: Number(bookTask.book_stats?.total_pages_read) || Number(bookTask.book_stats?.total_pages) || 0,
+              status: 'completed'
+            }];
+          } else {
+            inProgressBooks = [{
+              id: 'bk_' + bookTask.id,
+              title: bookTask.title,
+              author: bookTask.description,
+              total_pages: Number(bookTask.book_stats?.total_pages) || 0,
+              pages_read: Number(bookTask.book_stats?.total_pages_read) || 0,
+              status: 'in_progress'
+            }];
+          }
+        }
+      }
 
       const totalPages = userTasks.reduce((acc, t) => acc + (Number(t.book_stats?.total_pages) || 0), 0);
       const pagesRead = userTasks.reduce((acc, t) => acc + (Number(t.book_stats?.total_pages_read) || 0), 0);
 
+      const totalItemsCount = userTasks.filter(t => !t.is_book_reading).length + (bookTask?.books_list?.length || (bookTask ? 1 : 0));
+      const totalCompletedCount = regularCompletedTasks.length + completedBooks.length;
+
       return {
         user,
-        total: userTasks.length,
+        total: totalItemsCount,
+        totalCompletedCount,
         todoTasks,
         inProgressTasks,
         blockedTasks,
-        completedTasks,
+        regularCompletedTasks,
+        completedBooks,
+        inProgressBooks,
         bookTask,
         totalPages,
         pagesRead
@@ -333,7 +369,8 @@ export default function KanbanBoard({
               <tbody className="divide-y divide-slate-200/90 bg-white">
                 {memberMatrixData.map((member, idx) => {
                   const user = member.user;
-                  const completionRate = member.total > 0 ? Math.round((member.completedTasks.length / member.total) * 100) : 0;
+                  const completedCount = member.totalCompletedCount ?? ((member.regularCompletedTasks?.length || 0) + (member.completedBooks?.length || 0));
+                  const completionRate = member.total > 0 ? Math.round((completedCount / member.total) * 100) : 0;
 
                   return (
                     <tr 
@@ -461,104 +498,123 @@ export default function KanbanBoard({
 
                       {/* 4. IN PROGRESS COLUMN */}
                       <td className="py-3 px-3.5 border-r border-slate-200 align-top bg-blue-50/15">
-                        {member.inProgressTasks.length === 0 ? (
+                        {member.inProgressTasks.length === 0 && (!member.bookTask || member.inProgressBooks.length === 0) ? (
                           <div className="py-2 text-center text-slate-400 italic text-[10.5px]">
                             — None active —
                           </div>
                         ) : (
                           <div className="space-y-2">
-                            {member.inProgressTasks.map((t, tIdx) => {
+                            {/* Regular In-Progress Tasks */}
+                            {member.inProgressTasks.map((t, tIdx) => (
+                              <div key={t.id} className="p-2.5 rounded-xl bg-white border border-blue-200 shadow-2xs space-y-1.5">
+                                <div className="flex items-start justify-between gap-1">
+                                  <span className="font-bold text-slate-900 leading-tight">
+                                    <strong className="text-blue-600 font-extrabold">{tIdx + 1}.</strong> {t.title}
+                                  </span>
+                                  <span className="text-[8.5px] font-extrabold px-1.5 py-0.2 rounded bg-blue-100 text-blue-800 shrink-0">
+                                    In Progress
+                                  </span>
+                                </div>
+                                {t.description && (
+                                  <p className="text-[10px] text-slate-500 line-clamp-1">{t.description}</p>
+                                )}
+                                <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-[9.5px]">
+                                  <div className="flex items-center gap-1">
+                                    <button
+                                      onClick={() => { sounds.playClick(); onEditTask(t); }}
+                                      className="p-1 rounded text-slate-400 hover:text-blue-600 cursor-pointer"
+                                      title="Edit Task"
+                                    >
+                                      <Edit2 className="w-3 h-3" />
+                                    </button>
+                                    <span className="text-slate-400">{t.due_date ? `Due ${t.due_date.split('-').slice(1).join('/')}` : ''}</span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      sounds.playComplete();
+                                      confetti({ particleCount: 30, spread: 50, origin: { y: 0.7 } });
+                                      onStatusChange(t.id, 'completed');
+                                    }}
+                                    className="text-emerald-700 font-extrabold hover:underline cursor-pointer"
+                                  >
+                                    Finish ✓
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+
+                            {/* Book Reading Tracker in In-Progress */}
+                            {member.bookTask && member.inProgressBooks.length > 0 && (() => {
+                              const t = member.bookTask;
                               const stats = t.book_stats || {};
                               const readP = Number(stats.total_pages_read) || 0;
                               const totalP = Number(stats.total_pages) || 0;
                               const pct = totalP > 0 ? Math.min(100, Math.round((readP / totalP) * 100)) : 0;
-                              const booksList = Array.isArray(t.books_list) && t.books_list.length > 0 ? t.books_list : [];
 
                               return (
-                                <div key={t.id} className="p-2.5 rounded-xl bg-white border border-blue-200 shadow-2xs space-y-2">
+                                <div key={t.id} className="p-2.5 rounded-xl bg-white border border-indigo-200 shadow-2xs space-y-2">
                                   <div className="flex items-start justify-between gap-1">
-                                    <span className="font-bold text-slate-900 leading-tight">
-                                      <strong className="text-blue-600 font-extrabold">{tIdx + 1}.</strong> {t.title}
+                                    <span className="font-bold text-indigo-950 leading-tight flex items-center gap-1">
+                                      <BookOpen className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                                      <span>Active Reading ({member.inProgressBooks.length} Books)</span>
                                     </span>
-                                    <span className="text-[8.5px] font-extrabold px-1.5 py-0.2 rounded bg-blue-100 text-blue-800 shrink-0">
-                                      In Progress
+                                    <span className="text-[8.5px] font-extrabold px-1.5 py-0.2 rounded bg-indigo-100 text-indigo-800 shrink-0">
+                                      Reading
                                     </span>
                                   </div>
 
-                                  {/* Multi-Book list */}
-                                  {t.is_book_reading && booksList.length > 0 && (
-                                    <div className="space-y-1 pt-0.5">
-                                      {booksList.map((b, bIdx) => (
-                                        <div key={b.id || bIdx} className="p-1.5 rounded-lg bg-slate-50 border border-slate-200/80 text-[9.5px] flex items-center justify-between gap-1">
-                                          <span className="truncate font-semibold text-slate-800">
-                                            #{bIdx + 1} {b.title} {b.author ? `(${b.author})` : ''}
-                                          </span>
-                                          <span className={`px-1.5 py-0.2 rounded text-[8.5px] font-black shrink-0 ${
-                                            b.status === 'completed' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'
-                                          }`}>
-                                            {b.status === 'completed' ? 'Completed' : `${b.pages_read || 0}/${b.total_pages || 0} pgs`}
-                                          </span>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
+                                  {/* Multi-Book In-Progress list */}
+                                  <div className="space-y-1 pt-0.5">
+                                    {member.inProgressBooks.map((b, bIdx) => (
+                                      <div key={b.id || bIdx} className="p-1.5 rounded-lg bg-slate-50 border border-slate-200/80 text-[9.5px] flex items-center justify-between gap-1">
+                                        <span className="truncate font-semibold text-slate-800">
+                                          #{bIdx + 1} {b.title} {b.author ? `(${b.author})` : ''}
+                                        </span>
+                                        <span className="px-1.5 py-0.2 rounded text-[8.5px] font-black shrink-0 bg-blue-100 text-blue-800">
+                                          {b.pages_read || 0}/{b.total_pages || 0} pgs
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
 
                                   {/* Progress bar for book reading */}
-                                  {t.is_book_reading && totalP > 0 && (
+                                  {totalP > 0 && (
                                     <div className="space-y-0.5 pt-0.5">
                                       <div className="flex items-center justify-between text-[9.5px] font-bold text-slate-600">
                                         <span>{readP}/{totalP} pgs</span>
                                         <span className="text-indigo-600 font-black">{pct}%</span>
                                       </div>
                                       <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden border border-slate-200/60">
-                                        <div className="h-full rounded-full bg-blue-600" style={{ width: `${pct}%` }} />
+                                        <div className="h-full rounded-full bg-indigo-600" style={{ width: `${pct}%` }} />
                                       </div>
                                     </div>
                                   )}
 
-                                  {/* Action Buttons: Manage Books & Log Pages */}
+                                  {/* Action Buttons */}
                                   <div className="flex items-center justify-between pt-1.5 border-t border-slate-100 text-[9.5px] gap-1 flex-wrap">
-                                    {t.is_book_reading ? (
-                                      <div className="flex items-center gap-1">
-                                        <button
-                                          type="button"
-                                          onClick={() => { sounds.playClick(); setActiveDailyTask(t); }}
-                                          className="px-2 py-0.5 rounded-md bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold border border-indigo-200 inline-flex items-center gap-1 cursor-pointer shadow-2xs"
-                                        >
-                                          <Sparkles className="w-2.5 h-2.5" /> Log Pages
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => { sounds.playClick(); onEditTask(t); }}
-                                          className="px-2 py-0.5 rounded-md bg-white hover:bg-slate-100 text-slate-700 font-bold border border-slate-200 inline-flex items-center gap-1 cursor-pointer shadow-2xs"
-                                          title="Manage books, add new book, change status"
-                                        >
-                                          <Edit2 className="w-2.5 h-2.5 text-slate-500" /> Manage Books ({booksList.length})
-                                        </button>
-                                      </div>
-                                    ) : (
-                                      <div className="flex items-center gap-1">
-                                        <button
-                                          onClick={() => { sounds.playClick(); onEditTask(t); }}
-                                          className="p-1 rounded text-slate-400 hover:text-blue-600 cursor-pointer"
-                                          title="Edit Task"
-                                        >
-                                          <Edit2 className="w-3 h-3" />
-                                        </button>
-                                        <span className="text-slate-400">{t.due_date ? `Due ${t.due_date.split('-').slice(1).join('/')}` : ''}</span>
-                                      </div>
-                                    )}
+                                    <div className="flex items-center gap-1">
+                                      <button
+                                        type="button"
+                                        onClick={() => { sounds.playClick(); setActiveDailyTask(t); }}
+                                        className="px-2 py-0.5 rounded-md bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold border border-indigo-200 inline-flex items-center gap-1 cursor-pointer shadow-2xs"
+                                      >
+                                        <Sparkles className="w-2.5 h-2.5" /> Log Pages
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => { sounds.playClick(); onEditTask(t); }}
+                                        className="px-2 py-0.5 rounded-md bg-white hover:bg-slate-100 text-slate-700 font-bold border border-slate-200 inline-flex items-center gap-1 cursor-pointer shadow-2xs"
+                                        title="Manage books, add new book, change status"
+                                      >
+                                        <Edit2 className="w-2.5 h-2.5 text-slate-500" /> Manage Books
+                                      </button>
+                                    </div>
                                     <button
                                       type="button"
                                       onClick={() => {
-                                        if (t.is_book_reading) {
-                                          sounds.playClick();
-                                          setBookToFinish(t);
-                                        } else {
-                                          sounds.playComplete();
-                                          confetti({ particleCount: 30, spread: 50, origin: { y: 0.7 } });
-                                          onStatusChange(t.id, 'completed');
-                                        }
+                                        sounds.playClick();
+                                        setBookToFinish(t);
                                       }}
                                       className="text-emerald-700 font-extrabold hover:underline cursor-pointer"
                                     >
@@ -567,7 +623,7 @@ export default function KanbanBoard({
                                   </div>
                                 </div>
                               );
-                            })}
+                            })()}
                           </div>
                         )}
                       </td>
@@ -575,7 +631,7 @@ export default function KanbanBoard({
                       {/* 5. Workload Summary & Pages Read */}
                       <td className="py-4 px-4 border-r border-slate-200 align-top whitespace-nowrap space-y-1.5">
                         <div className="text-[11px] font-extrabold text-slate-800">
-                          {member.completedTasks.length}/{member.total} Tasks Done ({completionRate}%)
+                          {member.totalCompletedCount}/{member.total} Tasks Done ({completionRate}%)
                         </div>
                         <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-200/60">
                           <div
@@ -639,59 +695,100 @@ export default function KanbanBoard({
                         )}
                       </td>
 
-                      {/* 7. COMPLETED COLUMN (Placed at Very End) */}
+                      {/* 7. COMPLETED COLUMN (Lists Regular Completed Tasks + ALL Completed Books) */}
                       <td className="py-3 px-3.5 align-top bg-emerald-50/15">
-                        {member.completedTasks.length === 0 ? (
+                        {member.regularCompletedTasks.length === 0 && member.completedBooks.length === 0 ? (
                           <div className="py-2 text-center text-slate-400 italic text-[10.5px]">
                             — 0 finished —
                           </div>
                         ) : (
                           <div className="space-y-1.5">
-                            {member.completedTasks.map((t, tIdx) => {
-                              const isBook = t.is_book_reading;
-                              return (
-                                <div key={t.id} className="p-1.5 rounded-lg bg-white border border-emerald-200 shadow-2xs space-y-1 text-[10px]">
-                                  <div className="flex items-center justify-between gap-1">
-                                    <span className="font-semibold text-slate-700 line-through truncate">
-                                      {tIdx + 1}. {t.title}
-                                    </span>
-                                    <span className="text-[8px] font-black px-1 py-0.2 rounded bg-emerald-100 text-emerald-800 shrink-0">
-                                      ✓ Done
-                                    </span>
-                                  </div>
-                                  {isBook && t.book_stats?.total_pages && (
-                                    <div className="text-[9px] text-emerald-700 font-bold">
-                                      📖 {t.book_stats.total_pages_read || t.book_stats.total_pages}/{t.book_stats.total_pages} pages completed
-                                    </div>
-                                  )}
-                                  <div className="flex items-center justify-between text-[9px] pt-0.5 text-slate-400">
-                                    <div className="flex items-center gap-1.5">
-                                      <button
-                                        onClick={() => { sounds.playClick(); onEditTask(t); }}
-                                        className="hover:text-blue-600 cursor-pointer"
-                                        title="Edit"
-                                      >
-                                        <Edit2 className="w-2.5 h-2.5" />
-                                      </button>
-                                      <button
-                                        onClick={() => { sounds.playTrash(); onDeleteTask(t.id); }}
-                                        className="hover:text-rose-600 cursor-pointer"
-                                        title="Delete"
-                                      >
-                                        <Trash2 className="w-2.5 h-2.5" />
-                                      </button>
-                                    </div>
+                            {/* Regular Finished Tasks */}
+                            {member.regularCompletedTasks.map((t, tIdx) => (
+                              <div key={t.id} className="p-1.5 rounded-lg bg-white border border-emerald-200 shadow-2xs space-y-1 text-[10px]">
+                                <div className="flex items-center justify-between gap-1">
+                                  <span className="font-semibold text-slate-700 line-through truncate">
+                                    {tIdx + 1}. {t.title}
+                                  </span>
+                                  <span className="text-[8px] font-black px-1 py-0.2 rounded bg-emerald-100 text-emerald-800 shrink-0">
+                                    ✓ Done
+                                  </span>
+                                </div>
+                                <div className="flex items-center justify-between text-[9px] pt-0.5 text-slate-400">
+                                  <div className="flex items-center gap-1.5">
                                     <button
-                                      onClick={() => { sounds.playClick(); onStatusChange(t.id, 'in_progress'); }}
-                                      className="text-slate-500 hover:text-blue-600 font-medium hover:underline cursor-pointer"
-                                      title="Reopen task"
+                                      onClick={() => { sounds.playClick(); onEditTask(t); }}
+                                      className="hover:text-blue-600 cursor-pointer"
+                                      title="Edit"
                                     >
-                                      ↺ Reopen
+                                      <Edit2 className="w-2.5 h-2.5" />
+                                    </button>
+                                    <button
+                                      onClick={() => { sounds.playTrash(); onDeleteTask(t.id); }}
+                                      className="hover:text-rose-600 cursor-pointer"
+                                      title="Delete"
+                                    >
+                                      <Trash2 className="w-2.5 h-2.5" />
                                     </button>
                                   </div>
+                                  <button
+                                    onClick={() => { sounds.playClick(); onStatusChange(t.id, 'in_progress'); }}
+                                    className="text-slate-500 hover:text-blue-600 font-medium hover:underline cursor-pointer"
+                                    title="Reopen task"
+                                  >
+                                    ↺ Reopen
+                                  </button>
                                 </div>
-                              );
-                            })}
+                              </div>
+                            ))}
+
+                            {/* ALL Completed Books (Book 1, Book 2, etc.) */}
+                            {member.completedBooks.map((b, bIdx) => (
+                              <div 
+                                key={b.id || bIdx} 
+                                className="p-1.5 rounded-lg bg-emerald-50/80 border border-emerald-300/80 shadow-2xs space-y-1 text-[10px]"
+                              >
+                                <div className="flex items-center justify-between gap-1">
+                                  <span className="font-bold text-emerald-950 truncate">
+                                    {member.regularCompletedTasks.length + bIdx + 1}. 📚 {b.title || 'Book'}
+                                  </span>
+                                  <span className="text-[8px] font-black px-1 py-0.2 rounded bg-emerald-200/90 text-emerald-900 shrink-0">
+                                    ✓ Completed
+                                  </span>
+                                </div>
+                                {b.author && (
+                                  <div className="text-[9px] text-emerald-800 font-medium truncate">
+                                    ✍️ {b.author}
+                                  </div>
+                                )}
+                                <div className="flex items-center justify-between text-[9px] pt-0.5 text-emerald-700 font-semibold">
+                                  <span>📖 {b.pages_read || b.total_pages || 0}/{b.total_pages || 0} pages</span>
+                                  {b.presented && (
+                                    <span className="text-[8.5px] px-1 py-0.2 rounded bg-purple-100 text-purple-800 font-bold">
+                                      🎤 Presented
+                                    </span>
+                                  )}
+                                </div>
+                                {member.bookTask && (
+                                  <div className="flex items-center justify-between text-[9px] pt-0.5 border-t border-emerald-200/70 text-slate-400">
+                                    <button
+                                      onClick={() => { sounds.playClick(); onEditTask(member.bookTask); }}
+                                      className="text-emerald-800 hover:text-emerald-950 font-bold hover:underline cursor-pointer inline-flex items-center gap-1"
+                                      title="Manage this book"
+                                    >
+                                      <Edit2 className="w-2.5 h-2.5" /> Manage
+                                    </button>
+                                    <button
+                                      onClick={() => { sounds.playClick(); onEditTask(member.bookTask); }}
+                                      className="text-slate-500 hover:text-blue-700 font-medium hover:underline cursor-pointer"
+                                      title="Update book status"
+                                    >
+                                      Edit Status
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
                           </div>
                         )}
                       </td>
