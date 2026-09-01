@@ -6,15 +6,14 @@ import KanbanBoard from '../components/KanbanBoard';
 import CEODashboard from '../components/CEODashboard';
 import TaskModal from '../components/TaskModal';
 import EODCheckoutModal from '../components/EODCheckoutModal';
-import LiveActivityFeed from '../components/LiveActivityFeed';
 import AuthScreen from '../components/AuthScreen';
 import { sounds } from '../lib/audio';
 import { 
   Bell, 
   CheckCircle2, 
-  Clock,
-  ShieldCheck,
-  Lock
+  Clock, 
+  ShieldCheck, 
+  Lock 
 } from 'lucide-react';
 
 const AUTH_STORAGE_KEY = 'urbangaon_auth_user_v1';
@@ -25,7 +24,6 @@ export default function Home() {
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [tasks, setTasks] = useState([]);
   const [overview, setOverview] = useState(null);
-  const [activityLogs, setActivityLogs] = useState([]);
   const [eodReports, setEodReports] = useState([]);
   const [socketConnected, setSocketConnected] = useState(false);
 
@@ -53,11 +51,10 @@ export default function Home() {
   // Fetch full data snapshot via REST API (Vercel serverless & multi-PC compatible)
   const refreshData = async () => {
     try {
-      const [uRes, tRes, oRes, aRes, eRes] = await Promise.all([
+      const [uRes, tRes, oRes, eRes] = await Promise.all([
         fetch('/api/users'),
         fetch('/api/tasks'),
         fetch('/api/overview'),
-        fetch('/api/activity'),
         fetch('/api/eod-reports')
       ]);
 
@@ -72,10 +69,6 @@ export default function Home() {
       if (oRes.ok) {
         const oData = await oRes.json();
         setOverview(oData);
-      }
-      if (aRes.ok) {
-        const aData = await aRes.json();
-        setActivityLogs(aData);
       }
       if (eRes.ok) {
         const eData = await eRes.json();
@@ -181,45 +174,39 @@ export default function Home() {
         if (data.users && data.users.length > 0) setUsers(data.users);
         if (data.tasks) setTasks(data.tasks);
         if (data.overview) setOverview(data.overview);
-        if (data.activityLogs) setActivityLogs(data.activityLogs);
         if (data.eodReports) setEodReports(data.eodReports);
       });
 
-      socket.on('task:created', ({ task, tasks: newTasks, overview: newOverview, activityLogs: newLogs }) => {
+      socket.on('task:created', ({ task, tasks: newTasks, overview: newOverview }) => {
         if (newTasks) setTasks(newTasks);
         if (newOverview) setOverview(newOverview);
-        if (newLogs) setActivityLogs(newLogs);
         showToast('⚡ Task Created', `"${task.title}" assigned to ${task.assignee_name}`, 'success');
         sounds.playClick();
       });
 
-      socket.on('task:updated', ({ task, tasks: newTasks, overview: newOverview, activityLogs: newLogs }) => {
+      socket.on('task:updated', ({ task, tasks: newTasks, overview: newOverview }) => {
         if (newTasks) setTasks(newTasks);
         if (newOverview) setOverview(newOverview);
-        if (newLogs) setActivityLogs(newLogs);
         if (task.status === 'completed') {
           showToast('🎉 Task Completed', `"${task.title}" marked as completed!`, 'success');
         }
       });
 
-      socket.on('task:deleted', ({ tasks: newTasks, overview: newOverview, activityLogs: newLogs }) => {
+      socket.on('task:deleted', ({ tasks: newTasks, overview: newOverview }) => {
         if (newTasks) setTasks(newTasks);
         if (newOverview) setOverview(newOverview);
-        if (newLogs) setActivityLogs(newLogs);
       });
 
-      socket.on('eod:submitted', ({ report, eodReports: newReports, users: newUsers, overview: newOverview, activityLogs: newLogs }) => {
+      socket.on('eod:submitted', ({ report, eodReports: newReports, users: newUsers, overview: newOverview }) => {
         if (newReports) setEodReports(newReports);
         if (newUsers) setUsers(newUsers);
         if (newOverview) setOverview(newOverview);
-        if (newLogs) setActivityLogs(newLogs);
         showToast('📋 EOD Report Submitted', `${report.user_name} submitted daily checkout report.`, 'eod');
       });
 
-      socket.on('presence:updated', ({ users: newUsers, overview: newOverview, activityLogs: newLogs }) => {
+      socket.on('presence:updated', ({ users: newUsers, overview: newOverview }) => {
         if (newUsers) setUsers(newUsers);
         if (newOverview) setOverview(newOverview);
-        if (newLogs) setActivityLogs(newLogs);
       });
     } catch (e) {}
 
@@ -480,31 +467,21 @@ export default function Home() {
             </div>
           </div>
 
-          {/* View Tab 1: Task Board Workspace */}
+          {/* View Tab 1: Task Board Workspace (Full 100% Width Spacious Kanban Board) */}
           {activeTab === 'workspace' && (
-            <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 items-start">
-              
-              {/* Kanban Swimlanes (3 Cols) */}
-              <div className="xl:col-span-3 w-full">
-                <KanbanBoard
-                  tasks={tasks}
-                  users={users}
-                  currentUser={currentUser}
-                  onStatusChange={handleStatusChange}
-                  onEditTask={handleOpenEditTaskModal}
-                  onDeleteTask={handleDeleteTask}
-                  openNewTaskModal={handleOpenNewTaskModal}
-                  searchQuery={searchQuery}
-                  selectedMemberFilter={selectedMemberFilter}
-                  setSelectedMemberFilter={setSelectedMemberFilter}
-                />
-              </div>
-
-              {/* Sidebar Feed (1 Col) */}
-              <div className="space-y-4 w-full">
-                <LiveActivityFeed activityLogs={activityLogs} />
-              </div>
-
+            <div className="w-full">
+              <KanbanBoard
+                tasks={tasks}
+                users={users}
+                currentUser={currentUser}
+                onStatusChange={handleStatusChange}
+                onEditTask={handleOpenEditTaskModal}
+                onDeleteTask={handleDeleteTask}
+                openNewTaskModal={handleOpenNewTaskModal}
+                searchQuery={searchQuery}
+                selectedMemberFilter={selectedMemberFilter}
+                setSelectedMemberFilter={setSelectedMemberFilter}
+              />
             </div>
           )}
 

@@ -6,14 +6,23 @@ import {
   RefreshCw, 
   Trash2, 
   LogOut, 
-  UserCheck
+  UserCheck,
+  ShieldAlert
 } from 'lucide-react';
 
-export default function LiveActivityFeed({ activityLogs }) {
+export default function LiveActivityFeed({ activityLogs, currentUser }) {
+  const isAakash = currentUser?.id === 'usr_aakash' || currentUser?.name?.toLowerCase().includes('aakash');
+
+  // Strict Privacy: Only Aakash sees company-wide activity.
+  // Normal members only see their OWN activities!
+  const filteredLogs = isAakash 
+    ? activityLogs 
+    : activityLogs.filter(log => log.user_id === currentUser?.id);
+
   const getActionIcon = (actionType) => {
     switch (actionType) {
       case 'task_create':
-        return <PlusCircle className="w-3.5 h-3.5 text-indigo-600" />;
+        return <PlusCircle className="w-3.5 h-3.5 text-blue-600" />;
       case 'task_complete':
         return <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />;
       case 'task_update':
@@ -35,22 +44,27 @@ export default function LiveActivityFeed({ activityLogs }) {
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           <h3 className="text-xs font-bold text-slate-800">
-            Live Activity Feed
+            {isAakash ? 'Company Live Activity' : 'My Activity Log'}
           </h3>
         </div>
         <span className="text-[10px] text-slate-400 font-medium">Real-Time</span>
       </div>
 
       <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-        {activityLogs.length === 0 ? (
-          <p className="text-xs text-slate-400 py-3 text-center">No recent activity</p>
+        {filteredLogs.length === 0 ? (
+          <div className="py-6 text-center text-slate-400 space-y-1">
+            <p className="text-xs font-medium">No recent activity</p>
+            <p className="text-[10px] text-slate-400">
+              {isAakash ? 'Company actions will appear here in real time.' : 'Your task and EOD updates will appear here.'}
+            </p>
+          </div>
         ) : (
-          activityLogs.map((log) => (
+          filteredLogs.map((log) => (
             <div 
               key={log.id} 
-              className="p-2 rounded-xl bg-slate-50 border border-slate-100 flex items-start gap-2 text-xs"
+              className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-start gap-2 text-xs transition-all hover:bg-slate-100/70"
             >
-              <div className="mt-0.5 p-1 rounded-md bg-white border border-slate-200 shrink-0">
+              <div className="mt-0.5 p-1 rounded-md bg-white border border-slate-200 shrink-0 shadow-xs">
                 {getActionIcon(log.action_type)}
               </div>
               <div className="flex-1 min-w-0">
