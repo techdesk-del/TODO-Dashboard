@@ -11,7 +11,16 @@ import {
   FileText,
   Calendar,
   Star,
-  Award
+  Plus,
+  Search,
+  Filter,
+  Flame,
+  AlertCircle,
+  Edit2,
+  Trash2,
+  CheckSquare,
+  Layers,
+  ArrowRight
 } from 'lucide-react';
 import { sounds } from '../lib/audio';
 
@@ -19,13 +28,22 @@ export default function CEODashboard({
   overview, 
   tasks, 
   users, 
+  currentUser,
   eodReports, 
+  onStatusChange,
+  onEditTask,
+  onDeleteTask,
   onSelectMemberFilter,
   openNewTaskModal 
 }) {
   const [activeReportModal, setActiveReportModal] = useState(null);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  
+  // Executive Task Filter States
+  const [taskStatusFilter, setTaskStatusFilter] = useState('all'); // 'all' | 'pending' | 'todo' | 'in_progress' | 'blocked' | 'completed' | 'overdue'
+  const [taskMemberFilter, setTaskMemberFilter] = useState('all');
+  const [taskSearchQuery, setTaskSearchQuery] = useState('');
 
   const stats = overview?.tasks || {
     total: 0,
@@ -44,8 +62,6 @@ export default function CEODashboard({
 
   // Filter EOD reports for the selected date
   const filteredEodReports = (eodReports || []).filter(r => r.report_date === selectedDate);
-
-  // Compute average rating and hours for the selected date
   const ratings = filteredEodReports.map(r => Number(r.day_rating) || 5);
   const avgRating = ratings.length > 0 ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1) : '5.0';
   const totalHoursWorked = filteredEodReports.reduce((acc, r) => acc + (Number(r.hours_worked) || 8), 0).toFixed(1);
@@ -79,7 +95,43 @@ export default function CEODashboard({
     return 'Member';
   };
 
-  // Export report to CSV for the selected date
+  // Filter Company Tasks for Executive Task Matrix
+  const todayStr = new Date().toISOString().split('T')[0];
+  const allCompanyTasks = tasks || [];
+
+  const filteredCompanyTasks = allCompanyTasks.filter(task => {
+    // Member Filter
+    if (taskMemberFilter !== 'all' && task.assigned_to !== taskMemberFilter) {
+      return false;
+    }
+
+    // Status Filter
+    const isOverdue = task.status !== 'completed' && task.due_date && new Date(task.due_date).getTime() < new Date(todayStr).getTime();
+    if (taskStatusFilter === 'pending' && task.status === 'completed') return false;
+    if (taskStatusFilter === 'overdue' && !isOverdue) return false;
+    if (taskStatusFilter === 'todo' && task.status !== 'todo') return false;
+    if (taskStatusFilter === 'in_progress' && (task.status !== 'in_progress' && task.status !== 'review')) return false;
+    if (taskStatusFilter === 'blocked' && task.status !== 'blocked') return false;
+    if (taskStatusFilter === 'completed' && task.status !== 'completed') return false;
+
+    // Search Query
+    if (taskSearchQuery) {
+      const q = taskSearchQuery.toLowerCase();
+      const match = 
+        task.title.toLowerCase().includes(q) ||
+        (task.description && task.description.toLowerCase().includes(q)) ||
+        (task.assignee_name && task.assignee_name.toLowerCase().includes(q)) ||
+        (task.tags && task.tags.some(t => t.toLowerCase().includes(q)));
+      if (!match) return false;
+    }
+
+    return true;
+  });
+
+  const pendingCount = allCompanyTasks.filter(t => t.status !== 'completed').length;
+  const overdueCount = allCompanyTasks.filter(t => t.status !== 'completed' && t.due_date && new Date(t.due_date).getTime() < new Date(todayStr).getTime()).length;
+
+  // Export report to CSV
   const handleExportCSV = () => {
     sounds.playClick();
     const rows = [
@@ -105,7 +157,7 @@ export default function CEODashboard({
     document.body.removeChild(link);
   };
 
-  // Export professional PDF report for the selected date
+  // Export professional PDF report
   const handleExportPDF = async () => {
     sounds.playClick();
     setIsExportingPDF(true);
@@ -119,11 +171,9 @@ export default function CEODashboard({
         format: 'a4'
       });
 
-      // Corporate Blue Header Banner
-      doc.setFillColor(37, 99, 235); // #2563eb
+      doc.setFillColor(37, 99, 235);
       doc.rect(0, 0, 210, 28, 'F');
 
-      // Title & Subtitle
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(15);
       doc.setFont('helvetica', 'bold');
@@ -133,7 +183,6 @@ export default function CEODashboard({
       doc.setFont('helvetica', 'normal');
       doc.text(`Report Date: ${selectedDate}  |  Generated: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}  |  UrbanGaon Workspace`, 14, 20);
 
-      // KPI Summary Box
       doc.setFillColor(248, 250, 252);
       doc.setDrawColor(226, 232, 240);
       doc.roundedRect(14, 34, 182, 22, 3, 3, 'FD');
@@ -144,7 +193,6 @@ export default function CEODashboard({
       doc.text(`Team Members: ${userStats.total}   (EOD Checkouts: ${filteredEodReports.length}/${userStats.total})   |   Avg Rating: ${avgRating} / 5.0 ⭐`, 20, 43);
       doc.text(`Total Tasks: ${stats.total}   |   Completed: ${stats.completed} (${stats.completion_rate}%)   |   Hours Logged: ${totalHoursWorked} hrs`, 20, 50);
 
-      // Table of Team Breakdown
       const tableHeaders = [['#', 'Member Name', 'Role', 'Live Status', 'Completed', 'Pending', `EOD (${selectedDate})`]];
       const tableData = memberList.map((m, idx) => [
         idx + 1,
@@ -187,7 +235,6 @@ export default function CEODashboard({
         }
       });
 
-      // Footer
       const pageCount = doc.internal.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
@@ -217,17 +264,15 @@ export default function CEODashboard({
             </span>
           </div>
           <h2 className="text-xl font-bold text-slate-900">
-            Workforce Overview & Daily EOD Analytics
+            Executive Overview & Task Control Matrix
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Real-time visibility into team attendance, active workload, and historical daily checkouts.
+            Full visibility and management over all active team tasks, pending workloads, and daily checkouts.
           </p>
         </div>
 
         {/* Date Selector & Export Actions */}
         <div className="flex items-center gap-2.5 flex-wrap">
-          
-          {/* Historical Date Picker */}
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700 shadow-xs">
             <Calendar className="w-4 h-4 text-blue-600 shrink-0" />
             <input
@@ -268,36 +313,35 @@ export default function CEODashboard({
             <span className="text-xs font-semibold text-emerald-600">({userStats.online} online)</span>
           </div>
           <span className="text-[11px] text-slate-400 mt-1 block">
-            {userStats.checked_out} checked out (EOD)
+            {userStats.checked_out} clocked out
           </span>
         </div>
 
-        {/* Completion Rate */}
+        {/* Pending Active Workload */}
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <span className="text-xs font-semibold text-slate-500 block mb-1">Active Pending Tasks</span>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-bold text-amber-600">{pendingCount}</span>
+            <span className="text-xs font-semibold text-slate-500">of {stats.total}</span>
+          </div>
+          <span className="text-[11px] text-slate-400 mt-1 block">
+            {overdueCount > 0 ? `${overdueCount} overdue` : 'All tasks on schedule'}
+          </span>
+        </div>
+
+        {/* Sprint Completion Rate */}
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <span className="text-xs font-semibold text-slate-500 block mb-1">Completion Rate</span>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-bold text-blue-600">{stats.completion_rate}%</span>
-            <span className="text-xs font-semibold text-slate-500">({stats.completed}/{stats.total})</span>
+            <span className="text-xs font-semibold text-slate-500">({stats.completed} done)</span>
           </div>
           <span className="text-[11px] text-slate-400 mt-1 block">
             {stats.in_progress} in progress
           </span>
         </div>
 
-        {/* Team Rating for Date */}
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <span className="text-xs font-semibold text-slate-500 block mb-1">Avg Day Rating</span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-amber-500 flex items-center gap-1">
-              {avgRating} <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-            </span>
-          </div>
-          <span className="text-[11px] text-slate-400 mt-1 block">
-            Based on {filteredEodReports.length} EOD checkouts
-          </span>
-        </div>
-
-        {/* EOD Checkouts for Date */}
+        {/* EOD Attendance */}
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
           <span className="text-xs font-semibold text-slate-500 block mb-1">EOD Checkouts ({selectedDate})</span>
           <div className="flex items-baseline gap-2">
@@ -306,20 +350,241 @@ export default function CEODashboard({
             </span>
           </div>
           <span className="text-[11px] text-slate-400 mt-1 block">
-            {totalHoursWorked} total hours logged
+            Avg rating: {avgRating} ⭐
           </span>
         </div>
 
       </div>
 
-      {/* Team Performance & Attendance Table */}
+      {/* SECTION 1: LIVE TASK QUEUE & EXECUTIVE MODIFICATION MATRIX */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+        
+        {/* Header & Controls */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+          <div>
+            <div className="flex items-center gap-2">
+              <Layers className="w-4 h-4 text-blue-600" />
+              <h3 className="text-sm font-bold text-slate-900">
+                Live Company Tasks & Pending Work Matrix
+              </h3>
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                {filteredCompanyTasks.length} tasks
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Inspect, modify status, edit details, or delete any task across all 9 team members in real-time.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Search */}
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+              <input
+                type="text"
+                placeholder="Search tasks, tags..."
+                value={taskSearchQuery}
+                onChange={(e) => setTaskSearchQuery(e.target.value)}
+                className="pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-none focus:border-blue-500 w-44"
+              />
+            </div>
+
+            {/* Member Filter */}
+            <select
+              value={taskMemberFilter}
+              onChange={(e) => setTaskMemberFilter(e.target.value)}
+              className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold bg-slate-50 text-slate-700 focus:outline-none focus:border-blue-500 cursor-pointer"
+            >
+              <option value="all">All Members</option>
+              {users.map(u => (
+                <option key={u.id} value={u.id}>{u.name}</option>
+              ))}
+            </select>
+
+            {/* Create New Task Button */}
+            <button
+              onClick={() => { sounds.playClick(); openNewTaskModal('todo'); }}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create Task</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Status Filter Tabs */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {[
+            { id: 'all', label: `All (${allCompanyTasks.length})` },
+            { id: 'pending', label: `Pending Active (${pendingCount})` },
+            { id: 'overdue', label: `🔥 Overdue (${overdueCount})` },
+            { id: 'todo', label: 'To Do' },
+            { id: 'in_progress', label: 'In Progress' },
+            { id: 'blocked', label: 'Blocked' },
+            { id: 'completed', label: `Completed (${stats.completed})` }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => { sounds.playClick(); setTaskStatusFilter(tab.id); }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                taskStatusFilter === tab.id
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Tasks Table */}
+        <div className="overflow-x-auto border border-slate-200 rounded-xl">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold">
+                <th className="py-3 px-4">Task Title & Details</th>
+                <th className="py-3 px-4">Assignee</th>
+                <th className="py-3 px-4">Priority</th>
+                <th className="py-3 px-4">Due Date</th>
+                <th className="py-3 px-4">Status & Quick Change</th>
+                <th className="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filteredCompanyTasks.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="py-8 text-center text-slate-400">
+                    No tasks found matching your filter.
+                  </td>
+                </tr>
+              ) : (
+                filteredCompanyTasks.map(task => {
+                  const isCompleted = task.status === 'completed';
+                  const isOverdue = !isCompleted && task.due_date && new Date(task.due_date).getTime() < new Date(todayStr).getTime();
+
+                  return (
+                    <tr key={task.id} className="hover:bg-slate-50/70 transition-colors">
+                      
+                      {/* Title & Description */}
+                      <td className="py-3 px-4 max-w-xs">
+                        <div className="space-y-0.5">
+                          <h4 className={`font-bold text-slate-900 ${isCompleted ? 'line-through text-slate-400' : ''}`}>
+                            {task.title}
+                          </h4>
+                          {task.description && (
+                            <p className="text-[11px] text-slate-500 line-clamp-1">
+                              {task.description}
+                            </p>
+                          )}
+                          {Array.isArray(task.tags) && task.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 pt-1">
+                              {task.tags.map((t, idx) => (
+                                <span key={idx} className="text-[9px] bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded">
+                                  #{t}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Assignee */}
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-6 h-6 rounded-md flex items-center justify-center font-bold text-white text-[10px] shadow-xs shrink-0"
+                            style={{ backgroundColor: task.assignee_color || '#2563eb' }}
+                          >
+                            {task.assignee_avatar || '??'}
+                          </div>
+                          <span className="font-bold text-slate-800">{task.assignee_name}</span>
+                        </div>
+                      </td>
+
+                      {/* Priority */}
+                      <td className="py-3 px-4">
+                        <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md ${
+                          task.priority === 'urgent' ? 'bg-rose-100 text-rose-800' :
+                          task.priority === 'high' ? 'bg-amber-100 text-amber-800' :
+                          task.priority === 'medium' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-700'
+                        }`}>
+                          {task.priority}
+                        </span>
+                      </td>
+
+                      {/* Due Date & Overdue Badge */}
+                      <td className="py-3 px-4">
+                        <div className="space-y-0.5">
+                          <span className="text-slate-700 font-mono text-[11px] block">
+                            {task.due_date || 'No Date'}
+                          </span>
+                          {isOverdue && (
+                            <span className="text-[9px] px-1.5 py-0.2 bg-rose-50 text-rose-700 border border-rose-200 font-bold rounded flex items-center gap-1 w-max">
+                              <Flame className="w-2.5 h-2.5 text-rose-600" /> Overdue
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Status Dropdown (Direct Executive Modify) */}
+                      <td className="py-3 px-4">
+                        <select
+                          value={task.status}
+                          onChange={(e) => {
+                            sounds.playClick();
+                            onStatusChange(task.id, e.target.value);
+                          }}
+                          className={`text-xs font-bold rounded-lg px-2.5 py-1 border cursor-pointer focus:outline-none transition-colors ${
+                            task.status === 'completed' ? 'bg-emerald-50 text-emerald-800 border-emerald-300' :
+                            task.status === 'in_progress' ? 'bg-blue-50 text-blue-800 border-blue-300' :
+                            task.status === 'blocked' ? 'bg-rose-50 text-rose-800 border-rose-300' :
+                            'bg-slate-100 text-slate-700 border-slate-300'
+                          }`}
+                        >
+                          <option value="todo">To Do</option>
+                          <option value="in_progress">In Progress</option>
+                          <option value="blocked">Blocked</option>
+                          <option value="completed">Completed ✓</option>
+                        </select>
+                      </td>
+
+                      {/* Action Buttons */}
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => onEditTask(task)}
+                            title="Edit Task Details"
+                            className="p-1.5 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-600 text-slate-600 transition-all cursor-pointer"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => { sounds.playClick(); onDeleteTask(task.id); }}
+                            title="Delete Task"
+                            className="p-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-600 transition-all cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* SECTION 2: TEAM ATTENDANCE & EOD BREAKDOWN */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-4 border-b border-slate-100 flex items-center justify-between">
           <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
             Team Workload & Attendance for {selectedDate}
           </h3>
           <span className="text-xs text-slate-500">
-            Click any member to open their task board
+            Click any member to filter their tasks above
           </span>
         </div>
 
@@ -383,7 +648,13 @@ export default function CEODashboard({
                   </td>
 
                   <td className="py-3 px-4 text-center font-bold text-amber-600">
-                    {member.pending_tasks}
+                    <button
+                      onClick={() => setTaskMemberFilter(member.id)}
+                      className="hover:underline cursor-pointer"
+                      title="Filter tasks above"
+                    >
+                      {member.pending_tasks}
+                    </button>
                   </td>
 
                   <td className="py-3 px-4">

@@ -491,12 +491,16 @@ export default function Home() {
               overview={overview}
               tasks={tasks}
               users={users}
+              currentUser={currentUser}
               eodReports={eodReports}
+              onStatusChange={handleStatusChange}
+              onEditTask={handleOpenEditTaskModal}
+              onDeleteTask={handleDeleteTask}
               onSelectMemberFilter={(memberId) => {
                 setSelectedMemberFilter(memberId);
                 setActiveTab('workspace');
               }}
-              openNewTaskModal={() => handleOpenNewTaskModal()}
+              openNewTaskModal={handleOpenNewTaskModal}
             />
           )}
 
