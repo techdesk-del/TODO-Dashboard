@@ -9,18 +9,18 @@ import {
   Lock, 
   ShieldCheck, 
   ArrowLeft,
-  Radio,
-  UserCheck,
-  Crown
+  Crown,
+  Flame,
+  ArrowUpDown
 } from 'lucide-react';
 import TaskCard from './TaskCard';
 import { sounds } from '../lib/audio';
 
 const COLUMNS = [
-  { id: 'todo', title: 'To Do', color: 'text-slate-800', bg: 'bg-slate-50 border-slate-200/80', countBg: 'bg-slate-200 text-slate-700' },
-  { id: 'in_progress', title: 'In Progress', color: 'text-blue-800', bg: 'bg-blue-50/40 border-blue-200/80', countBg: 'bg-blue-100 text-blue-700' },
-  { id: 'blocked', title: 'Blocked', color: 'text-rose-800', bg: 'bg-rose-50/40 border-rose-200/80', countBg: 'bg-rose-100 text-rose-700' },
-  { id: 'completed', title: 'Completed', color: 'text-emerald-800', bg: 'bg-emerald-50/40 border-emerald-200/80', countBg: 'bg-emerald-100 text-emerald-700' }
+  { id: 'todo', title: 'To Do', color: 'text-slate-800', bg: 'bg-slate-50 border-slate-200', countBg: 'bg-slate-200 text-slate-700', dropBg: 'bg-blue-50/70 border-blue-400 border-dashed' },
+  { id: 'in_progress', title: 'In Progress', color: 'text-blue-800', bg: 'bg-blue-50/30 border-blue-200/80', countBg: 'bg-blue-100 text-blue-700', dropBg: 'bg-blue-100/70 border-blue-500 border-dashed' },
+  { id: 'blocked', title: 'Blocked', color: 'text-rose-800', bg: 'bg-rose-50/30 border-rose-200/80', countBg: 'bg-rose-100 text-rose-700', dropBg: 'bg-rose-100/70 border-rose-500 border-dashed' },
+  { id: 'completed', title: 'Completed', color: 'text-emerald-800', bg: 'bg-emerald-50/30 border-emerald-200/80', countBg: 'bg-emerald-100 text-emerald-700', dropBg: 'bg-emerald-100/70 border-emerald-500 border-dashed' }
 ];
 
 export default function KanbanBoard({ 
@@ -36,16 +36,15 @@ export default function KanbanBoard({
   setSelectedMemberFilter 
 }) {
   const [priorityFilter, setPriorityFilter] = useState('all');
+  const [dragOverCol, setDragOverCol] = useState(null);
 
   const isAakash = currentUser?.id === 'usr_aakash' || currentUser?.name?.toLowerCase().includes('aakash');
   const selectedMemberObj = users.find(u => u.id === selectedMemberFilter);
   
-  // PRIVACY RULE:
-  // If user is Aakash -> Full Access to inspect and manage ANY member's tasks!
-  // If user is NOT Aakash -> Restricted: Tapping anyone else shows the private lock screen!
+  // Privacy Check
   const isAccessDenied = !isAakash && selectedMemberFilter && selectedMemberFilter !== 'all' && selectedMemberFilter !== currentUser?.id;
 
-  // Determine base task pool based on permissions:
+  // Determine base task pool
   let baseTasks = [];
   if (isAakash) {
     if (selectedMemberFilter && selectedMemberFilter !== 'all') {
@@ -54,12 +53,11 @@ export default function KanbanBoard({
       baseTasks = tasks;
     }
   } else {
-    // Normal members only see their own tasks
     baseTasks = tasks.filter(t => t.assigned_to === currentUser?.id);
   }
 
   // Filter tasks with search and priority
-  const filteredTasks = baseTasks.filter(task => {
+  let filteredTasks = baseTasks.filter(task => {
     const query = (searchQuery || '').toLowerCase();
     const matchesSearch = 
       !query ||
@@ -73,6 +71,44 @@ export default function KanbanBoard({
     return matchesSearch && matchesPriority;
   });
 
+  // Intelligent Urgency Sorting (Overdue and Urgent tasks float to the top)
+  const todayStr = new Date().toISOString().split('T')[0];
+  const priorityWeights = { urgent: 4, high: 3, medium: 2, low: 1 };
+
+  filteredTasks.sort((a, b) => {
+    if (a.status === 'completed' && b.status !== 'completed') return 1;
+    if (a.status !== 'completed' && b.status === 'completed') return -1;
+
+    // Check overdue
+    const aDue = a.due_date ? new Date(a.due_date).getTime() : Infinity;
+    const bDue = b.due_date ? new Date(b.due_date).getTime() : Infinity;
+    const now = new Date(todayStr).getTime();
+
+    const aIsOverdue = aDue < now;
+    const bIsOverdue = bDue < now;
+
+    if (aIsOverdue && !bIsOverdue) return -1;
+    if (!aIsOverdue && bIsOverdue) return 1;
+
+    // Sort by priority weight
+    const weightDiff = (priorityWeights[b.priority] || 2) - (priorityWeights[a.priority] || 2);
+    if (weightDiff !== 0) return weightDiff;
+
+    // Sort by due date
+    return aDue - bDue;
+  });
+
+  // Drag and Drop Drop Handler
+  const handleDrop = (e, colId) => {
+    e.preventDefault();
+    setDragOverCol(null);
+    const taskId = e.dataTransfer.getData('text/plain');
+    if (taskId) {
+      sounds.playClick();
+      onStatusChange(taskId, colId);
+    }
+  };
+
   // When normal members tap on someone else -> Show Privacy Lock Screen
   if (isAccessDenied && selectedMemberObj) {
     const isTargetOnline = selectedMemberObj.status === 'online';
@@ -80,7 +116,6 @@ export default function KanbanBoard({
 
     return (
       <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 text-center shadow-sm space-y-6 max-w-2xl mx-auto my-6 animate-fade-in">
-        
         <div className="relative inline-block">
           <div 
             className="w-20 h-20 rounded-3xl flex items-center justify-center font-extrabold text-white text-2xl shadow-lg mx-auto"
@@ -145,24 +180,25 @@ export default function KanbanBoard({
             <span>Return to My Tasks</span>
           </button>
         </div>
-
       </div>
     );
   }
 
-  // Header Title description
+  // Header Title
   let boardTitle = 'My Tasks';
   if (isAakash) {
     if (selectedMemberObj && selectedMemberObj.id !== currentUser?.id) {
       boardTitle = `${selectedMemberObj.name}'s Tasks (Executive Control)`;
     } else if (selectedMemberFilter === 'all') {
-      boardTitle = 'All Company Tasks (Full Executive Workspace)';
+      boardTitle = 'All Company Tasks (Full Workspace)';
     } else {
       boardTitle = 'My Personal Tasks (Aakash Das)';
     }
   } else {
     boardTitle = `My Tasks (${currentUser?.name})`;
   }
+
+  const overdueCount = filteredTasks.filter(t => t.status !== 'completed' && t.due_date && new Date(t.due_date).getTime() < new Date(todayStr).getTime()).length;
 
   return (
     <div className="space-y-4 w-full">
@@ -183,9 +219,14 @@ export default function KanbanBoard({
           <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
             {filteredTasks.length} tasks
           </span>
+          {overdueCount > 0 && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 font-extrabold border border-rose-200 flex items-center gap-1">
+              <Flame className="w-3 h-3 text-rose-600" /> {overdueCount} Overdue
+            </span>
+          )}
           {isAakash && (
             <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 font-extrabold border border-amber-200">
-              Full Admin Mode
+              Admin Mode
             </span>
           )}
         </div>
@@ -235,7 +276,7 @@ export default function KanbanBoard({
           </button>
         </div>
       ) : (
-        /* 4 Clean Kanban Columns */
+        /* 4 Drag-and-Drop Kanban Columns */
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-start w-full">
           {COLUMNS.map(col => {
             const colTasks = filteredTasks.filter(t => {
@@ -246,10 +287,17 @@ export default function KanbanBoard({
               return false;
             });
 
+            const isHovered = dragOverCol === col.id;
+
             return (
               <div 
                 key={col.id}
-                className={`rounded-2xl border p-3.5 min-h-[480px] flex flex-col ${col.bg}`}
+                onDragOver={(e) => { e.preventDefault(); setDragOverCol(col.id); }}
+                onDragLeave={() => setDragOverCol(null)}
+                onDrop={(e) => handleDrop(e, col.id)}
+                className={`rounded-2xl border p-3.5 min-h-[500px] flex flex-col transition-all duration-200 ${
+                  isHovered ? col.dropBg + ' ring-2 ring-blue-400 scale-[1.01]' : col.bg
+                }`}
               >
                 {/* Column Header */}
                 <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-slate-200/80">
@@ -270,17 +318,23 @@ export default function KanbanBoard({
                   </div>
                 </div>
 
-                {/* Tasks List */}
+                {/* Tasks List Drop Area */}
                 <div className="flex-1 space-y-3">
                   {colTasks.length === 0 ? (
-                    <div className="h-28 flex flex-col items-center justify-center text-center p-3 border border-dashed border-slate-300 rounded-xl bg-white/50">
-                      <p className="text-xs text-slate-400 font-medium">No tasks in this lane</p>
-                      <button
-                        onClick={() => openNewTaskModal(col.id === 'completed' ? 'todo' : col.id)}
-                        className="mt-1 text-xs text-blue-600 font-bold hover:underline flex items-center gap-1 cursor-pointer"
-                      >
-                        <Plus className="w-3.5 h-3.5" /> Add Task
-                      </button>
+                    <div className={`h-32 flex flex-col items-center justify-center text-center p-3 border border-dashed rounded-xl transition-colors ${
+                      isHovered ? 'border-blue-500 bg-blue-50/50' : 'border-slate-300 bg-white/50'
+                    }`}>
+                      <p className="text-xs text-slate-400 font-medium">
+                        {isHovered ? 'Drop task here' : 'No tasks in this lane'}
+                      </p>
+                      {!isHovered && (
+                        <button
+                          onClick={() => openNewTaskModal(col.id === 'completed' ? 'todo' : col.id)}
+                          className="mt-1 text-xs text-blue-600 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                        >
+                          <Plus className="w-3.5 h-3.5" /> Add Task
+                        </button>
+                      )}
                     </div>
                   ) : (
                     colTasks.map(task => (

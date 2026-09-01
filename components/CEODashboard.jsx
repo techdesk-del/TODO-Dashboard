@@ -8,7 +8,10 @@ import {
   Download,
   CheckCircle,
   FileSpreadsheet,
-  FileText
+  FileText,
+  Calendar,
+  Star,
+  Award
 } from 'lucide-react';
 import { sounds } from '../lib/audio';
 
@@ -22,6 +25,7 @@ export default function CEODashboard({
 }) {
   const [activeReportModal, setActiveReportModal] = useState(null);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
   const stats = overview?.tasks || {
     total: 0,
@@ -38,7 +42,35 @@ export default function CEODashboard({
     checked_out: 0
   };
 
-  const memberList = overview?.memberBreakdown || [];
+  // Filter EOD reports for the selected date
+  const filteredEodReports = (eodReports || []).filter(r => r.report_date === selectedDate);
+
+  // Compute average rating and hours for the selected date
+  const ratings = filteredEodReports.map(r => Number(r.day_rating) || 5);
+  const avgRating = ratings.length > 0 ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1) : '5.0';
+  const totalHoursWorked = filteredEodReports.reduce((acc, r) => acc + (Number(r.hours_worked) || 8), 0).toFixed(1);
+
+  const memberList = (users || []).map(u => {
+    const userTasks = (tasks || []).filter(t => t.assigned_to === u.id);
+    const userCompleted = userTasks.filter(t => t.status === 'completed').length;
+    const userPending = userTasks.filter(t => t.status !== 'completed').length;
+    const userEod = filteredEodReports.find(r => r.user_id === u.id);
+
+    return {
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      role: u.role || 'member',
+      status: u.status,
+      avatar: u.avatar,
+      color: u.color,
+      total_tasks: userTasks.length,
+      completed_tasks: userCompleted,
+      pending_tasks: userPending,
+      has_submitted_eod: !!userEod,
+      eod_report: userEod || null
+    };
+  });
 
   const getCleanRole = (role) => {
     if (!role) return 'Member';
@@ -47,11 +79,11 @@ export default function CEODashboard({
     return 'Member';
   };
 
-  // Export report to CSV (No Department, No CEO tag)
+  // Export report to CSV for the selected date
   const handleExportCSV = () => {
     sounds.playClick();
     const rows = [
-      ['Member Name', 'Role', 'Status', 'Total Tasks', 'Completed Tasks', 'Pending Tasks', 'EOD Submitted'],
+      ['Member Name', 'Role', 'Status', 'Total Tasks', 'Completed Tasks', 'Pending Tasks', `EOD Submitted (${selectedDate})`],
       ...memberList.map(m => [
         m.name,
         getCleanRole(m.role),
@@ -67,13 +99,13 @@ export default function CEODashboard({
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `UrbanGaon_Workforce_Report_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("download", `UrbanGaon_Workforce_Report_${selectedDate}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  // Export professional PDF report (No Department, No CEO tag)
+  // Export professional PDF report for the selected date
   const handleExportPDF = async () => {
     sounds.playClick();
     setIsExportingPDF(true);
@@ -99,7 +131,7 @@ export default function CEODashboard({
 
       doc.setFontSize(8.5);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}  |  UrbanGaon Enterprise Workspace`, 14, 20);
+      doc.text(`Report Date: ${selectedDate}  |  Generated: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}  |  UrbanGaon Workspace`, 14, 20);
 
       // KPI Summary Box
       doc.setFillColor(248, 250, 252);
@@ -109,11 +141,11 @@ export default function CEODashboard({
       doc.setTextColor(15, 23, 42);
       doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
-      doc.text(`Total Team Members: ${userStats.total}   (Online: ${userStats.online}  |  Clocked Out: ${userStats.checked_out})`, 20, 43);
-      doc.text(`Total Company Tasks: ${stats.total}   |   Completed: ${stats.completed} (${stats.completion_rate}%)   |   Pending: ${stats.total - stats.completed}`, 20, 50);
+      doc.text(`Team Members: ${userStats.total}   (EOD Checkouts: ${filteredEodReports.length}/${userStats.total})   |   Avg Rating: ${avgRating} / 5.0 ⭐`, 20, 43);
+      doc.text(`Total Tasks: ${stats.total}   |   Completed: ${stats.completed} (${stats.completion_rate}%)   |   Hours Logged: ${totalHoursWorked} hrs`, 20, 50);
 
-      // Table of Team Breakdown (No Department Column)
-      const tableHeaders = [['#', 'Member Name', 'Role', 'Live Status', 'Completed', 'Pending', 'EOD Status']];
+      // Table of Team Breakdown
+      const tableHeaders = [['#', 'Member Name', 'Role', 'Live Status', 'Completed', 'Pending', `EOD (${selectedDate})`]];
       const tableData = memberList.map((m, idx) => [
         idx + 1,
         m.name,
@@ -164,8 +196,7 @@ export default function CEODashboard({
         doc.text(`UrbanGaon Workspace Report • Page ${i} of ${pageCount}`, 14, 287);
       }
 
-      const todayStr = new Date().toISOString().split('T')[0];
-      doc.save(`UrbanGaon_Workforce_Report_${todayStr}.pdf`);
+      doc.save(`UrbanGaon_Workforce_Report_${selectedDate}.pdf`);
     } catch (err) {
       console.error('PDF export error:', err);
       alert('Could not generate PDF. Please try again.');
@@ -186,22 +217,34 @@ export default function CEODashboard({
             </span>
           </div>
           <h2 className="text-xl font-bold text-slate-900">
-            Workforce Overview & Daily EOD Reports
+            Workforce Overview & Daily EOD Analytics
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Real-time visibility into team attendance, active workload, and daily checkout submissions.
+            Real-time visibility into team attendance, active workload, and historical daily checkouts.
           </p>
         </div>
 
-        {/* Export Buttons: PDF + CSV */}
-        <div className="flex items-center gap-2 flex-wrap">
+        {/* Date Selector & Export Actions */}
+        <div className="flex items-center gap-2.5 flex-wrap">
+          
+          {/* Historical Date Picker */}
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700 shadow-xs">
+            <Calendar className="w-4 h-4 text-blue-600 shrink-0" />
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="bg-transparent border-none text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"
+            />
+          </div>
+
           <button
             onClick={handleExportPDF}
             disabled={isExportingPDF}
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold shadow-sm transition-all cursor-pointer active:scale-95 disabled:opacity-50"
           >
             <FileText className="w-4 h-4 text-rose-600" />
-            <span>{isExportingPDF ? 'Generating PDF...' : 'Export PDF Report'}</span>
+            <span>{isExportingPDF ? 'Generating PDF...' : 'Export PDF'}</span>
           </button>
 
           <button
@@ -241,29 +284,29 @@ export default function CEODashboard({
           </span>
         </div>
 
-        {/* Blocked Tasks */}
+        {/* Team Rating for Date */}
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <span className="text-xs font-semibold text-slate-500 block mb-1">Blocked Tasks</span>
+          <span className="text-xs font-semibold text-slate-500 block mb-1">Avg Day Rating</span>
           <div className="flex items-baseline gap-2">
-            <span className={`text-2xl font-bold ${stats.blocked > 0 ? 'text-rose-600' : 'text-slate-900'}`}>
-              {stats.blocked}
+            <span className="text-2xl font-bold text-amber-500 flex items-center gap-1">
+              {avgRating} <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
             </span>
           </div>
           <span className="text-[11px] text-slate-400 mt-1 block">
-            Requires attention
+            Based on {filteredEodReports.length} EOD checkouts
           </span>
         </div>
 
-        {/* EOD Checkouts */}
+        {/* EOD Checkouts for Date */}
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <span className="text-xs font-semibold text-slate-500 block mb-1">Today's EOD Checkouts</span>
+          <span className="text-xs font-semibold text-slate-500 block mb-1">EOD Checkouts ({selectedDate})</span>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-bold text-purple-600">
-              {memberList.filter(m => m.has_submitted_eod).length}/{userStats.total}
+              {filteredEodReports.length}/{userStats.total}
             </span>
           </div>
           <span className="text-[11px] text-slate-400 mt-1 block">
-            Team members clocked out
+            {totalHoursWorked} total hours logged
           </span>
         </div>
 
@@ -273,7 +316,7 @@ export default function CEODashboard({
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-4 border-b border-slate-100 flex items-center justify-between">
           <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-            Team Workload & Daily EOD Attendance
+            Team Workload & Attendance for {selectedDate}
           </h3>
           <span className="text-xs text-slate-500">
             Click any member to open their task board
@@ -289,7 +332,7 @@ export default function CEODashboard({
                 <th className="py-3 px-4">Role</th>
                 <th className="py-3 px-4 text-center">Completed</th>
                 <th className="py-3 px-4 text-center">Pending</th>
-                <th className="py-3 px-4">EOD Status</th>
+                <th className="py-3 px-4">EOD ({selectedDate})</th>
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
@@ -354,7 +397,7 @@ export default function CEODashboard({
                       </button>
                     ) : (
                       <span className="text-[11px] text-slate-400 italic">
-                        Not submitted yet
+                        Not submitted on {selectedDate}
                       </span>
                     )}
                   </td>
@@ -385,7 +428,7 @@ export default function CEODashboard({
                   {activeReportModal.user_name}'s EOD Report
                 </h4>
                 <p className="text-xs text-slate-500">
-                  Submitted on {activeReportModal.report_date} at {new Date(activeReportModal.submitted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  Submitted for date {activeReportModal.report_date} at {new Date(activeReportModal.submitted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </p>
               </div>
               <span className="text-xs px-2.5 py-1 bg-purple-100 text-purple-800 font-bold rounded-lg">
@@ -402,7 +445,7 @@ export default function CEODashboard({
               </div>
 
               <div>
-                <h5 className="font-bold text-slate-700 mb-1">Completed Today ({activeReportModal.completed_tasks?.length || 0}):</h5>
+                <h5 className="font-bold text-slate-700 mb-1">Completed Tasks ({activeReportModal.completed_tasks?.length || 0}):</h5>
                 <ul className="list-disc pl-4 space-y-1 text-slate-600">
                   {(activeReportModal.completed_tasks || []).map((t, idx) => (
                     <li key={idx}>{t}</li>
