@@ -409,8 +409,12 @@ export default function Home() {
     }
   };
 
-  const handleOpenNewTaskModal = (defaultStatus = 'todo') => {
-    setEditingTask(null);
+  const handleOpenNewTaskModal = (defaultStatus = 'todo', defaultAssignee = null) => {
+    if (defaultAssignee) {
+      setEditingTask({ assigned_to: defaultAssignee, status: defaultStatus });
+    } else {
+      setEditingTask(null);
+    }
     setDefaultTaskStatus(defaultStatus);
     setTaskModalOpen(true);
   };
