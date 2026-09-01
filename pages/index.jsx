@@ -163,24 +163,25 @@ export default function Home() {
     };
   }, [currentUser?.id]);
 
-  // Real-Time Multi-PC Auto Sync (Every 2.5s poll)
+  // Real-Time Multi-PC Auto Sync (10s background sync fallback)
   useEffect(() => {
     const syncInterval = setInterval(() => {
       refreshData();
-    }, 2500);
+    }, 10000);
     return () => clearInterval(syncInterval);
   }, []);
 
-  // Socket.IO
+  // Socket.IO Real-Time Engine (WebSocket preferred for 0ms latency)
   useEffect(() => {
     let socket;
     try {
       socket = io({
-        transports: ['polling', 'websocket'],
+        transports: ['websocket', 'polling'],
         reconnection: true,
-        reconnectionAttempts: 5,
-        reconnectionDelay: 2000,
-        timeout: 5000
+        reconnectionAttempts: Infinity,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        timeout: 10000
       });
       socketRef.current = socket;
 
@@ -345,6 +346,66 @@ export default function Home() {
     }
   };
 
+  const handleLogDailyReading = async (taskId, logData) => {
+    // 1. Optimistic Real-time UI update
+    setTasks(prev => prev.map(t => {
+      if (t.id === taskId) {
+        const currentLogs = Array.isArray(t.reading_logs) ? [...t.reading_logs] : [];
+        const logEntry = {
+          id: 'log_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 3),
+          date: logData.date,
+          pages_read: Number(logData.pages_read) || 0,
+          takeaways: logData.takeaways || '',
+          created_at: new Date().toISOString()
+        };
+        const existingIndex = currentLogs.findIndex(l => l.date === logEntry.date);
+        if (existingIndex >= 0) {
+          currentLogs[existingIndex] = logEntry;
+        } else {
+          currentLogs.unshift(logEntry);
+        }
+
+        const totalRead = currentLogs.reduce((acc, l) => acc + (Number(l.pages_read) || 0), 0);
+        return {
+          ...t,
+          reading_logs: currentLogs,
+          book_stats: {
+            ...(t.book_stats || {}),
+            total_pages_read: totalRead
+          }
+        };
+      }
+      return t;
+    }));
+
+    showToast('📖 Reading Logged', `Recorded +${logData.pages_read} pages for ${logData.date}.`, 'success');
+
+    // 2. Real-time Multi-Device Broadcast via Socket.IO
+    if (socketRef.current && socketConnected) {
+      socketRef.current.emit('task:log_reading', {
+        taskId,
+        logData,
+        user: currentUser
+      });
+    }
+
+    // 3. Persistent REST & MongoDB Atlas sync
+    try {
+      await fetch(`/api/tasks/${taskId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'log_daily_reading',
+          reading_log: logData,
+          user: currentUser
+        })
+      });
+      refreshData();
+    } catch (e) {
+      console.error('Failed to sync daily reading log:', e);
+    }
+  };
+
   const handleOpenNewTaskModal = (defaultStatus = 'todo') => {
     setEditingTask(null);
     setDefaultTaskStatus(defaultStatus);
@@ -500,6 +561,7 @@ export default function Home() {
                   onStatusChange={handleStatusChange}
                   onEditTask={handleOpenEditTaskModal}
                   onDeleteTask={handleDeleteTask}
+                  onLogDailyReading={handleLogDailyReading}
                   openNewTaskModal={handleOpenNewTaskModal}
                   searchQuery={searchQuery}
                   selectedMemberFilter={selectedMemberFilter}

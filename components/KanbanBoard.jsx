@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { 
   Plus, 
   Search, 
@@ -29,7 +29,8 @@ export default function KanbanBoard({
   currentUser, 
   onStatusChange, 
   onEditTask, 
-  onDeleteTask, 
+  onDeleteTask,
+  onLogDailyReading,
   openNewTaskModal, 
   searchQuery, 
   selectedMemberFilter, 
@@ -37,6 +38,7 @@ export default function KanbanBoard({
 }) {
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [dragOverCol, setDragOverCol] = useState(null);
+  const todayStr = new Date().toISOString().split('T')[0];
 
   const isAakash = currentUser?.id === 'usr_aakash' || currentUser?.name?.toLowerCase().includes('aakash');
   const selectedMemberObj = users.find(u => u.id === selectedMemberFilter);
@@ -44,59 +46,54 @@ export default function KanbanBoard({
   // Privacy Check
   const isAccessDenied = !isAakash && selectedMemberFilter && selectedMemberFilter !== 'all' && selectedMemberFilter !== currentUser?.id;
 
-  // Determine base task pool
-  let baseTasks = [];
-  if (isAakash) {
-    if (selectedMemberFilter && selectedMemberFilter !== 'all') {
-      baseTasks = tasks.filter(t => t.assigned_to === selectedMemberFilter);
+  // Memoized Base & Filtered Task Pool
+  const filteredTasks = useMemo(() => {
+    let base = [];
+    if (isAakash) {
+      if (selectedMemberFilter && selectedMemberFilter !== 'all') {
+        base = tasks.filter(t => t.assigned_to === selectedMemberFilter);
+      } else {
+        base = tasks;
+      }
     } else {
-      baseTasks = tasks;
+      base = tasks.filter(t => t.assigned_to === currentUser?.id);
     }
-  } else {
-    baseTasks = tasks.filter(t => t.assigned_to === currentUser?.id);
-  }
 
-  // Filter tasks with search and priority
-  let filteredTasks = baseTasks.filter(task => {
     const query = (searchQuery || '').toLowerCase();
-    const matchesSearch = 
-      !query ||
-      task.title.toLowerCase().includes(query) ||
-      (task.description && task.description.toLowerCase().includes(query)) ||
-      (task.assignee_name && task.assignee_name.toLowerCase().includes(query)) ||
-      (task.tags && task.tags.some(t => t.toLowerCase().includes(query)));
+    const result = base.filter(task => {
+      const matchesSearch = 
+        !query ||
+        task.title?.toLowerCase().includes(query) ||
+        (task.description && task.description.toLowerCase().includes(query)) ||
+        (task.assignee_name && task.assignee_name.toLowerCase().includes(query)) ||
+        (task.tags && task.tags.some(t => t.toLowerCase().includes(query)));
 
-    const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter;
+      const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter;
+      return matchesSearch && matchesPriority;
+    });
 
-    return matchesSearch && matchesPriority;
-  });
-
-  // Intelligent Urgency Sorting (Overdue and Urgent tasks float to the top)
-  const todayStr = new Date().toISOString().split('T')[0];
-  const priorityWeights = { urgent: 4, high: 3, medium: 2, low: 1 };
-
-  filteredTasks.sort((a, b) => {
-    if (a.status === 'completed' && b.status !== 'completed') return 1;
-    if (a.status !== 'completed' && b.status === 'completed') return -1;
-
-    // Check overdue
-    const aDue = a.due_date ? new Date(a.due_date).getTime() : Infinity;
-    const bDue = b.due_date ? new Date(b.due_date).getTime() : Infinity;
+    const priorityWeights = { urgent: 4, high: 3, medium: 2, low: 1 };
     const now = new Date(todayStr).getTime();
 
-    const aIsOverdue = aDue < now;
-    const bIsOverdue = bDue < now;
+    return result.sort((a, b) => {
+      if (a.status === 'completed' && b.status !== 'completed') return 1;
+      if (a.status !== 'completed' && b.status === 'completed') return -1;
 
-    if (aIsOverdue && !bIsOverdue) return -1;
-    if (!aIsOverdue && bIsOverdue) return 1;
+      const aDue = a.due_date ? new Date(a.due_date).getTime() : Infinity;
+      const bDue = b.due_date ? new Date(b.due_date).getTime() : Infinity;
 
-    // Sort by priority weight
-    const weightDiff = (priorityWeights[b.priority] || 2) - (priorityWeights[a.priority] || 2);
-    if (weightDiff !== 0) return weightDiff;
+      const aIsOverdue = aDue < now;
+      const bIsOverdue = bDue < now;
 
-    // Sort by due date
-    return aDue - bDue;
-  });
+      if (aIsOverdue && !bIsOverdue) return -1;
+      if (!aIsOverdue && bIsOverdue) return 1;
+
+      const weightDiff = (priorityWeights[b.priority] || 2) - (priorityWeights[a.priority] || 2);
+      if (weightDiff !== 0) return weightDiff;
+
+      return aDue - bDue;
+    });
+  }, [tasks, selectedMemberFilter, isAakash, currentUser?.id, searchQuery, priorityFilter]);
 
   // Drag and Drop Drop Handler
   const handleDrop = (e, colId) => {
@@ -344,6 +341,7 @@ export default function KanbanBoard({
                         onStatusChange={onStatusChange}
                         onEditTask={onEditTask}
                         onDeleteTask={onDeleteTask}
+                        onLogDailyReading={onLogDailyReading}
                       />
                     ))
                   )}

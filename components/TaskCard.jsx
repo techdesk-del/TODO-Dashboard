@@ -2,27 +2,32 @@ import React, { useState } from 'react';
 import { 
   CheckCircle2, 
   AlertCircle, 
-  Trash2,
-  Edit2,
-  CheckSquare,
-  Clock,
-  GripVertical,
-  Flame,
-  Calendar,
-  ChevronDown,
+  Trash2, 
+  Edit2, 
+  CheckSquare, 
+  Clock, 
+  GripVertical, 
+  Flame, 
+  Calendar, 
+  ChevronDown, 
   ChevronUp,
-  BookOpen
+  BookOpen,
+  Sparkles,
+  Plus
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { sounds } from '../lib/audio';
+import DailyReadingModal from './DailyReadingModal';
 
 export default function TaskCard({ 
   task, 
   onStatusChange, 
   onEditTask, 
-  onDeleteTask 
+  onDeleteTask,
+  onLogDailyReading
 }) {
   const [showSubtasks, setShowSubtasks] = useState(false);
+  const [isDailyLogOpen, setIsDailyLogOpen] = useState(false);
   const isCompleted = task.status === 'completed';
   const isBlocked = task.status === 'blocked';
 
@@ -301,18 +306,57 @@ export default function TaskCard({
                 </div>
               </div>
 
-              {/* Quick Update Button */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEditTask(task);
-                }}
-                className="w-full py-1.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white text-[11px] font-bold shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <Edit2 className="w-3 h-3" />
-                <span>Update Reading Stats</span>
-              </button>
+              {/* Latest Daily Check-in Note (if exists) */}
+              {Array.isArray(task.reading_logs) && task.reading_logs.length > 0 && (() => {
+                const latest = task.reading_logs[0];
+                return (
+                  <div className="p-2 rounded-xl bg-indigo-50/70 border border-indigo-100/90 text-[10px] text-indigo-900 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 truncate">
+                      <span className="font-extrabold flex items-center gap-1 shrink-0">
+                        <Calendar className="w-3 h-3 text-indigo-600" />
+                        {latest.date}:
+                      </span>
+                      <span className="font-black text-indigo-700 bg-white px-1.5 py-0.5 rounded shadow-2xs">
+                        +{latest.pages_read} pgs
+                      </span>
+                      {latest.takeaways && (
+                        <span className="text-slate-600 truncate italic">
+                          "{latest.takeaways}"
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Action Buttons Row */}
+              <div className="grid grid-cols-2 gap-2 pt-0.5">
+                {/* 1. Log Daily Pages Button */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsDailyLogOpen(true);
+                  }}
+                  className="py-1.5 px-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white text-[10.5px] font-bold shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Sparkles className="w-3 h-3" />
+                  <span>Log Daily Pages</span>
+                </button>
+
+                {/* 2. Edit Book Details */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEditTask(task);
+                  }}
+                  className="py-1.5 px-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 active:scale-[0.98] text-[10.5px] font-bold shadow-2xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Edit2 className="w-3 h-3 text-slate-500" />
+                  <span>Edit Book</span>
+                </button>
+              </div>
 
             </div>
           );
@@ -400,6 +444,16 @@ export default function TaskCard({
           <option value="completed">Completed</option>
         </select>
       </div>
+
+      {/* Daily Reading Log Modal */}
+      {task.is_book_reading && (
+        <DailyReadingModal
+          isOpen={isDailyLogOpen}
+          onClose={() => setIsDailyLogOpen(false)}
+          task={task}
+          onLogSaved={onLogDailyReading}
+        />
+      )}
 
     </div>
   );

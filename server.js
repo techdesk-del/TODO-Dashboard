@@ -49,31 +49,31 @@ app.prepare().then(async () => {
       }
 
       // Direct REST endpoints
-      if (pathname.startsWith('/api/users')) {
+      if (pathname === '/api/users' && req.method === 'GET') {
         const users = await dbHelpers.getUsers();
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify(users));
         return;
       }
-      if (pathname.startsWith('/api/tasks')) {
+      if (pathname === '/api/tasks' && req.method === 'GET') {
         const tasks = await dbHelpers.getTasks(query);
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify(tasks));
         return;
       }
-      if (pathname.startsWith('/api/overview')) {
+      if (pathname === '/api/overview' && req.method === 'GET') {
         const overview = await dbHelpers.getCompanyOverview();
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify(overview));
         return;
       }
-      if (pathname.startsWith('/api/eod-reports')) {
+      if (pathname === '/api/eod-reports' && req.method === 'GET') {
         const reports = await dbHelpers.getEodReports(query);
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify(reports));
         return;
       }
-      if (pathname.startsWith('/api/activity')) {
+      if (pathname === '/api/activity' && req.method === 'GET') {
         const logs = await dbHelpers.getActivityLogs();
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify(logs));
@@ -98,55 +98,72 @@ app.prepare().then(async () => {
 
   // Track connected sockets: socket.id -> userId
   const socketUserMap = new Map();
+  let presenceDebounceTimer = null;
 
   async function broadcastPresence() {
-    const activeUserIds = Array.from(new Set(Array.from(socketUserMap.values()).filter(Boolean)));
-    const updatedUsers = await dbHelpers.syncOnlinePresence(activeUserIds);
-    const overview = await dbHelpers.getCompanyOverview();
-    const activityLogs = await dbHelpers.getActivityLogs(25);
+    try {
+      const activeUserIds = Array.from(new Set(Array.from(socketUserMap.values()).filter(Boolean)));
+      const updatedUsers = await dbHelpers.syncOnlinePresence(activeUserIds);
+      const overview = await dbHelpers.getCompanyOverview();
+      const activityLogs = await dbHelpers.getActivityLogs(25);
 
-    io.emit('presence:updated', {
-      users: updatedUsers,
-      activeUserIds,
-      overview,
-      activityLogs
-    });
+      io.emit('presence:updated', {
+        users: updatedUsers,
+        activeUserIds,
+        overview,
+        activityLogs
+      });
+    } catch (e) {
+      console.error('Error broadcasting presence:', e);
+    }
+  }
+
+  function queueBroadcastPresence() {
+    if (presenceDebounceTimer) return;
+    presenceDebounceTimer = setTimeout(async () => {
+      presenceDebounceTimer = null;
+      await broadcastPresence();
+    }, 300);
   }
 
   io.on('connection', async (socket) => {
     // Send initial snapshot on connect
-    const users = await dbHelpers.getUsers();
-    const tasks = await dbHelpers.getTasks();
-    const overview = await dbHelpers.getCompanyOverview();
-    const activityLogs = await dbHelpers.getActivityLogs(25);
-    const eodReports = await dbHelpers.getEodReports();
+    try {
+      const users = await dbHelpers.getUsers();
+      const tasks = await dbHelpers.getTasks();
+      const overview = await dbHelpers.getCompanyOverview();
+      const activityLogs = await dbHelpers.getActivityLogs(25);
+      const eodReports = await dbHelpers.getEodReports();
 
-    socket.emit('sync:initial', {
-      users,
-      tasks,
-      overview,
-      activityLogs,
-      eodReports
-    });
+      socket.emit('sync:initial', {
+        users,
+        tasks,
+        overview,
+        activityLogs,
+        eodReports
+      });
+    } catch (e) {
+      console.error('Socket initial sync error:', e);
+    }
 
     // Handle user authentication/presence announce
     socket.on('user:join', async (userData) => {
       if (!userData || !userData.id) return;
       socketUserMap.set(socket.id, userData.id);
-      await broadcastPresence();
+      queueBroadcastPresence();
     });
 
     // Handle user logout
     socket.on('user:logout', async (userId) => {
       socketUserMap.delete(socket.id);
-      await broadcastPresence();
+      queueBroadcastPresence();
     });
 
     // Handle heartbeat
     socket.on('user:ping', async (userId) => {
       if (userId) {
         socketUserMap.set(socket.id, userId);
-        await broadcastPresence();
+        queueBroadcastPresence();
       }
     });
 
@@ -226,6 +243,33 @@ app.prepare().then(async () => {
         }
       } catch (err) {
         console.error('Error updating task:', err);
+        if (typeof callback === 'function') {
+          callback({ success: false, error: err.message });
+        }
+      }
+    });
+
+    // Log Daily Reading Check-in
+    socket.on('task:log_reading', async ({ taskId, logData, user }, callback) => {
+      try {
+        const updatedTask = await dbHelpers.logDailyReading(taskId, logData, user);
+        const tasks = await dbHelpers.getTasks();
+        const overview = await dbHelpers.getCompanyOverview();
+        const activityLogs = await dbHelpers.getActivityLogs(25);
+
+        const payload = {
+          task: updatedTask,
+          tasks,
+          overview,
+          activityLogs
+        };
+
+        io.emit('task:updated', payload);
+
+        if (typeof callback === 'function') {
+          callback({ success: true, task: updatedTask });
+        }
+      } catch (err) {
         if (typeof callback === 'function') {
           callback({ success: false, error: err.message });
         }

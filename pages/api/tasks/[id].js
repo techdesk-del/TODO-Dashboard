@@ -10,8 +10,16 @@ export default async function handler(req, res) {
       return res.status(200).json(task);
     }
 
-    if (req.method === 'PUT' || req.method === 'PATCH') {
-      const { updates, user } = req.body || {};
+    if (req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH') {
+      const { action, reading_log, updates, user } = req.body || {};
+
+      if (action === 'log_daily_reading' || reading_log) {
+        const logData = reading_log || req.body;
+        const updatedTask = await dbHelpers.logDailyReading(id, logData, user);
+        if (!updatedTask) return res.status(404).json({ error: 'Task not found' });
+        return res.status(200).json({ success: true, task: updatedTask });
+      }
+
       const updatedTask = await dbHelpers.updateTask(id, updates || {});
       if (!updatedTask) return res.status(404).json({ error: 'Task not found' });
 

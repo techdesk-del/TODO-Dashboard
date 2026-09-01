@@ -20,7 +20,10 @@ import {
   Trash2,
   CheckSquare,
   Layers,
-  ArrowRight
+  ArrowRight,
+  BookOpen,
+  Sparkles,
+  History
 } from 'lucide-react';
 import { sounds } from '../lib/audio';
 
@@ -39,6 +42,7 @@ export default function CEODashboard({
   const [activeReportModal, setActiveReportModal] = useState(null);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedReadingHistoryTask, setSelectedReadingHistoryTask] = useState(null);
   
   // Executive Task Filter States
   const [taskStatusFilter, setTaskStatusFilter] = useState('all'); // 'all' | 'pending' | 'todo' | 'in_progress' | 'blocked' | 'completed' | 'overdue'
@@ -355,6 +359,186 @@ export default function CEODashboard({
         </div>
 
       </div>
+
+      {/* SECTION: TEAM DAILY BOOK READING TRACKER */}
+      {(() => {
+        const bookTasks = allCompanyTasks.filter(t => t.is_book_reading);
+        const todayStrLocal = new Date().toISOString().split('T')[0];
+        
+        let totalPagesReadToday = 0;
+        let membersReadTodayCount = 0;
+        let totalCumulativePages = 0;
+
+        const memberReadingData = users.map(user => {
+          const task = bookTasks.find(t => t.assigned_to === user.id);
+          const logs = Array.isArray(task?.reading_logs) ? task.reading_logs : [];
+          const todayLog = logs.find(l => l.date === todayStrLocal);
+          const latestLog = logs[0] || null;
+
+          const totalPagesRead = Number(task?.book_stats?.total_pages_read) || 0;
+          const totalPages = Number(task?.book_stats?.total_pages) || 0;
+          
+          if (todayLog && todayLog.pages_read > 0) {
+            totalPagesReadToday += Number(todayLog.pages_read);
+            membersReadTodayCount++;
+          }
+          totalCumulativePages += totalPagesRead;
+
+          return {
+            user,
+            task,
+            logs,
+            todayLog,
+            latestLog,
+            totalPagesRead,
+            totalPages,
+            bookTitle: task?.title || 'No Book Selected',
+            author: task?.description || '',
+            percent: totalPages > 0 ? Math.min(100, Math.round((totalPagesRead / totalPages) * 100)) : 0
+          };
+        });
+
+        return (
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-600 flex items-center justify-center font-bold">
+                  <BookOpen className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    Team Daily Book Reading Tracker
+                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-indigo-600 text-white">
+                      Daily Activity
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Track daily pages read, key learnings & book completion across all 9 team members.
+                  </p>
+                </div>
+              </div>
+
+              {/* Summary Stats Badges */}
+              <div className="flex items-center gap-2 flex-wrap text-xs font-bold">
+                <div className="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-1.5">
+                  <span>⚡ Read Today:</span>
+                  <span className="font-black text-emerald-950">{membersReadTodayCount}/{users.length} Members</span>
+                </div>
+                <div className="px-3 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-800 flex items-center gap-1.5">
+                  <span>📖 Today's Pages:</span>
+                  <span className="font-black text-indigo-950">+{totalPagesReadToday} pgs</span>
+                </div>
+                <div className="px-3 py-1.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-800 flex items-center gap-1.5">
+                  <span>📚 Total Read:</span>
+                  <span className="font-black text-purple-950">{totalCumulativePages} pgs</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Reading Grid Table */}
+            <div className="overflow-x-auto border border-slate-200 rounded-xl">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold">
+                    <th className="py-3 px-4">Team Member</th>
+                    <th className="py-3 px-4">Current Book & Author</th>
+                    <th className="py-3 px-4">Today's Reading Status</th>
+                    <th className="py-3 px-4">Overall Progress</th>
+                    <th className="py-3 px-4">Latest Insights / Key Learnings</th>
+                    <th className="py-3 px-4 text-right">History</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {memberReadingData.map(item => (
+                    <tr key={item.user.id} className="hover:bg-indigo-50/30 transition-colors">
+                      {/* Team Member */}
+                      <td className="py-3 px-4 font-bold text-slate-900 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-extrabold text-white shadow-2xs shrink-0"
+                            style={{ backgroundColor: item.user.color || '#2563eb' }}
+                          >
+                            {item.user.avatar || '??'}
+                          </div>
+                          <div>
+                            <div className="leading-snug">{item.user.name}</div>
+                            <div className="text-[10px] text-slate-400 font-normal">{item.user.role}</div>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Current Book & Author */}
+                      <td className="py-3 px-4 max-w-[200px]">
+                        <div className="font-bold text-indigo-950 truncate" title={item.bookTitle}>
+                          {item.bookTitle}
+                        </div>
+                        {item.author && (
+                          <div className="text-[10.5px] text-slate-500 truncate" title={item.author}>
+                            ✍️ {item.author}
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Today's Reading Status */}
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        {item.todayLog ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-900 font-black text-xs border border-emerald-300 shadow-2xs">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+                            +{item.todayLog.pages_read} pages read
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 font-bold text-xs border border-amber-200">
+                            ⏳ No log yet today
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Overall Progress */}
+                      <td className="py-3 px-4 min-w-[140px]">
+                        <div className="flex items-center justify-between text-[11px] font-bold text-slate-700 mb-1">
+                          <span>{item.totalPagesRead} / {item.totalPages || '—'} pgs</span>
+                          <span className="text-indigo-600">{item.percent}%</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200/60">
+                          <div
+                            className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-full"
+                            style={{ width: `${item.percent}%` }}
+                          />
+                        </div>
+                      </td>
+
+                      {/* Latest Insights / Learnings */}
+                      <td className="py-3 px-4 max-w-xs">
+                        {item.latestLog?.takeaways ? (
+                          <p className="text-[11px] text-slate-700 bg-slate-50 p-1.5 rounded-lg border border-slate-200/70 italic line-clamp-2">
+                            "{item.latestLog.takeaways}"
+                          </p>
+                        ) : (
+                          <span className="text-[11px] text-slate-400 italic">—</span>
+                        )}
+                      </td>
+
+                      {/* History Action */}
+                      <td className="py-3 px-4 text-right whitespace-nowrap">
+                        <button
+                          onClick={() => {
+                            sounds.playClick();
+                            setSelectedReadingHistoryTask(item);
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs border border-indigo-200 transition-colors inline-flex items-center gap-1 cursor-pointer"
+                        >
+                          <History className="w-3 h-3" />
+                          <span>Logs ({item.logs.length})</span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* SECTION 1: LIVE TASK QUEUE & EXECUTIVE MODIFICATION MATRIX */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
@@ -784,6 +968,86 @@ export default function CEODashboard({
                 Close Report
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Member Reading History Modal */}
+      {selectedReadingHistoryTask && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+          <div className="relative w-full max-w-lg my-6 bg-white border border-slate-200 rounded-3xl shadow-2xl p-6 space-y-4 animate-slide-up">
+            
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-3">
+                <div 
+                  className="w-10 h-10 rounded-2xl flex items-center justify-center text-sm font-extrabold text-white shadow-2xs shrink-0"
+                  style={{ backgroundColor: selectedReadingHistoryTask.user?.color || '#4f46e5' }}
+                >
+                  {selectedReadingHistoryTask.user?.avatar || '??'}
+                </div>
+                <div>
+                  <h4 className="text-sm font-black text-slate-900">
+                    {selectedReadingHistoryTask.user?.name} — Reading Timeline
+                  </h4>
+                  <p className="text-xs text-indigo-700 font-semibold truncate max-w-xs">
+                    📖 {selectedReadingHistoryTask.bookTitle} {selectedReadingHistoryTask.author ? `(by ${selectedReadingHistoryTask.author})` : ''}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setSelectedReadingHistoryTask(null)}
+                className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs"
+              >
+                Close
+              </button>
+            </div>
+
+            {/* Total Stats summary banner */}
+            <div className="p-3 bg-indigo-50/70 border border-indigo-100 rounded-2xl flex items-center justify-between text-xs">
+              <div>
+                <span className="text-[10.5px] font-bold text-slate-500 block">Total Read</span>
+                <span className="text-sm font-black text-indigo-950">
+                  {selectedReadingHistoryTask.totalPagesRead} {selectedReadingHistoryTask.totalPages ? `/ ${selectedReadingHistoryTask.totalPages}` : ''} pages
+                </span>
+              </div>
+              <span className="text-xs font-black px-2.5 py-1 bg-indigo-600 text-white rounded-lg shadow-2xs">
+                {selectedReadingHistoryTask.percent}% Completed
+              </span>
+            </div>
+
+            {/* Daily Logs Timeline list */}
+            <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
+              {(!selectedReadingHistoryTask.logs || selectedReadingHistoryTask.logs.length === 0) ? (
+                <div className="py-8 text-center text-slate-400 text-xs">
+                  No daily reading check-ins recorded yet for this member.
+                </div>
+              ) : (
+                selectedReadingHistoryTask.logs.map((log, idx) => (
+                  <div 
+                    key={log.id || idx}
+                    className="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-1.5"
+                  >
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-extrabold text-slate-800 flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-indigo-600" />
+                        {log.date}
+                      </span>
+                      <span className="font-black text-xs px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200">
+                        +{log.pages_read} pages
+                      </span>
+                    </div>
+                    {log.takeaways && (
+                      <p className="text-[11.5px] text-slate-700 bg-white p-2 rounded-xl border border-slate-100 leading-relaxed italic">
+                        "{log.takeaways}"
+                      </p>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+
           </div>
         </div>
       )}
