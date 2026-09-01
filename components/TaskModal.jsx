@@ -30,6 +30,7 @@ export default function TaskModal({
   
   // Book Reading Stats State
   const [isBookReading, setIsBookReading] = useState(false);
+  const [booksList, setBooksList] = useState([]);
   const [totalBooks, setTotalBooks] = useState(0);
   const [completedBooks, setCompletedBooks] = useState(0);
   const [inProgressBooks, setInProgressBooks] = useState(0);
@@ -46,8 +47,28 @@ export default function TaskModal({
       setPriority(initialTask.priority || 'medium');
       setDueDate(initialTask.due_date || new Date().toISOString().split('T')[0]);
       
-      setIsBookReading(Boolean(initialTask.is_book_reading));
-      setTotalBooks(initialTask.book_stats?.total_books ?? 0);
+      const isBook = Boolean(initialTask.is_book_reading);
+      setIsBookReading(isBook);
+
+      let initialBooks = Array.isArray(initialTask.books_list) && initialTask.books_list.length > 0 
+        ? initialTask.books_list 
+        : [];
+
+      if (isBook && initialBooks.length === 0) {
+        initialBooks = [{
+          id: 'bk_' + Date.now().toString(36) + '1',
+          title: initialTask.title !== '📖 Book Reading' ? initialTask.title : '',
+          author: initialTask.description || '',
+          status: 'in_progress',
+          total_pages: Number(initialTask.book_stats?.total_pages) || 0,
+          pages_read: Number(initialTask.book_stats?.total_pages_read) || 0,
+          presented: Number(initialTask.book_stats?.books_presented) > 0,
+          notes: ''
+        }];
+      }
+
+      setBooksList(initialBooks);
+      setTotalBooks(initialTask.book_stats?.total_books ?? (initialBooks.length || 0));
       setCompletedBooks(initialTask.book_stats?.completed ?? 0);
       setInProgressBooks(initialTask.book_stats?.in_progress ?? 0);
       setBooksPresented(initialTask.book_stats?.books_presented ?? 0);
@@ -62,6 +83,7 @@ export default function TaskModal({
       setDueDate(new Date().toISOString().split('T')[0]);
       
       setIsBookReading(false);
+      setBooksList([]);
       setTotalBooks(0);
       setCompletedBooks(0);
       setInProgressBooks(0);
@@ -71,15 +93,78 @@ export default function TaskModal({
     }
   }, [initialTask, defaultStatus, isOpen]);
 
+  // Handle book item changes
+  const handleAddBook = () => {
+    sounds.playClick();
+    const newBook = {
+      id: 'bk_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 3),
+      title: '',
+      author: '',
+      status: 'in_progress',
+      total_pages: 0,
+      pages_read: 0,
+      presented: false,
+      notes: ''
+    };
+    const updated = [...booksList, newBook];
+    setBooksList(updated);
+    recalculateBookStats(updated);
+  };
+
+  const handleUpdateBook = (index, field, value) => {
+    const updated = [...booksList];
+    updated[index] = { ...updated[index], [field]: value };
+    setBooksList(updated);
+    recalculateBookStats(updated);
+
+    // Auto sync primary title & author with first in-progress book
+    const active = updated.find(b => b.status === 'in_progress') || updated[0];
+    if (active && active.title) {
+      setTitle(active.title);
+      setDescription(active.author || '');
+    }
+  };
+
+  const handleRemoveBook = (index) => {
+    sounds.playClick();
+    const updated = booksList.filter((_, i) => i !== index);
+    setBooksList(updated);
+    recalculateBookStats(updated);
+  };
+
+  const recalculateBookStats = (list) => {
+    const total = list.length;
+    const completed = list.filter(b => b.status === 'completed').length;
+    const inProg = list.filter(b => b.status === 'in_progress' || b.status !== 'completed').length;
+    const pres = list.filter(b => b.presented || b.status === 'presented').length;
+    const pages = list.reduce((sum, b) => sum + (Number(b.total_pages) || 0), 0);
+    const pagesR = list.reduce((sum, b) => sum + (Number(b.pages_read) || 0), 0);
+
+    setTotalBooks(total);
+    setCompletedBooks(completed);
+    setInProgressBooks(inProg);
+    setBooksPresented(pres);
+    setTotalPages(pages);
+    setTotalPagesRead(pagesR);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (!title.trim() && !isBookReading) return;
 
     sounds.playClick();
+    const activeBook = booksList.find(b => b.status === 'reading') || booksList[0];
+    const finalTitle = isBookReading 
+      ? (activeBook?.title || title.trim() || '📖 Book Reading')
+      : title.trim();
+    const finalDesc = isBookReading 
+      ? (activeBook?.author || description.trim() || '')
+      : description.trim();
+
     onSave({
       id: initialTask?.id,
-      title: title.trim(),
-      description: description.trim(),
+      title: finalTitle,
+      description: finalDesc,
       assigned_to: assignedTo,
       created_by: initialTask?.created_by || currentUser?.id || 'usr_ceo',
       status,
@@ -89,6 +174,7 @@ export default function TaskModal({
       subtasks: initialTask?.subtasks || [],
       estimated_hours: initialTask?.estimated_hours || 2,
       is_book_reading: isBookReading,
+      books_list: booksList,
       book_stats: {
         total_books: Number(totalBooks) || 0,
         completed: Number(completedBooks) || 0,
@@ -128,44 +214,238 @@ export default function TaskModal({
         {/* Task Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           
-          {/* Title */}
-          <div>
-            <label className="text-xs font-bold text-slate-700 block mb-1">
-              {isBookReading ? 'Book Title' : 'Task Title'} <span className="text-rose-500">*</span>
-            </label>
-            <input
-              type="text"
-              required
-              placeholder={isBookReading ? "Enter book title (e.g. Atomic Habits, The Lean Startup...)" : "e.g. Deploy Redis cluster, Finalize landing page UX..."}
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3.5 py-2 text-xs rounded-xl clean-input font-medium"
-            />
-          </div>
+          {/* If NOT book reading, render normal Task Title & Description */}
+          {!isBookReading ? (
+            <>
+              {/* Title */}
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Task Title <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Deploy Redis cluster, Finalize landing page UX..."
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full px-3.5 py-2 text-xs rounded-xl clean-input font-medium"
+                />
+              </div>
 
-          {/* Description / Book Author */}
-          <div>
-            <label className="text-xs font-bold text-slate-700 block mb-1">
-              {isBookReading ? 'Book Author / Creator' : 'Description / Notes (Optional)'}
-            </label>
-            {isBookReading ? (
-              <input
-                type="text"
-                placeholder="e.g. James Clear, Morgan Housel, Peter Thiel..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full px-3.5 py-2 text-xs rounded-xl clean-input font-medium"
-              />
-            ) : (
-              <textarea
-                rows={2}
-                placeholder="Provide specifications or instructions..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full p-2.5 text-xs rounded-xl clean-input resize-none"
-              />
-            )}
-          </div>
+              {/* Description */}
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Description / Notes (Optional)
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Provide specifications or instructions..."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full p-2.5 text-xs rounded-xl clean-input resize-none"
+                />
+              </div>
+            </>
+          ) : (
+            /* Multi-Book Library Section (Book 1, Book 2, Book 3...) */
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-extrabold text-indigo-950 flex items-center gap-1.5">
+                    <BookOpen className="w-4 h-4 text-indigo-600" />
+                    My Books Library ({booksList.length} {booksList.length === 1 ? 'Book' : 'Books'})
+                  </h4>
+                  <p className="text-[11px] text-slate-500">
+                    Add Book 1, Book 2, etc. Each book has its own author, status, and pages.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleAddBook}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs border border-indigo-200 transition-all cursor-pointer shadow-2xs active:scale-95"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>+ Add Book</span>
+                </button>
+              </div>
+
+              {/* List of Individual Book Cards */}
+              <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
+                {booksList.map((book, idx) => {
+                  const bookPages = Number(book.total_pages) || 0;
+                  const bookRead = Number(book.pages_read) || 0;
+                  const bookPct = bookPages > 0 ? Math.min(100, Math.round((bookRead / bookPages) * 100)) : 0;
+
+                  return (
+                    <div 
+                      key={book.id || idx}
+                      className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/90 space-y-2.5 shadow-2xs relative group"
+                    >
+                      {/* Book Card Header */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-extrabold px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-800 flex items-center gap-1">
+                          📖 Book #{idx + 1}
+                        </span>
+
+                        <div className="flex items-center gap-2">
+                          <label className="flex items-center gap-1.5 text-[11px] font-semibold text-purple-700 cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              checked={Boolean(book.presented)}
+                              onChange={(e) => handleUpdateBook(idx, 'presented', e.target.checked)}
+                              className="rounded text-purple-600 focus:ring-purple-500 w-3.5 h-3.5 cursor-pointer"
+                            />
+                            <span>Presented (🎤)</span>
+                          </label>
+
+                          {booksList.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveBook(idx)}
+                              className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                              title="Remove this book"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Title & Author Inputs */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-600 block mb-0.5">
+                            Book Title <span className="text-rose-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="e.g. Atomic Habits, Lean Startup..."
+                            value={book.title || ''}
+                            onChange={(e) => handleUpdateBook(idx, 'title', e.target.value)}
+                            className="w-full px-2.5 py-1.5 text-xs rounded-lg clean-input font-bold text-slate-800"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-600 block mb-0.5">
+                            Author / Creator
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. James Clear, Eric Ries..."
+                            value={book.author || ''}
+                            onChange={(e) => handleUpdateBook(idx, 'author', e.target.value)}
+                            className="w-full px-2.5 py-1.5 text-xs rounded-lg clean-input font-medium text-slate-700"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Status, Pages & Progress */}
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-600 block mb-0.5">
+                            Reading Status
+                          </label>
+                          <select
+                            value={book.status === 'completed' ? 'completed' : 'in_progress'}
+                            onChange={(e) => handleUpdateBook(idx, 'status', e.target.value)}
+                            className="w-full px-2 py-1.5 text-xs rounded-lg clean-input font-bold cursor-pointer"
+                          >
+                            <option value="in_progress">📖 In Progress</option>
+                            <option value="completed">✅ Completed</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-600 block mb-0.5">
+                            Total Pages
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="320"
+                            value={book.total_pages ?? ''}
+                            onChange={(e) => handleUpdateBook(idx, 'total_pages', Number(e.target.value) || 0)}
+                            className="w-full px-2 py-1.5 text-xs rounded-lg clean-input font-bold text-slate-800"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-600 block mb-0.5">
+                            Pages Read
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="180"
+                            value={book.pages_read ?? ''}
+                            onChange={(e) => handleUpdateBook(idx, 'pages_read', Number(e.target.value) || 0)}
+                            className="w-full px-2 py-1.5 text-xs rounded-lg clean-input font-bold text-indigo-700 bg-indigo-50/40"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Mini Book Progress Bar */}
+                      {bookPages > 0 && (
+                        <div className="pt-1">
+                          <div className="flex items-center justify-between text-[10px] text-slate-500 font-semibold mb-1">
+                            <span>Book Progress: {bookRead} / {bookPages} pages</span>
+                            <span className="font-bold text-indigo-600">{bookPct}%</span>
+                          </div>
+                          <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                            <div 
+                              className="bg-indigo-600 h-full rounded-full transition-all duration-300"
+                              style={{ width: `${bookPct}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Live Cumulative Summary Banner */}
+              <div className="p-3 bg-indigo-50/70 border border-indigo-200 rounded-xl space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-extrabold uppercase tracking-wider text-indigo-900">
+                    ⚡ Total Reading Stats (Auto-Calculated)
+                  </span>
+                  <span className="text-[10px] font-bold text-indigo-700">
+                    {totalBooks} Books • {totalPagesRead}/{totalPages} Total Pages
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 text-center text-[10px]">
+                  <div className="p-1.5 bg-white rounded-lg border border-indigo-100 font-bold text-slate-800">
+                    <span className="block text-[9px] text-slate-400">Total Books</span>
+                    {totalBooks}
+                  </div>
+                  <div className="p-1.5 bg-white rounded-lg border border-emerald-100 font-bold text-emerald-700">
+                    <span className="block text-[9px] text-emerald-500">Completed</span>
+                    {completedBooks}
+                  </div>
+                  <div className="p-1.5 bg-white rounded-lg border border-blue-100 font-bold text-blue-700">
+                    <span className="block text-[9px] text-blue-500">In Progress</span>
+                    {inProgressBooks}
+                  </div>
+                  <div className="p-1.5 bg-white rounded-lg border border-purple-100 font-bold text-purple-700">
+                    <span className="block text-[9px] text-purple-500">Presented</span>
+                    {booksPresented}
+                  </div>
+                  <div className="p-1.5 bg-white rounded-lg border border-amber-100 font-bold text-amber-800">
+                    <span className="block text-[9px] text-amber-500">Total Pages</span>
+                    {totalPages}
+                  </div>
+                  <div className="p-1.5 bg-white rounded-lg border border-teal-100 font-bold text-teal-800">
+                    <span className="block text-[9px] text-teal-500">Pages Read</span>
+                    {totalPagesRead}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Assignee & Priority */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -214,10 +494,19 @@ export default function TaskModal({
                 onChange={(e) => setStatus(e.target.value)}
                 className="w-full px-3 py-2 text-xs rounded-xl clean-input cursor-pointer font-medium"
               >
-                <option value="todo">To Do</option>
-                <option value="in_progress">In Progress</option>
-                <option value="blocked">Blocked</option>
-                <option value="completed">Completed</option>
+                {isBookReading ? (
+                  <>
+                    <option value="in_progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="todo">To Do</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="blocked">Blocked</option>
+                    <option value="completed">Completed</option>
+                  </>
+                )}
               </select>
             </div>
 
@@ -234,126 +523,6 @@ export default function TaskModal({
             </div>
           </div>
 
-          {/* Book Reading Tracker Switch & 5-Column Metric Controls */}
-          <div className="pt-2 border-t border-slate-100">
-            <div className="flex items-center justify-between p-2.5 rounded-xl bg-indigo-50/60 border border-indigo-100 mb-3">
-              <label className="flex items-center gap-2 cursor-pointer select-none">
-                <input
-                  type="checkbox"
-                  checked={isBookReading}
-                  onChange={(e) => setIsBookReading(e.target.checked)}
-                  className="rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer"
-                />
-                <span className="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
-                  <BookOpen className="w-4 h-4 text-indigo-600" />
-                  Book Reading & Learning Tracker Task
-                </span>
-              </label>
-              <span className="text-[10px] font-semibold text-indigo-700 bg-indigo-100/80 px-2 py-0.5 rounded-md">
-                5 Team Columns
-              </span>
-            </div>
-
-            {isBookReading && (
-              <div className="p-3 bg-white border border-indigo-200 rounded-xl space-y-3 shadow-inner">
-                <div className="flex items-center justify-between border-b border-indigo-50 pb-2">
-                  <h4 className="text-[11px] font-extrabold uppercase tracking-wider text-indigo-900">
-                    Book Reading Metrics & Stats
-                  </h4>
-                  <span className="text-[10px] text-slate-500 font-medium">
-                    Updates live on team dashboard
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                  {/* 1. Total Books */}
-                  <div>
-                    <label className="text-[10.5px] font-bold text-slate-700 block mb-1">
-                      1. Total Books
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={totalBooks}
-                      onChange={(e) => setTotalBooks(e.target.value)}
-                      className="w-full px-2.5 py-1.5 text-xs rounded-lg clean-input font-bold text-slate-800"
-                    />
-                  </div>
-
-                  {/* 2. Completed */}
-                  <div>
-                    <label className="text-[10.5px] font-bold text-emerald-700 block mb-1">
-                      2. Completed
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={completedBooks}
-                      onChange={(e) => setCompletedBooks(e.target.value)}
-                      className="w-full px-2.5 py-1.5 text-xs rounded-lg clean-input font-bold text-emerald-800 bg-emerald-50/30 border-emerald-200"
-                    />
-                  </div>
-
-                  {/* 3. In Progress */}
-                  <div>
-                    <label className="text-[10.5px] font-bold text-blue-700 block mb-1">
-                      3. In Progress
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={inProgressBooks}
-                      onChange={(e) => setInProgressBooks(e.target.value)}
-                      className="w-full px-2.5 py-1.5 text-xs rounded-lg clean-input font-bold text-blue-800 bg-blue-50/30 border-blue-200"
-                    />
-                  </div>
-
-                  {/* 4. Books Presented */}
-                  <div>
-                    <label className="text-[10.5px] font-bold text-purple-700 block mb-1">
-                      4. Books Presented
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={booksPresented}
-                      onChange={(e) => setBooksPresented(e.target.value)}
-                      className="w-full px-2.5 py-1.5 text-xs rounded-lg clean-input font-bold text-purple-800 bg-purple-50/30 border-purple-200"
-                    />
-                  </div>
-
-                  {/* 5. Total Pages */}
-                  <div>
-                    <label className="text-[10.5px] font-bold text-amber-700 block mb-1">
-                      5. Total Pages
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={totalPages}
-                      onChange={(e) => setTotalPages(e.target.value)}
-                      className="w-full px-2.5 py-1.5 text-xs rounded-lg clean-input font-bold text-amber-900 bg-amber-50/30 border-amber-200"
-                    />
-                  </div>
-
-                  {/* 6. Total Pages Read */}
-                  <div>
-                    <label className="text-[10.5px] font-bold text-teal-700 block mb-1">
-                      6. Total Pages Read
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={totalPagesRead}
-                      onChange={(e) => setTotalPagesRead(e.target.value)}
-                      className="w-full px-2.5 py-1.5 text-xs rounded-lg clean-input font-bold text-teal-900 bg-teal-50/30 border-teal-200"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
           {/* Form Actions */}
           <div className="pt-2 border-t border-slate-100 flex items-center justify-end gap-2.5">
             <button
@@ -365,10 +534,10 @@ export default function TaskModal({
             </button>
             <button
               type="submit"
-              className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition-all active:scale-95"
+              className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition-all active:scale-95 cursor-pointer"
             >
               <Save className="w-4 h-4" />
-              <span>{initialTask ? 'Update Task' : 'Save Task'}</span>
+              <span>{initialTask ? 'Save All Books & Details' : 'Save Task'}</span>
             </button>
           </div>
 

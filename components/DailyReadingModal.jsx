@@ -16,6 +16,7 @@ export default function DailyReadingModal({
   const [logDate, setLogDate] = useState(todayStr);
   const [pagesReadToday, setPagesReadToday] = useState('');
   const [takeaways, setTakeaways] = useState('');
+  const [selectedBookId, setSelectedBookId] = useState(task?.books_list?.[0]?.id || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('log'); // 'log' | 'history'
 
@@ -31,6 +32,9 @@ export default function DailyReadingModal({
     setIsSubmitting(true);
     sounds.playComplete();
 
+    const selectedBook = Array.isArray(task.books_list) ? task.books_list.find(b => b.id === selectedBookId) : null;
+    const bookTitle = selectedBook ? selectedBook.title : task.title;
+
     try {
       confetti({
         particleCount: 35,
@@ -43,6 +47,7 @@ export default function DailyReadingModal({
         await onLogSaved(task.id, {
           date: logDate,
           pages_read: pages,
+          book_title: bookTitle,
           takeaways: takeaways.trim()
         });
       }
@@ -126,6 +131,26 @@ export default function DailyReadingModal({
                 {bookTotalPages > 0 ? `${Math.round((currentTotal / bookTotalPages) * 100)}% Done` : '🔥 Streak Active'}
               </span>
             </div>
+
+            {/* Book Selector if multiple books */}
+            {Array.isArray(task.books_list) && task.books_list.length > 1 && (
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                  Select Book Being Read
+                </label>
+                <select
+                  value={selectedBookId}
+                  onChange={(e) => setSelectedBookId(e.target.value)}
+                  className="w-full px-3 py-2 text-xs rounded-xl clean-input font-bold text-slate-800 cursor-pointer"
+                >
+                  {task.books_list.map((b, i) => (
+                    <option key={b.id || i} value={b.id}>
+                      📖 Book #{i + 1}: {b.title || 'Untitled Book'} {b.author ? `(${b.author})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Date Input */}
             <div>

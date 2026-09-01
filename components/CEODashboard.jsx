@@ -392,6 +392,7 @@ export default function CEODashboard({
             latestLog,
             totalPagesRead,
             totalPages,
+            booksList: task?.books_list || [],
             bookTitle: task?.title || 'No Book Selected',
             author: task?.description || '',
             percent: totalPages > 0 ? Math.min(100, Math.round((totalPagesRead / totalPages) * 100)) : 0
@@ -1016,6 +1017,46 @@ export default function CEODashboard({
                 {selectedReadingHistoryTask.percent}% Completed
               </span>
             </div>
+
+            {/* Individual Books Breakdown (Book 1, Book 2...) */}
+            {Array.isArray(selectedReadingHistoryTask.booksList) && selectedReadingHistoryTask.booksList.length > 0 && (
+              <div className="p-3 bg-slate-50 border border-slate-200/90 rounded-2xl space-y-2">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block">
+                  📚 Books in Library ({selectedReadingHistoryTask.booksList.length})
+                </span>
+                <div className="space-y-1.5 max-h-32 overflow-y-auto pr-0.5">
+                  {selectedReadingHistoryTask.booksList.map((b, i) => {
+                    const bp = Number(b.total_pages) || 0;
+                    const br = Number(b.pages_read) || 0;
+                    const pct = bp > 0 ? Math.min(100, Math.round((br / bp) * 100)) : 0;
+                    return (
+                      <div key={b.id || i} className="p-2 rounded-xl bg-white border border-slate-200 text-xs flex items-center justify-between gap-2 shadow-2xs">
+                        <div className="min-w-0">
+                          <span className="font-bold text-slate-900 block truncate">
+                            Book #{i + 1}: {b.title || 'Untitled'}
+                          </span>
+                          {b.author && (
+                            <span className="text-[10.5px] text-slate-400 block truncate">
+                              ✍️ {b.author}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-right shrink-0">
+                          <span className="text-[11px] font-black text-indigo-700 block">
+                            {br} / {bp || '—'} pgs ({pct}%)
+                          </span>
+                          <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded inline-block ${
+                            b.status === 'completed' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'
+                          }`}>
+                            {b.status === 'completed' ? 'Completed' : 'In Progress'}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Daily Logs Timeline list */}
             <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
