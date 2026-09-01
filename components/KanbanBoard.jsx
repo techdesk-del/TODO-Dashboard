@@ -22,7 +22,8 @@ import {
   Edit2,
   Trash2,
   Sparkles,
-  Calendar
+  Calendar,
+  X
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import DailyReadingModal from './DailyReadingModal';
@@ -42,6 +43,7 @@ export default function KanbanBoard({
   setSelectedMemberFilter 
 }) {
   const [activeDailyTask, setActiveDailyTask] = useState(null);
+  const [bookToFinish, setBookToFinish] = useState(null);
   const [priorityFilter, setPriorityFilter] = useState('all');
   const todayStr = new Date().toISOString().split('T')[0];
 
@@ -549,9 +551,14 @@ export default function KanbanBoard({
                                     <button
                                       type="button"
                                       onClick={() => {
-                                        sounds.playComplete();
-                                        confetti({ particleCount: 30, spread: 50, origin: { y: 0.7 } });
-                                        onStatusChange(t.id, 'completed');
+                                        if (t.is_book_reading) {
+                                          sounds.playClick();
+                                          setBookToFinish(t);
+                                        } else {
+                                          sounds.playComplete();
+                                          confetti({ particleCount: 30, spread: 50, origin: { y: 0.7 } });
+                                          onStatusChange(t.id, 'completed');
+                                        }
                                       }}
                                       className="text-emerald-700 font-extrabold hover:underline cursor-pointer"
                                     >
@@ -706,6 +713,110 @@ export default function KanbanBoard({
           task={activeDailyTask}
           onLogSaved={onLogDailyReading}
         />
+      )}
+
+      {/* Book Reading Finish Confirmation Modal */}
+      {bookToFinish && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="relative w-full max-w-md bg-white border border-slate-200 rounded-3xl shadow-2xl p-6 space-y-4 animate-slide-up">
+            
+            {/* Header */}
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 text-xl shadow-2xs">
+                  📖
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900">
+                    Book Reading Confirmation
+                  </h3>
+                  <p className="text-xs text-slate-500 font-medium">
+                    Confirm before marking as completed
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setBookToFinish(null)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Question Card */}
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-50/70 via-blue-50/40 to-slate-50 border border-indigo-100/80 space-y-2.5">
+              <p className="text-sm font-bold text-slate-800">
+                Have you completely finished reading this book?
+              </p>
+              
+              {/* Book Details */}
+              <div className="p-3 bg-white rounded-xl border border-indigo-100 shadow-2xs space-y-1.5">
+                <div className="font-extrabold text-slate-900 text-xs">
+                  {bookToFinish.title}
+                </div>
+                {bookToFinish.description && (
+                  <div className="text-[11px] text-slate-500 font-medium">
+                    ✍️ {bookToFinish.description}
+                  </div>
+                )}
+                {bookToFinish.book_stats && (
+                  <div className="flex items-center justify-between text-[10.5px] font-bold text-indigo-700 pt-1 border-t border-slate-100">
+                    <span>Pages Read: {bookToFinish.book_stats.total_pages_read || 0} / {bookToFinish.book_stats.total_pages || 0}</span>
+                    <span>{bookToFinish.book_stats.total_pages > 0 ? Math.min(100, Math.round(((bookToFinish.book_stats.total_pages_read || 0) / bookToFinish.book_stats.total_pages) * 100)) : 100}%</span>
+                  </div>
+                )}
+              </div>
+
+              <p className="text-xs text-slate-600">
+                • If <strong>YES</strong>, click <strong>"Yes, Mark as Completed"</strong>.<br/>
+                • If <strong>NO</strong>, click <strong>"Update Pages / Edit Details"</strong> to log remaining pages or update info.
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-center gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  const task = bookToFinish;
+                  setBookToFinish(null);
+                  sounds.playClick();
+                  onEditTask(task);
+                }}
+                className="w-full sm:flex-1 py-2.5 px-3 rounded-xl bg-white hover:bg-slate-50 text-indigo-700 border border-indigo-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-98 cursor-pointer shadow-2xs"
+              >
+                <Edit2 className="w-3.5 h-3.5" />
+                <span>Update Pages / Edit</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const taskId = bookToFinish.id;
+                  setBookToFinish(null);
+                  sounds.playComplete();
+                  confetti({ particleCount: 40, spread: 60, origin: { y: 0.7 } });
+                  onStatusChange(taskId, 'completed');
+                }}
+                className="w-full sm:flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/20 transition-all active:scale-98 cursor-pointer"
+              >
+                <CheckCircle2 className="w-4 h-4 stroke-[2.5]" />
+                <span>Yes, Finished!</span>
+              </button>
+            </div>
+
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => setBookToFinish(null)}
+                className="text-[11px] font-semibold text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
     </div>
