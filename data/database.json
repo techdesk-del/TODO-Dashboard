@@ -82,7 +82,233 @@
       "last_active": "2026-08-31T11:00:00.000Z"
     }
   ],
-  "tasks": [],
+  "tasks": [
+    {
+      "id": "tsk_book_usr_shyamsundar",
+      "title": "📖 Book Reading",
+      "description": "",
+      "status": "todo",
+      "priority": "medium",
+      "assigned_to": "usr_shyamsundar",
+      "created_by": "usr_shyamsundar",
+      "due_date": "",
+      "tags": [
+        "BookReading"
+      ],
+      "subtasks": [],
+      "estimated_hours": 0,
+      "logged_hours": 0,
+      "is_book_reading": true,
+      "book_stats": {
+        "total_books": 0,
+        "completed": 0,
+        "in_progress": 0,
+        "books_presented": 0,
+        "total_pages": 0,
+        "total_pages_read": 0
+      }
+    },
+    {
+      "id": "tsk_book_usr_aakash",
+      "title": "📖 Book Reading",
+      "description": "",
+      "status": "todo",
+      "priority": "medium",
+      "assigned_to": "usr_aakash",
+      "created_by": "usr_shyamsundar",
+      "due_date": "",
+      "tags": [
+        "BookReading"
+      ],
+      "subtasks": [],
+      "estimated_hours": 0,
+      "logged_hours": 0,
+      "is_book_reading": true,
+      "book_stats": {
+        "total_books": 0,
+        "completed": 0,
+        "in_progress": 0,
+        "books_presented": 0,
+        "total_pages": 0,
+        "total_pages_read": 0
+      }
+    },
+    {
+      "id": "tsk_book_usr_yudhister",
+      "title": "📖 Book Reading",
+      "description": "",
+      "status": "todo",
+      "priority": "medium",
+      "assigned_to": "usr_yudhister",
+      "created_by": "usr_shyamsundar",
+      "due_date": "",
+      "tags": [
+        "BookReading"
+      ],
+      "subtasks": [],
+      "estimated_hours": 0,
+      "logged_hours": 0,
+      "is_book_reading": true,
+      "book_stats": {
+        "total_books": 0,
+        "completed": 0,
+        "in_progress": 0,
+        "books_presented": 0,
+        "total_pages": 0,
+        "total_pages_read": 0
+      }
+    },
+    {
+      "id": "tsk_book_usr_rekha",
+      "title": "📖 Book Reading",
+      "description": "",
+      "status": "todo",
+      "priority": "medium",
+      "assigned_to": "usr_rekha",
+      "created_by": "usr_shyamsundar",
+      "due_date": "",
+      "tags": [
+        "BookReading"
+      ],
+      "subtasks": [],
+      "estimated_hours": 0,
+      "logged_hours": 0,
+      "is_book_reading": true,
+      "book_stats": {
+        "total_books": 0,
+        "completed": 0,
+        "in_progress": 0,
+        "books_presented": 0,
+        "total_pages": 0,
+        "total_pages_read": 0
+      }
+    },
+    {
+      "id": "tsk_book_usr_sanjay",
+      "title": "📖 Book Reading",
+      "description": "",
+      "status": "todo",
+      "priority": "medium",
+      "assigned_to": "usr_sanjay",
+      "created_by": "usr_shyamsundar",
+      "due_date": "",
+      "tags": [
+        "BookReading"
+      ],
+      "subtasks": [],
+      "estimated_hours": 0,
+      "logged_hours": 0,
+      "is_book_reading": true,
+      "book_stats": {
+        "total_books": 0,
+        "completed": 0,
+        "in_progress": 0,
+        "books_presented": 0,
+        "total_pages": 0,
+        "total_pages_read": 0
+      }
+    },
+    {
+      "id": "tsk_book_usr_ayaz",
+      "title": "📖 Book Reading",
+      "description": "",
+      "status": "todo",
+      "priority": "medium",
+      "assigned_to": "usr_ayaz",
+      "created_by": "usr_shyamsundar",
+      "due_date": "",
+      "tags": [
+        "BookReading"
+      ],
+      "subtasks": [],
+      "estimated_hours": 0,
+      "logged_hours": 0,
+      "is_book_reading": true,
+      "book_stats": {
+        "total_books": 0,
+        "completed": 0,
+        "in_progress": 0,
+        "books_presented": 0,
+        "total_pages": 0,
+        "total_pages_read": 0
+      }
+    },
+    {
+      "id": "tsk_book_usr_utkarsh",
+      "title": "📖 Book Reading",
+      "description": "",
+      "status": "todo",
+      "priority": "medium",
+      "assigned_to": "usr_utkarsh",
+      "created_by": "usr_shyamsundar",
+      "due_date": "",
+      "tags": [
+        "BookReading"
+      ],
+      "subtasks": [],
+      "estimated_hours": 0,
+      "logged_hours": 0,
+      "is_book_reading": true,
+      "book_stats": {
+        "total_books": 0,
+        "completed": 0,
+        "in_progress": 0,
+        "books_presented": 0,
+        "total_pages": 0,
+        "total_pages_read": 0
+      }
+    },
+    {
+      "id": "tsk_book_usr_pratap",
+      "title": "📖 Book Reading",
+      "description": "",
+      "status": "todo",
+      "priority": "medium",
+      "assigned_to": "usr_pratap",
+      "created_by": "usr_shyamsundar",
+      "due_date": "",
+      "tags": [
+        "BookReading"
+      ],
+      "subtasks": [],
+      "estimated_hours": 0,
+      "logged_hours": 0,
+      "is_book_reading": true,
+      "book_stats": {
+        "total_books": 0,
+        "completed": 0,
+        "in_progress": 0,
+        "books_presented": 0,
+        "total_pages": 0,
+        "total_pages_read": 0
+      }
+    },
+    {
+      "id": "tsk_book_usr_varun",
+      "title": "📖 Book Reading",
+      "description": "",
+      "status": "todo",
+      "priority": "medium",
+      "assigned_to": "usr_varun",
+      "created_by": "usr_shyamsundar",
+      "due_date": "",
+      "tags": [
+        "BookReading"
+      ],
+      "subtasks": [],
+      "estimated_hours": 0,
+      "logged_hours": 0,
+      "is_book_reading": true,
+      "book_stats": {
+        "total_books": 0,
+        "completed": 0,
+        "in_progress": 0,
+        "books_presented": 0,
+        "total_pages": 0,
+        "total_pages_read": 0
+      }
+    }
+  ],
   "eod_reports": [],
   "activity_logs": []
 }

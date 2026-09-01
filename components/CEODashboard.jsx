@@ -476,6 +476,28 @@ export default function CEODashboard({
                               {task.description}
                             </p>
                           )}
+                          {task.is_book_reading && task.book_stats && (
+                            <div className="flex items-center gap-1.5 flex-wrap pt-1.5">
+                              <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                📚 Total: {task.book_stats.total_books || 0}
+                              </span>
+                              <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                ✅ Done: {task.book_stats.completed || 0}
+                              </span>
+                              <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                                📖 Reading: {task.book_stats.in_progress || 0}
+                              </span>
+                              <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">
+                                🎤 Presented: {task.book_stats.books_presented || 0}
+                              </span>
+                              <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
+                                📄 Total Pages: {task.book_stats.total_pages || 0}
+                              </span>
+                              <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded bg-teal-50 text-teal-800 border border-teal-200">
+                                📖 Read: {task.book_stats.total_pages_read || 0}
+                              </span>
+                            </div>
+                          )}
                           {Array.isArray(task.tags) && task.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1 pt-1">
                               {task.tags.map((t, idx) => (
