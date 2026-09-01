@@ -26,6 +26,7 @@ export default function TaskModal({
   const [assignedTo, setAssignedTo] = useState('');
   const [status, setStatus] = useState('todo');
   const [priority, setPriority] = useState('medium');
+  const [startDate, setStartDate] = useState('');
   const [dueDate, setDueDate] = useState('');
   
   // Book Reading Stats State
@@ -39,13 +40,15 @@ export default function TaskModal({
   const [totalPagesRead, setTotalPagesRead] = useState(0);
 
   useEffect(() => {
+    const today = new Date().toISOString().split('T')[0];
     if (initialTask) {
       setTitle(initialTask.title || '');
       setDescription(initialTask.description || '');
       setAssignedTo(initialTask.assigned_to || (users[0]?.id || ''));
       setStatus(initialTask.status || 'todo');
       setPriority(initialTask.priority || 'medium');
-      setDueDate(initialTask.due_date || new Date().toISOString().split('T')[0]);
+      setStartDate(initialTask.start_date || today);
+      setDueDate(initialTask.due_date || today);
       
       const isBook = Boolean(initialTask.is_book_reading);
       setIsBookReading(isBook);
@@ -60,6 +63,8 @@ export default function TaskModal({
           title: initialTask.title !== '📖 Book Reading' ? initialTask.title : '',
           author: initialTask.description || '',
           status: 'in_progress',
+          start_date: initialTask.start_date || today,
+          target_date: initialTask.due_date || '',
           total_pages: Number(initialTask.book_stats?.total_pages) || 0,
           pages_read: Number(initialTask.book_stats?.total_pages_read) || 0,
           presented: Number(initialTask.book_stats?.books_presented) > 0,
@@ -80,7 +85,8 @@ export default function TaskModal({
       setAssignedTo(currentUser?.id || users[0]?.id || '');
       setStatus(defaultStatus || 'todo');
       setPriority('medium');
-      setDueDate(new Date().toISOString().split('T')[0]);
+      setStartDate(today);
+      setDueDate(today);
       
       setIsBookReading(false);
       setBooksList([]);
@@ -96,11 +102,14 @@ export default function TaskModal({
   // Handle book item changes
   const handleAddBook = () => {
     sounds.playClick();
+    const today = new Date().toISOString().split('T')[0];
     const newBook = {
       id: 'bk_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 3),
       title: '',
       author: '',
       status: 'in_progress',
+      start_date: today,
+      target_date: '',
       total_pages: 0,
       pages_read: 0,
       presented: false,
@@ -169,6 +178,7 @@ export default function TaskModal({
       created_by: initialTask?.created_by || currentUser?.id || 'usr_ceo',
       status,
       priority,
+      start_date: startDate,
       due_date: dueDate,
       tags: initialTask?.tags || (isBookReading ? ['BookReading', 'Knowledge'] : ['Sprint']),
       subtasks: initialTask?.subtasks || [],
@@ -387,6 +397,33 @@ export default function TaskModal({
                         </div>
                       </div>
 
+                      {/* Book Reading Dates */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-600 block mb-0.5">
+                            Start Date
+                          </label>
+                          <input
+                            type="date"
+                            value={book.start_date || ''}
+                            onChange={(e) => handleUpdateBook(idx, 'start_date', e.target.value)}
+                            className="w-full px-2 py-1.5 text-xs rounded-lg clean-input font-medium cursor-pointer"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-600 block mb-0.5">
+                            Target End Date
+                          </label>
+                          <input
+                            type="date"
+                            value={book.target_date || ''}
+                            onChange={(e) => handleUpdateBook(idx, 'target_date', e.target.value)}
+                            className="w-full px-2 py-1.5 text-xs rounded-lg clean-input font-medium cursor-pointer"
+                          />
+                        </div>
+                      </div>
+
                       {/* Mini Book Progress Bar */}
                       {bookPages > 0 && (
                         <div className="pt-1">
@@ -447,81 +484,89 @@ export default function TaskModal({
             </div>
           )}
 
-          {/* Assignee & Priority */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">
-                Assignee
-              </label>
-              <select
-                value={assignedTo}
-                onChange={(e) => setAssignedTo(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl clean-input cursor-pointer font-medium"
-              >
-                {users.map(u => (
-                  <option key={u.id} value={u.id}>
-                    {u.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+          {/* Assignee, Priority, Status & Dates (Only for regular tasks - books have individual controls) */}
+          {!isBookReading && (
+            <>
+              {/* Assignee & Priority */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">
+                    Assignee
+                  </label>
+                  <select
+                    value={assignedTo}
+                    onChange={(e) => setAssignedTo(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-xl clean-input cursor-pointer font-medium"
+                  >
+                    {users.map(u => (
+                      <option key={u.id} value={u.id}>
+                        {u.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">
-                Priority
-              </label>
-              <select
-                value={priority}
-                onChange={(e) => setPriority(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl clean-input cursor-pointer font-medium"
-              >
-                <option value="urgent">🚨 Urgent</option>
-                <option value="high">⚡ High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-              </select>
-            </div>
-          </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">
+                    Priority
+                  </label>
+                  <select
+                    value={priority}
+                    onChange={(e) => setPriority(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-xl clean-input cursor-pointer font-medium"
+                  >
+                    <option value="urgent">🚨 Urgent</option>
+                    <option value="high">⚡ High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                  </select>
+                </div>
+              </div>
 
-          {/* Status & Date */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">
-                Status
-              </label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl clean-input cursor-pointer font-medium"
-              >
-                {isBookReading ? (
-                  <>
-                    <option value="in_progress">In Progress</option>
-                    <option value="completed">Completed</option>
-                  </>
-                ) : (
-                  <>
+              {/* Status, Start Date & Target End Date */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">
+                    Status
+                  </label>
+                  <select
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-xl clean-input cursor-pointer font-medium"
+                  >
                     <option value="todo">To Do</option>
                     <option value="in_progress">In Progress</option>
                     <option value="blocked">Blocked</option>
                     <option value="completed">Completed</option>
-                  </>
-                )}
-              </select>
-            </div>
+                  </select>
+                </div>
 
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">
-                Target Due Date
-              </label>
-              <input
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl clean-input cursor-pointer"
-              />
-            </div>
-          </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">
+                    Start Date
+                  </label>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-xl clean-input cursor-pointer"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">
+                    Target End Date
+                  </label>
+                  <input
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                    className="w-full px-3 py-2 text-xs rounded-xl clean-input cursor-pointer"
+                  />
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Form Actions */}
           <div className="pt-2 border-t border-slate-100 flex items-center justify-end gap-2.5">

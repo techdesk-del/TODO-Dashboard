@@ -338,11 +338,16 @@ export default function TaskCard({
                             </span>
                           </div>
 
-                          {b.author && (
-                            <span className="text-[9.5px] text-slate-500 block truncate">
-                              ✍️ {b.author}
-                            </span>
-                          )}
+                          <div className="flex items-center justify-between text-[9.5px] text-slate-500 gap-1">
+                            {b.author && (
+                              <span className="truncate">✍️ {b.author}</span>
+                            )}
+                            {(b.start_date || b.target_date) && (
+                              <span className="font-semibold text-slate-400 shrink-0 flex items-center gap-0.5">
+                                📅 {b.start_date ? b.start_date.split('-').slice(1).join('/') : ''}{b.start_date && b.target_date ? ' → ' : ''}{b.target_date ? b.target_date.split('-').slice(1).join('/') : ''}
+                              </span>
+                            )}
+                          </div>
 
                           {bPages > 0 && (
                             <div className="flex items-center gap-1.5 pt-0.5">
