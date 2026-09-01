@@ -40,16 +40,22 @@ export default function CEODashboard({
 
   const memberList = overview?.memberBreakdown || [];
 
-  // Export report to CSV
+  const getCleanRole = (role) => {
+    if (!role) return 'Member';
+    const lower = role.toLowerCase();
+    if (lower === 'ceo' || lower === 'admin') return 'Admin';
+    return 'Member';
+  };
+
+  // Export report to CSV (No Department, No CEO tag)
   const handleExportCSV = () => {
     sounds.playClick();
     const rows = [
-      ['Member Name', 'Department', 'Role', 'Status', 'Total Tasks', 'Completed Tasks', 'Pending Tasks', 'EOD Submitted'],
+      ['Member Name', 'Role', 'Status', 'Total Tasks', 'Completed Tasks', 'Pending Tasks', 'EOD Submitted'],
       ...memberList.map(m => [
         m.name,
-        m.department,
-        m.role,
-        m.status,
+        getCleanRole(m.role),
+        m.status === 'online' ? 'Online' : m.status === 'logged_out' ? 'Clocked Out' : 'Offline',
         m.total_tasks,
         m.completed_tasks,
         m.pending_tasks,
@@ -67,7 +73,7 @@ export default function CEODashboard({
     document.body.removeChild(link);
   };
 
-  // Export professional PDF report
+  // Export professional PDF report (No Department, No CEO tag)
   const handleExportPDF = async () => {
     sounds.playClick();
     setIsExportingPDF(true);
@@ -89,11 +95,11 @@ export default function CEODashboard({
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(15);
       doc.setFont('helvetica', 'bold');
-      doc.text('UrbanGaon — Executive Workforce & Team Report', 14, 12);
+      doc.text('UrbanGaon — Team Workforce & Performance Report', 14, 12);
 
       doc.setFontSize(8.5);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}  |  Authorized by: Aakash Das (Admin)`, 14, 20);
+      doc.text(`Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}  |  UrbanGaon Enterprise Workspace`, 14, 20);
 
       // KPI Summary Box
       doc.setFillColor(248, 250, 252);
@@ -106,13 +112,12 @@ export default function CEODashboard({
       doc.text(`Total Team Members: ${userStats.total}   (Online: ${userStats.online}  |  Clocked Out: ${userStats.checked_out})`, 20, 43);
       doc.text(`Total Company Tasks: ${stats.total}   |   Completed: ${stats.completed} (${stats.completion_rate}%)   |   Pending: ${stats.total - stats.completed}`, 20, 50);
 
-      // Table of Team Breakdown
-      const tableHeaders = [['#', 'Member Name', 'Department', 'Role', 'Status', 'Completed', 'Pending', 'EOD Status']];
+      // Table of Team Breakdown (No Department Column)
+      const tableHeaders = [['#', 'Member Name', 'Role', 'Live Status', 'Completed', 'Pending', 'EOD Status']];
       const tableData = memberList.map((m, idx) => [
         idx + 1,
         m.name,
-        m.department || 'Engineering',
-        (m.role || 'Member').toUpperCase(),
+        getCleanRole(m.role),
         m.status === 'online' ? 'Online' : m.status === 'logged_out' ? 'Clocked Out' : 'Offline',
         m.completed_tasks,
         m.pending_tasks,
@@ -138,15 +143,15 @@ export default function CEODashboard({
           fillColor: [248, 250, 252]
         },
         styles: {
-          cellPadding: 3,
+          cellPadding: 3.5,
           halign: 'left'
         },
         columnStyles: {
           0: { cellWidth: 10, halign: 'center' },
-          4: { fontStyle: 'bold' },
+          3: { fontStyle: 'bold' },
+          4: { halign: 'center' },
           5: { halign: 'center' },
-          6: { halign: 'center' },
-          7: { fontStyle: 'bold' }
+          6: { fontStyle: 'bold' }
         }
       });
 
@@ -156,11 +161,11 @@ export default function CEODashboard({
         doc.setPage(i);
         doc.setFontSize(8);
         doc.setTextColor(148, 163, 184);
-        doc.text(`UrbanGaon Confidential Executive Workspace • Page ${i} of ${pageCount}`, 14, 287);
+        doc.text(`UrbanGaon Workspace Report • Page ${i} of ${pageCount}`, 14, 287);
       }
 
       const todayStr = new Date().toISOString().split('T')[0];
-      doc.save(`UrbanGaon_Executive_Report_${todayStr}.pdf`);
+      doc.save(`UrbanGaon_Workforce_Report_${todayStr}.pdf`);
     } catch (err) {
       console.error('PDF export error:', err);
       alert('Could not generate PDF. Please try again.');
@@ -176,15 +181,15 @@ export default function CEODashboard({
       <div className="rounded-2xl bg-white border border-slate-200 p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-300">
-              👑 Executive Command Center
+            <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-800 border border-blue-200">
+              Workforce Command Center
             </span>
           </div>
           <h2 className="text-xl font-bold text-slate-900">
             Workforce Overview & Daily EOD Reports
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Real-time visibility into team attendance, active sprint workload, and daily checkout submissions.
+            Real-time visibility into team attendance, active workload, and daily checkout submissions.
           </p>
         </div>
 
@@ -226,7 +231,7 @@ export default function CEODashboard({
 
         {/* Completion Rate */}
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <span className="text-xs font-semibold text-slate-500 block mb-1">Sprint Completion Rate</span>
+          <span className="text-xs font-semibold text-slate-500 block mb-1">Completion Rate</span>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-bold text-blue-600">{stats.completion_rate}%</span>
             <span className="text-xs font-semibold text-slate-500">({stats.completed}/{stats.total})</span>
@@ -245,7 +250,7 @@ export default function CEODashboard({
             </span>
           </div>
           <span className="text-[11px] text-slate-400 mt-1 block">
-            Requires immediate unblocking
+            Requires attention
           </span>
         </div>
 
@@ -327,7 +332,7 @@ export default function CEODashboard({
                   </td>
 
                   <td className="py-3 px-4 text-slate-600 font-medium capitalize">
-                    {member.role || 'Member'}
+                    {getCleanRole(member.role)}
                   </td>
 
                   <td className="py-3 px-4 text-center font-bold text-emerald-600">
