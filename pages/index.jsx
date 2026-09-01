@@ -127,6 +127,7 @@ export default function Home() {
     if (!currentUser?.id) return;
 
     const sendHeartbeat = () => {
+      if (document.hidden) return;
       fetch('/api/users/heartbeat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -135,7 +136,7 @@ export default function Home() {
     };
 
     sendHeartbeat();
-    const hbInterval = setInterval(sendHeartbeat, 3000);
+    const hbInterval = setInterval(sendHeartbeat, 8000);
 
     const handleUnload = () => {
       if (currentUser?.id) {
@@ -163,11 +164,13 @@ export default function Home() {
     };
   }, [currentUser?.id]);
 
-  // Real-Time Multi-PC Auto Sync (10s background sync fallback)
+  // Real-Time Multi-PC Auto Sync (15s background sync fallback)
   useEffect(() => {
     const syncInterval = setInterval(() => {
-      refreshData();
-    }, 10000);
+      if (!document.hidden) {
+        refreshData();
+      }
+    }, 15000);
     return () => clearInterval(syncInterval);
   }, []);
 

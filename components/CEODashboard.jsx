@@ -23,7 +23,8 @@ import {
   ArrowRight,
   BookOpen,
   Sparkles,
-  History
+  History,
+  Award
 } from 'lucide-react';
 import { sounds } from '../lib/audio';
 
@@ -365,9 +366,14 @@ export default function CEODashboard({
         const bookTasks = allCompanyTasks.filter(t => t.is_book_reading);
         const todayStrLocal = new Date().toISOString().split('T')[0];
         
+        let totalCompanyBooks = 0;
+        let totalCompanyCompleted = 0;
+        let totalCompanyInProgress = 0;
+        let totalCompanyPresented = 0;
+        let totalCompanyPages = 0;
+        let totalCompanyPagesRead = 0;
         let totalPagesReadToday = 0;
         let membersReadTodayCount = 0;
-        let totalCumulativePages = 0;
 
         const memberReadingData = users.map(user => {
           const task = bookTasks.find(t => t.assigned_to === user.id);
@@ -375,14 +381,31 @@ export default function CEODashboard({
           const todayLog = logs.find(l => l.date === todayStrLocal);
           const latestLog = logs[0] || null;
 
+          const booksList = Array.isArray(task?.books_list) ? task.books_list : [];
+          const totalBooks = Number(task?.book_stats?.total_books) || booksList.length || (task ? 1 : 0);
+          const completedBooks = Number(task?.book_stats?.completed) || booksList.filter(b => b.status === 'completed').length || (task?.status === 'completed' ? 1 : 0);
+          const inProgressBooks = Number(task?.book_stats?.in_progress) || booksList.filter(b => b.status === 'in_progress' || b.status !== 'completed').length || (task && task.status !== 'completed' ? 1 : 0);
+          const presentedBooks = Number(task?.book_stats?.books_presented) || booksList.filter(b => b.presented).length || 0;
           const totalPagesRead = Number(task?.book_stats?.total_pages_read) || 0;
           const totalPages = Number(task?.book_stats?.total_pages) || 0;
           
+          totalCompanyBooks += totalBooks;
+          totalCompanyCompleted += completedBooks;
+          totalCompanyInProgress += inProgressBooks;
+          totalCompanyPresented += presentedBooks;
+          totalCompanyPages += totalPages;
+          totalCompanyPagesRead += totalPagesRead;
+
           if (todayLog && todayLog.pages_read > 0) {
             totalPagesReadToday += Number(todayLog.pages_read);
             membersReadTodayCount++;
           }
-          totalCumulativePages += totalPagesRead;
+
+          const isAllCompleted = Boolean(
+            task?.status === 'completed' || 
+            (completedBooks > 0 && inProgressBooks === 0) || 
+            (totalPages > 0 && totalPagesRead >= totalPages)
+          );
 
           return {
             user,
@@ -390,49 +413,119 @@ export default function CEODashboard({
             logs,
             todayLog,
             latestLog,
+            totalBooks,
+            completedBooks,
+            inProgressBooks,
+            presentedBooks,
             totalPagesRead,
             totalPages,
-            booksList: task?.books_list || [],
+            booksList,
+            isAllCompleted,
             bookTitle: task?.title || 'No Book Selected',
             author: task?.description || '',
-            percent: totalPages > 0 ? Math.min(100, Math.round((totalPagesRead / totalPages) * 100)) : 0
+            percent: totalPages > 0 ? Math.min(100, Math.round((totalPagesRead / totalPages) * 100)) : (isAllCompleted ? 100 : 0)
           };
         });
+
+        const overallCompanyBookPercent = totalCompanyPages > 0 
+          ? Math.min(100, Math.round((totalCompanyPagesRead / totalCompanyPages) * 100)) 
+          : 0;
 
         return (
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-600 flex items-center justify-center font-bold">
+                <div className="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-600 flex items-center justify-center font-bold shadow-2xs">
                   <BookOpen className="w-4 h-4" />
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                    Team Daily Book Reading Tracker
-                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-indigo-600 text-white">
-                      Daily Activity
+                    Executive Book Reading & Learning Analytics
+                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-indigo-600 text-white shadow-2xs">
+                      Company Overview
                     </span>
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Track daily pages read, key learnings & book completion across all 9 team members.
+                    Track total books, reading completion, presentations & daily progress across all 9 members.
                   </p>
                 </div>
               </div>
 
-              {/* Summary Stats Badges */}
+              {/* Today's Velocity Badges */}
               <div className="flex items-center gap-2 flex-wrap text-xs font-bold">
-                <div className="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-1.5">
+                <div className="px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-1.5 shadow-2xs">
                   <span>⚡ Read Today:</span>
-                  <span className="font-black text-emerald-950">{membersReadTodayCount}/{users.length} Members</span>
+                  <span className="font-black text-emerald-950">{membersReadTodayCount}/{users.length} Active</span>
                 </div>
-                <div className="px-3 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-800 flex items-center gap-1.5">
-                  <span>📖 Today's Pages:</span>
+                <div className="px-3 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-800 flex items-center gap-1.5 shadow-2xs">
+                  <span>📖 Today's Output:</span>
                   <span className="font-black text-indigo-950">+{totalPagesReadToday} pgs</span>
                 </div>
-                <div className="px-3 py-1.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-800 flex items-center gap-1.5">
-                  <span>📚 Total Read:</span>
-                  <span className="font-black text-purple-950">{totalCumulativePages} pgs</span>
+              </div>
+            </div>
+
+            {/* 6 EXECUTIVE KPI CARDS FOR BOOK READING */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              {/* Total Books */}
+              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-indigo-50/80 to-slate-50 border border-indigo-100 shadow-2xs">
+                <div className="flex items-center justify-between text-indigo-600 mb-1">
+                  <span className="text-[10.5px] font-bold uppercase tracking-wider text-slate-500">Total Books</span>
+                  <BookOpen className="w-3.5 h-3.5" />
                 </div>
+                <div className="text-xl font-black text-slate-900">{totalCompanyBooks}</div>
+                <span className="text-[10px] text-slate-400 font-medium">In company queue</span>
+              </div>
+
+              {/* Completed */}
+              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-emerald-50/80 to-slate-50 border border-emerald-100 shadow-2xs">
+                <div className="flex items-center justify-between text-emerald-600 mb-1">
+                  <span className="text-[10.5px] font-bold uppercase tracking-wider text-slate-500">Completed</span>
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                </div>
+                <div className="text-xl font-black text-emerald-700">{totalCompanyCompleted}</div>
+                <span className="text-[10px] text-emerald-600 font-semibold">Fully finished</span>
+              </div>
+
+              {/* In Progress */}
+              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-blue-50/80 to-slate-50 border border-blue-100 shadow-2xs">
+                <div className="flex items-center justify-between text-blue-600 mb-1">
+                  <span className="text-[10.5px] font-bold uppercase tracking-wider text-slate-500">In Progress</span>
+                  <Clock className="w-3.5 h-3.5" />
+                </div>
+                <div className="text-xl font-black text-blue-700">{totalCompanyInProgress}</div>
+                <span className="text-[10px] text-blue-600 font-semibold">Being read now</span>
+              </div>
+
+              {/* Books Presented */}
+              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-purple-50/80 to-slate-50 border border-purple-100 shadow-2xs">
+                <div className="flex items-center justify-between text-purple-600 mb-1">
+                  <span className="text-[10.5px] font-bold uppercase tracking-wider text-slate-500">Presented</span>
+                  <Award className="w-3.5 h-3.5" />
+                </div>
+                <div className="text-xl font-black text-purple-700">{totalCompanyPresented}</div>
+                <span className="text-[10px] text-purple-600 font-semibold">Shared with team</span>
+              </div>
+
+              {/* Total Pages */}
+              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-amber-50/80 to-slate-50 border border-amber-100 shadow-2xs">
+                <div className="flex items-center justify-between text-amber-600 mb-1">
+                  <span className="text-[10.5px] font-bold uppercase tracking-wider text-slate-500">Total Pages</span>
+                  <Layers className="w-3.5 h-3.5" />
+                </div>
+                <div className="text-xl font-black text-amber-800">{totalCompanyPages.toLocaleString()}</div>
+                <span className="text-[10px] text-slate-400 font-medium">Total volume</span>
+              </div>
+
+              {/* Total Pages Read */}
+              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-teal-50/80 to-slate-50 border border-teal-100 shadow-2xs">
+                <div className="flex items-center justify-between text-teal-600 mb-1">
+                  <span className="text-[10.5px] font-bold uppercase tracking-wider text-slate-500">Pages Read</span>
+                  <TrendingUp className="w-3.5 h-3.5" />
+                </div>
+                <div className="text-xl font-black text-teal-700">
+                  {totalCompanyPagesRead.toLocaleString()}
+                </div>
+                <span className="text-[10px] text-teal-600 font-bold">{overallCompanyBookPercent}% read so far</span>
               </div>
             </div>
 
@@ -443,10 +536,14 @@ export default function CEODashboard({
                   <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold">
                     <th className="py-3 px-4">Team Member</th>
                     <th className="py-3 px-4">Current Book & Author</th>
-                    <th className="py-3 px-4">Today's Reading Status</th>
-                    <th className="py-3 px-4">Overall Progress</th>
-                    <th className="py-3 px-4">Latest Insights / Key Learnings</th>
-                    <th className="py-3 px-4 text-right">History</th>
+                    <th className="py-3 px-3 text-center">Total Books</th>
+                    <th className="py-3 px-3 text-center">Completed</th>
+                    <th className="py-3 px-3 text-center">In Progress</th>
+                    <th className="py-3 px-3 text-center">Presented</th>
+                    <th className="py-3 px-4">Today's Status</th>
+                    <th className="py-3 px-4">Total Progress</th>
+                    <th className="py-3 px-4">Latest Insights</th>
+                    <th className="py-3 px-4 text-right">Timeline</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -469,7 +566,7 @@ export default function CEODashboard({
                       </td>
 
                       {/* Current Book & Author */}
-                      <td className="py-3 px-4 max-w-[200px]">
+                      <td className="py-3 px-4 max-w-[180px]">
                         <div className="font-bold text-indigo-950 truncate" title={item.bookTitle}>
                           {item.bookTitle}
                         </div>
@@ -480,25 +577,62 @@ export default function CEODashboard({
                         )}
                       </td>
 
+                      {/* Total Books */}
+                      <td className="py-3 px-3 text-center font-bold text-slate-800">
+                        <span className="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200">
+                          {item.totalBooks}
+                        </span>
+                      </td>
+
+                      {/* Completed Books */}
+                      <td className="py-3 px-3 text-center font-bold text-emerald-700">
+                        <span className="px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200">
+                          {item.completedBooks}
+                        </span>
+                      </td>
+
+                      {/* In Progress Books */}
+                      <td className="py-3 px-3 text-center font-bold text-blue-700">
+                        <span className="px-2 py-0.5 rounded-md bg-blue-50 border border-blue-200">
+                          {item.inProgressBooks}
+                        </span>
+                      </td>
+
+                      {/* Presented */}
+                      <td className="py-3 px-3 text-center font-bold text-purple-700">
+                        <span className="px-2 py-0.5 rounded-md bg-purple-50 border border-purple-200">
+                          {item.presentedBooks}
+                        </span>
+                      </td>
+
                       {/* Today's Reading Status */}
                       <td className="py-3 px-4 whitespace-nowrap">
                         {item.todayLog ? (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-900 font-black text-xs border border-emerald-300 shadow-2xs">
                             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
-                            +{item.todayLog.pages_read} pages read
+                            +{item.todayLog.pages_read} pgs
+                          </span>
+                        ) : item.isAllCompleted ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 font-bold text-xs border border-emerald-200">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                            Book Completed
+                          </span>
+                        ) : !item.task || item.totalBooks === 0 ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-50 text-slate-400 font-medium text-xs border border-slate-200">
+                            ⚪ No Active Book
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 font-bold text-xs border border-amber-200">
-                            ⏳ No log yet today
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 font-bold text-xs border border-amber-200">
+                            ⏳ Pending Today
                           </span>
                         )}
                       </td>
 
                       {/* Overall Progress */}
-                      <td className="py-3 px-4 min-w-[140px]">
+                      <td className="py-3 px-4 min-w-[130px]">
                         <div className="flex items-center justify-between text-[11px] font-bold text-slate-700 mb-1">
                           <span>{item.totalPagesRead} / {item.totalPages || '—'} pgs</span>
-                          <span className="text-indigo-600">{item.percent}%</span>
+                          <span className="text-indigo-600 font-black">{item.percent}%</span>
                         </div>
                         <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200/60">
                           <div
@@ -509,9 +643,9 @@ export default function CEODashboard({
                       </td>
 
                       {/* Latest Insights / Learnings */}
-                      <td className="py-3 px-4 max-w-xs">
+                      <td className="py-3 px-4 max-w-[160px]">
                         {item.latestLog?.takeaways ? (
-                          <p className="text-[11px] text-slate-700 bg-slate-50 p-1.5 rounded-lg border border-slate-200/70 italic line-clamp-2">
+                          <p className="text-[11px] text-slate-700 bg-slate-50 p-1.5 rounded-lg border border-slate-200/70 italic line-clamp-2" title={item.latestLog.takeaways}>
                             "{item.latestLog.takeaways}"
                           </p>
                         ) : (

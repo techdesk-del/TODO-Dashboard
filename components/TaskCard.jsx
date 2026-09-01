@@ -21,6 +21,7 @@ import DailyReadingModal from './DailyReadingModal';
 
 export default function TaskCard({ 
   task, 
+  itemNumber,
   onStatusChange, 
   onEditTask, 
   onDeleteTask,
@@ -129,6 +130,12 @@ export default function TaskCard({
         <div className="flex items-center gap-1.5 flex-wrap min-w-0">
           <GripVertical className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-500 transition-colors shrink-0" />
           
+          {itemNumber && (
+            <span className="w-5 h-5 rounded-md bg-slate-100 border border-slate-300/80 font-black text-slate-700 flex items-center justify-center text-[10px] shrink-0 shadow-2xs">
+              {itemNumber}
+            </span>
+          )}
+
           <span className={`text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md inline-flex items-center h-5 ${
             task.priority === 'urgent' ? 'badge-urgent' :
             task.priority === 'high' ? 'badge-high' :
@@ -170,13 +177,11 @@ export default function TaskCard({
         </div>
       </div>
 
-      {/* Main Task Content Area */}
-      <div className="flex-1 flex flex-col justify-start mb-2.5">
-        <div className="flex items-start gap-2.5">
-          <button
+        {/* Task Title & Details */}
+        <div className="flex items-start gap-2 pt-0.5">
+          <button 
             onClick={handleToggleComplete}
-            title={isCompleted ? "Mark as Incomplete" : "Mark as Completed"}
-            className={`w-5 h-5 min-w-[20px] max-w-[20px] rounded-lg border flex items-center justify-center shrink-0 mt-0.5 transition-all cursor-pointer ${
+            className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center transition-all shrink-0 cursor-pointer ${
               isCompleted 
                 ? 'bg-emerald-600 border-emerald-600 text-white shadow-xs' 
                 : 'border-slate-300 hover:border-blue-500 text-transparent hover:text-blue-400 bg-white'
@@ -188,7 +193,7 @@ export default function TaskCard({
           <div className="flex-1 min-w-0">
             {task.is_book_reading && (
               <span className="text-[9.5px] font-extrabold uppercase tracking-wide text-indigo-600 mb-0.5 flex items-center gap-1">
-                <BookOpen className="w-3 h-3 text-indigo-600" /> Book Title:
+                <BookOpen className="w-3 h-3 text-indigo-600" /> Book Reading Library
               </span>
             )}
             <h4 className={`text-xs font-bold leading-snug break-words ${
@@ -196,11 +201,9 @@ export default function TaskCard({
             }`}>
               {task.title}
             </h4>
-            {task.description && (
-              <p className={`text-[11px] mt-1 line-clamp-2 leading-relaxed break-words ${
-                task.is_book_reading ? 'text-indigo-700 font-semibold' : 'text-slate-500'
-              }`}>
-                {task.is_book_reading ? `✍️ Author: ${task.description}` : task.description}
+            {task.description && !task.is_book_reading && (
+              <p className="text-[11px] mt-1 line-clamp-2 leading-relaxed text-slate-500 break-words">
+                {task.description}
               </p>
             )}
           </div>
@@ -208,7 +211,7 @@ export default function TaskCard({
 
         {/* Tags (Only for regular tasks) */}
         {!task.is_book_reading && Array.isArray(task.tags) && task.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-2">
+          <div className="flex flex-wrap gap-1 mt-1">
             {task.tags.map((tag, idx) => (
               <span 
                 key={idx} 
@@ -220,207 +223,87 @@ export default function TaskCard({
           </div>
         )}
 
-        {/* Book Reading Executive Showcase & Metrics Grid */}
+        {/* Book Reading Clean Point-by-Point Section */}
         {task.is_book_reading && (() => {
           const stats = task.book_stats || {};
           const readPages = Number(stats.total_pages_read) || 0;
           const totalPages = Number(stats.total_pages) || 0;
           const pagesPercent = totalPages > 0 ? Math.min(100, Math.round((readPages / totalPages) * 100)) : 0;
-          const booksDone = Number(stats.completed) || 0;
-          const booksTotal = Number(stats.total_books) || 0;
-          const booksPercent = booksTotal > 0 ? Math.min(100, Math.round((booksDone / booksTotal) * 100)) : 0;
+          const booksList = Array.isArray(task.books_list) && task.books_list.length > 0 
+            ? task.books_list 
+            : [{ title: task.title, author: task.description, total_pages: totalPages, pages_read: readPages, status: task.status }];
 
           return (
-            <div className="mt-2.5 p-3 rounded-2xl bg-gradient-to-br from-indigo-50/90 via-slate-50 to-purple-50/60 border border-indigo-200/80 shadow-2xs space-y-3">
+            <div className="mt-2 p-2.5 rounded-xl bg-slate-50 border border-indigo-100 space-y-2 text-xs">
               
-              {/* Reading Progress Bar Section */}
-              <div className="bg-white/95 p-2.5 rounded-xl border border-indigo-100 shadow-2xs space-y-1.5">
-                <div className="flex items-center justify-between text-[10.5px]">
-                  <span className="font-extrabold text-indigo-950 flex items-center gap-1.5">
-                    <BookOpen className="w-3.5 h-3.5 text-indigo-600" />
-                    Reading Progress
-                  </span>
-                  <span className="font-extrabold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200/60">
-                    {pagesPercent}%
-                  </span>
-                </div>
+              {/* Point 1, Point 2 Book List */}
+              <div className="space-y-1.5">
+                {booksList.map((b, i) => {
+                  const bP = Number(b.total_pages) || 0;
+                  const bR = Number(b.pages_read) || 0;
+                  const pct = bP > 0 ? Math.min(100, Math.round((bR / bP) * 100)) : 0;
+                  const isDone = b.status === 'completed';
 
-                {/* Progress Bar */}
-                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200/60 p-0.5">
-                  <div 
-                    className="h-full bg-gradient-to-r from-indigo-500 via-blue-500 to-emerald-500 rounded-full transition-all duration-500"
-                    style={{ width: `${Math.max(pagesPercent, totalPages > 0 ? 3 : 0)}%` }}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between text-[10px] text-slate-500 font-medium pt-0.5">
-                  <span>📄 <strong>{readPages}</strong> of {totalPages || '—'} pages</span>
-                  <span>📚 <strong>{booksDone}</strong> of {booksTotal || '—'} books</span>
-                </div>
-              </div>
-
-              {/* 4 Clean Executive Metric Tiles (2x2 Grid with full readability) */}
-              <div className="grid grid-cols-2 gap-2">
-                {/* 1. Total Books */}
-                <div className="bg-white/95 rounded-xl p-2 border border-indigo-100 shadow-2xs flex items-center justify-between">
-                  <div className="min-w-0">
-                    <span className="text-[10px] font-bold text-slate-500 block">Total Books</span>
-                    <span className="text-sm font-black text-slate-900 mt-0.5 block">{stats.total_books ?? 0}</span>
-                  </div>
-                  <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-xs shrink-0">
-                    📚
-                  </div>
-                </div>
-
-                {/* 2. In Progress */}
-                <div className="bg-white/95 rounded-xl p-2 border border-blue-100 shadow-2xs flex items-center justify-between">
-                  <div className="min-w-0">
-                    <span className="text-[10px] font-bold text-blue-700 block">In Progress</span>
-                    <span className="text-sm font-black text-blue-800 mt-0.5 block">{stats.in_progress ?? 0}</span>
-                  </div>
-                  <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs shrink-0">
-                    📖
-                  </div>
-                </div>
-
-                {/* 3. Completed */}
-                <div className="bg-white/95 rounded-xl p-2 border border-emerald-100 shadow-2xs flex items-center justify-between">
-                  <div className="min-w-0">
-                    <span className="text-[10px] font-bold text-emerald-700 block">Completed</span>
-                    <span className="text-sm font-black text-emerald-800 mt-0.5 block">{stats.completed ?? 0}</span>
-                  </div>
-                  <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs shrink-0">
-                    ✅
-                  </div>
-                </div>
-
-                {/* 4. Books Presented */}
-                <div className="bg-white/95 rounded-xl p-2 border border-purple-100 shadow-2xs flex items-center justify-between">
-                  <div className="min-w-0">
-                    <span className="text-[10px] font-bold text-purple-700 block">Presented</span>
-                    <span className="text-sm font-black text-purple-800 mt-0.5 block">{stats.books_presented ?? 0}</span>
-                  </div>
-                  <div className="w-7 h-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-xs shrink-0">
-                    🎤
-                  </div>
-                </div>
-              </div>
-
-              {/* Multi-Book Library Showcase (Book 1, Book 2, Book 3...) */}
-              {Array.isArray(task.books_list) && task.books_list.length > 0 && (
-                <div className="bg-white/95 rounded-xl p-2.5 border border-indigo-100 shadow-2xs space-y-2">
-                  <div className="flex items-center justify-between text-[10px]">
-                    <span className="font-extrabold text-indigo-950 flex items-center gap-1">
-                      📚 My Books ({task.books_list.length})
-                    </span>
-                    <span className="text-slate-400 font-medium">
-                      Individual Book Stats
-                    </span>
-                  </div>
-
-                  <div className="space-y-1.5 max-h-36 overflow-y-auto pr-0.5">
-                    {task.books_list.map((b, i) => {
-                      const bPages = Number(b.total_pages) || 0;
-                      const bRead = Number(b.pages_read) || 0;
-                      const bPct = bPages > 0 ? Math.min(100, Math.round((bRead / bPages) * 100)) : 0;
-                      const isDone = b.status === 'completed';
-
-                      return (
-                        <div key={b.id || i} className="p-1.5 rounded-lg bg-slate-50 border border-slate-200/80 text-[10px] space-y-1">
-                          <div className="flex items-center justify-between gap-1">
-                            <span className="font-bold text-slate-800 truncate">
-                              #{i + 1} {b.title || 'Untitled Book'}
-                            </span>
-                            <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold shrink-0 ${
-                              isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'
-                            }`}>
-                              {isDone ? 'Completed' : 'In Progress'}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center justify-between text-[9.5px] text-slate-500 gap-1">
-                            {b.author && (
-                              <span className="truncate">✍️ {b.author}</span>
-                            )}
-                            {(b.start_date || b.target_date) && (
-                              <span className="font-semibold text-slate-400 shrink-0 flex items-center gap-0.5">
-                                📅 {b.start_date ? b.start_date.split('-').slice(1).join('/') : ''}{b.start_date && b.target_date ? ' → ' : ''}{b.target_date ? b.target_date.split('-').slice(1).join('/') : ''}
-                              </span>
-                            )}
-                          </div>
-
-                          {bPages > 0 && (
-                            <div className="flex items-center gap-1.5 pt-0.5">
-                              <div className="flex-1 bg-slate-200 h-1 rounded-full overflow-hidden">
-                                <div 
-                                  className={`h-full rounded-full ${isDone ? 'bg-emerald-500' : 'bg-indigo-600'}`}
-                                  style={{ width: `${bPct}%` }}
-                                />
-                              </div>
-                              <span className="text-[9px] text-slate-500 font-bold shrink-0">
-                                {bRead}/{bPages} ({bPct}%)
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Latest Daily Check-in Note (if exists) */}
-              {Array.isArray(task.reading_logs) && task.reading_logs.length > 0 && (() => {
-                const latest = task.reading_logs[0];
-                return (
-                  <div className="p-2 rounded-xl bg-indigo-50/70 border border-indigo-100/90 text-[10px] text-indigo-900 flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 truncate">
-                      <span className="font-extrabold flex items-center gap-1 shrink-0">
-                        <Calendar className="w-3 h-3 text-indigo-600" />
-                        {latest.date}:
-                      </span>
-                      <span className="font-black text-indigo-700 bg-white px-1.5 py-0.5 rounded shadow-2xs">
-                        +{latest.pages_read} pgs
-                      </span>
-                      {latest.takeaways && (
-                        <span className="text-slate-600 truncate italic">
-                          "{latest.takeaways}"
+                  return (
+                    <div key={b.id || i} className="p-2 rounded-lg bg-white border border-slate-200/90 shadow-2xs space-y-1">
+                      <div className="flex items-center justify-between gap-1 text-[11px]">
+                        <span className="font-bold text-slate-900 truncate flex items-center gap-1">
+                          <span className="text-indigo-600 font-black">{i + 1}.</span> {b.title || 'Untitled Book'}
                         </span>
+                        <span className={`px-1.5 py-0.2 rounded text-[9px] font-extrabold shrink-0 ${
+                          isDone ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {isDone ? 'Completed' : 'In Progress'}
+                        </span>
+                      </div>
+
+                      {b.author && (
+                        <div className="text-[10px] text-slate-500 truncate">
+                          ✍️ {b.author}
+                        </div>
+                      )}
+
+                      {/* Progress Bar for Book */}
+                      {bP > 0 && (
+                        <div className="flex items-center gap-1.5 pt-0.5">
+                          <div className="flex-1 bg-slate-100 h-1.5 rounded-full overflow-hidden border border-slate-200/60">
+                            <div 
+                              className={`h-full rounded-full ${isDone ? 'bg-emerald-500' : 'bg-indigo-600'}`}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                          <span className="text-[9.5px] font-bold text-slate-600 shrink-0">
+                            {bR}/{bP} pgs ({pct}%)
+                          </span>
+                        </div>
                       )}
                     </div>
-                  </div>
-                );
-              })()}
+                  );
+                })}
+              </div>
 
-              {/* Action Buttons Row */}
-              <div className="grid grid-cols-2 gap-2 pt-0.5">
-                {/* 1. Log Daily Pages Button */}
+              {/* Cumulative Progress & Manage Button Bar */}
+              <div className="pt-1 flex items-center justify-between text-[10px] border-t border-slate-200/80">
+                <span className="font-extrabold text-indigo-950">
+                  Total: {readPages}/{totalPages || '—'} pgs ({pagesPercent}%)
+                </span>
                 <button
                   type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsDailyLogOpen(true);
-                  }}
-                  className="py-1.5 px-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white text-[10.5px] font-bold shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  onClick={(e) => { e.stopPropagation(); onEditTask(task); }}
+                  className="px-2 py-0.5 rounded-md bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold border border-indigo-200 transition-colors cursor-pointer"
                 >
-                  <Sparkles className="w-3 h-3" />
-                  <span>Log Daily Pages</span>
-                </button>
-
-                {/* 2. Edit Book Details */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEditTask(task);
-                  }}
-                  className="py-1.5 px-2.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 active:scale-[0.98] text-[10.5px] font-bold shadow-2xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <Edit2 className="w-3 h-3 text-slate-500" />
-                  <span>Manage Books ({task.books_list?.length || 1})</span>
+                  Manage Books ({booksList.length})
                 </button>
               </div>
 
+              {/* Daily Log Button */}
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setIsDailyLogOpen(true); }}
+                className="w-full py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10.5px] flex items-center justify-center gap-1.5 shadow-2xs transition-all active:scale-98 cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" /> Log Today's Reading
+              </button>
             </div>
           );
         })()}
@@ -474,7 +357,6 @@ export default function TaskCard({
             )}
           </div>
         )}
-      </div>
 
       {/* Footer Row */}
       <div className="mt-auto pt-2 border-t border-slate-100 flex items-center justify-between gap-2 h-7">
