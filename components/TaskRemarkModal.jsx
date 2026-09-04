@@ -62,34 +62,28 @@ export default function TaskRemarkModal({
     { label: '🚀 Deployed', text: '🚀 Changes deployed to staging / production environment.' }
   ];
 
+  const submittingLockRef = React.useRef(false);
+
   const handleSubmit = async (e) => {
-    if (e) e.preventDefault();
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     const cleanText = remarkText.trim();
-    if (!cleanText || isSubmitting || !activeTask) return;
+    if (!cleanText || isSubmitting || submittingLockRef.current || !activeTask) return;
 
-    // 1. Instant 0ms Optimistic local insert into remarks list
-    const tempId = 'rem_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4);
-    const newRemark = {
-      id: tempId,
-      text: cleanText,
-      author_id: currentUser?.id || 'usr_unknown',
-      author_name: currentUser?.name || 'Team Member',
-      author_avatar: currentUser?.avatar || currentUser?.name?.substring(0, 2).toUpperCase() || '??',
-      author_color: currentUser?.color || '#6366f1',
-      created_at: new Date().toISOString()
-    };
-
-    setRemarksList(prev => [newRemark, ...prev]);
+    submittingLockRef.current = true;
+    setIsSubmitting(true);
     setRemarkText('');
     sounds.playClick();
 
     try {
-      setIsSubmitting(true);
       await onSaveRemark(activeTask.id, cleanText);
     } catch (err) {
       console.error('Error saving remark:', err);
     } finally {
       setIsSubmitting(false);
+      submittingLockRef.current = false;
     }
   };
 
@@ -318,11 +312,14 @@ export default function TaskRemarkModal({
             <button
               key={pIdx}
               type="button"
-              onClick={() => {
+              disabled={isSubmitting}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 sounds.playClick();
                 setRemarkText(preset.text);
               }}
-              className="px-2.5 py-1 rounded-lg bg-white hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-300 border border-slate-200 text-slate-600 font-semibold text-[10.5px] shrink-0 transition-all cursor-pointer shadow-2xs active:scale-95"
+              className="px-2.5 py-1 rounded-lg bg-white hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-300 border border-slate-200 text-slate-600 font-semibold text-[10.5px] shrink-0 transition-all cursor-pointer shadow-2xs active:scale-95 disabled:opacity-50"
             >
               {preset.label}
             </button>

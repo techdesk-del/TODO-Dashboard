@@ -11,9 +11,13 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, error: 'User ID is required' });
     }
 
-    const result = await dbHelpers.verifyPin(userId, pin);
+    const clientIp = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '127.0.0.1';
+    const result = await dbHelpers.verifyPin(userId, pin, clientIp);
     if (result.success) {
       return res.status(200).json(result);
+    } else if (result.rateLimited) {
+      res.setHeader('Retry-After', String(result.remainingSec || 60));
+      return res.status(429).json(result);
     } else {
       return res.status(401).json(result);
     }

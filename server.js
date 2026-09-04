@@ -2,7 +2,17 @@ const { createServer } = require('http');
 const { parse } = require('url');
 const next = require('next');
 const { Server } = require('socket.io');
+const zlib = require('zlib');
 const { dbHelpers } = require('./lib/db');
+
+// Global Enterprise Process Crash Guards
+process.on('uncaughtException', (err) => {
+  console.error('🛡️ [SERVER CRASH GUARD] Uncaught Exception caught safely:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('🛡️ [SERVER CRASH GUARD] Unhandled Rejection caught safely:', reason);
+});
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = 'localhost';
@@ -20,10 +30,49 @@ app.prepare().then(async () => {
       const parsedUrl = parse(req.url, true);
       const { pathname, query } = parsedUrl;
 
-      // Handle JSON Body parsing helper
+      // Baseline Enterprise Security Headers on all HTTP responses
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+      res.setHeader('X-XSS-Protection', '1; mode=block');
+      res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+      res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+
+      // High-Performance Stream Gzip Compressor for JSON Responses
+      const sendJsonResponse = (statusCode, data) => {
+        const payloadStr = JSON.stringify(data);
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.statusCode = statusCode;
+
+        const acceptEncoding = req.headers['accept-encoding'] || '';
+        if (acceptEncoding.includes('gzip') && payloadStr.length > 1024) {
+          try {
+            const compressed = zlib.gzipSync(Buffer.from(payloadStr));
+            res.setHeader('Content-Encoding', 'gzip');
+            res.setHeader('Vary', 'Accept-Encoding');
+            res.end(compressed);
+            return;
+          } catch (e) {}
+        }
+        res.end(payloadStr);
+      };
+
+      // Protected JSON Body Parser with 1MB Payload DOS Shield
       const parseBody = () => new Promise((resolve) => {
         let body = '';
-        req.on('data', chunk => { body += chunk; });
+        let totalBytes = 0;
+        const MAX_BYTES = 1024 * 1024; // 1 MB limit
+
+        req.on('data', chunk => {
+          totalBytes += chunk.length;
+          if (totalBytes > MAX_BYTES) {
+            req.destroy();
+            res.statusCode = 413;
+            res.end(JSON.stringify({ error: 'Payload exceeds 1MB limit' }));
+            return;
+          }
+          body += chunk;
+        });
+
         req.on('end', () => {
           try {
             resolve(JSON.parse(body || '{}'));
@@ -33,50 +82,46 @@ app.prepare().then(async () => {
         });
       });
 
-      // Auth: Login Endpoint with PIN
+      // Auth: Login Endpoint with Sliding-Window Rate Limiting
       if (pathname === '/api/auth/login' && req.method === 'POST') {
+        const clientIp = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '127.0.0.1';
         const { userId, pin } = await parseBody();
-        const result = await dbHelpers.verifyPin(userId, pin);
-        res.setHeader('Content-Type', 'application/json');
+        const result = await dbHelpers.verifyPin(userId, pin, clientIp);
         if (result.success) {
-          res.statusCode = 200;
-          res.end(JSON.stringify(result));
+          sendJsonResponse(200, result);
+        } else if (result.rateLimited) {
+          res.setHeader('Retry-After', String(result.remainingSec || 60));
+          sendJsonResponse(429, result);
         } else {
-          res.statusCode = 401;
-          res.end(JSON.stringify(result));
+          sendJsonResponse(401, result);
         }
         return;
       }
 
-      // Direct REST endpoints
+      // Direct High-Speed Gzip-Compressed REST endpoints
       if (pathname === '/api/users' && req.method === 'GET') {
         const users = await dbHelpers.getUsers();
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify(users));
+        sendJsonResponse(200, users);
         return;
       }
       if (pathname === '/api/tasks' && req.method === 'GET') {
         const tasks = await dbHelpers.getTasks(query);
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify(tasks));
+        sendJsonResponse(200, tasks);
         return;
       }
       if (pathname === '/api/overview' && req.method === 'GET') {
         const overview = await dbHelpers.getCompanyOverview();
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify(overview));
+        sendJsonResponse(200, overview);
         return;
       }
       if (pathname === '/api/eod-reports' && req.method === 'GET') {
         const reports = await dbHelpers.getEodReports(query);
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify(reports));
+        sendJsonResponse(200, reports);
         return;
       }
       if (pathname === '/api/activity' && req.method === 'GET') {
         const logs = await dbHelpers.getActivityLogs();
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify(logs));
+        sendJsonResponse(200, logs);
         return;
       }
 
@@ -88,8 +133,11 @@ app.prepare().then(async () => {
     }
   });
 
-  // Attach Socket.IO
+  // Attach Socket.IO with Concurrency Hardening
   const io = new Server(server, {
+    pingTimeout: 20000,
+    pingInterval: 10000,
+    maxHttpBufferSize: 1e6,
     cors: {
       origin: '*',
       methods: ['GET', 'POST']

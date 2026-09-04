@@ -62,17 +62,11 @@ export default function TopNavbar({
   };
 
   return (
-    <header className="bg-white border-b border-slate-200 px-6 py-3 sticky top-0 z-40 flex items-center justify-between gap-4 shadow-sm select-none">
+    <header className="bg-white border-b border-slate-200 px-4 sm:px-6 py-2.5 sticky top-0 z-40 flex items-center justify-between gap-4 sm:gap-8 shadow-xs select-none">
       
-      {/* Left: Tasks Count, View Mode Switch & Global Search */}
-      <div className="flex items-center gap-3 flex-1 max-w-2xl">
+      {/* Left: View Mode Switch & Fixed-Width Search Bar */}
+      <div className="flex items-center gap-3 shrink-0">
         
-        {/* Count Pill */}
-        <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700 shrink-0">
-          <FolderGit2 className="w-3.5 h-3.5 text-blue-600" />
-          <span>Tasks: {totalTasks}</span>
-        </div>
-
         {/* View Mode Toggle: [ Kanban Board | 📅 Sprint Calendar ] */}
         {setViewMode && (
           <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 shrink-0">
@@ -85,7 +79,7 @@ export default function TopNavbar({
               }`}
             >
               <Layers className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Kanban</span>
+              <span className="hidden sm:inline">Kanban</span>
             </button>
 
             <button
@@ -97,74 +91,79 @@ export default function TopNavbar({
               }`}
             >
               <Calendar className="w-3.5 h-3.5 text-blue-600" />
-              <span className="hidden md:inline">Calendar</span>
+              <span className="hidden sm:inline">Calendar</span>
             </button>
           </div>
         )}
 
-        {/* Global Search Bar */}
-        <div className="relative flex-1">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+        {/* Global Search Bar (Dedicated, Non-Collapsing Width) */}
+        <div className="relative w-52 sm:w-64 md:w-72 lg:w-80 shrink-0">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
-            placeholder="Search tasks, tags, status..."
+            placeholder="Search tasks, members..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-12 py-2 text-xs font-medium rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white transition-all"
+            className="w-full pl-9 pr-12 py-1.5 text-xs font-medium rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white transition-all shadow-2xs"
           />
-          <span className="hidden sm:inline-block absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 border border-slate-200 px-1.5 py-0.5 rounded bg-white font-mono">
+          <span className="hidden sm:inline-block absolute right-2.5 top-1/2 -translate-y-1/2 text-[9.5px] font-bold text-slate-400 border border-slate-200 px-1.5 py-0.5 rounded bg-white font-mono pointer-events-none">
             ⌘K
           </span>
         </div>
 
       </div>
 
-      {/* Right: Actions, Live Badge & Notification Center */}
-      <div className="flex items-center gap-3">
+      {/* Right: Actions, Live Badge & Notification Center (Pushed to the right with ml-auto) */}
+      <div className="flex items-center gap-2.5 shrink-0 ml-auto">
         
-        {/* + EOD Checkout */}
+        {/* + EOD Checkout (Green Button - Clean, Distinct, Protected) */}
         <button
           onClick={() => { sounds.playClick(); openEODModal(); }}
-          className={`hidden md:flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition-all active:scale-95 cursor-pointer ${
+          className={`flex items-center gap-1.5 px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold shadow-xs transition-all active:scale-95 cursor-pointer shrink-0 whitespace-nowrap ${
             eodSubmittedToday
               ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-              : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+              : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/20'
           }`}
+          title="Submit End of Day Checkout"
         >
+          <Clock className="w-3.5 h-3.5 shrink-0" />
           <span>{eodSubmittedToday ? '✓ EOD Logged' : '+ EOD Checkout'}</span>
         </button>
 
         {/* + New Task */}
         <button
           onClick={() => { sounds.playClick(); openNewTaskModal(); }}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-500/20 transition-all active:scale-95 cursor-pointer"
+          className="flex items-center gap-1.5 px-3.5 py-1.5 sm:py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm shadow-blue-500/20 transition-all active:scale-95 cursor-pointer shrink-0 whitespace-nowrap"
         >
           <Plus className="w-4 h-4 stroke-[3]" />
           <span>New Task</span>
         </button>
 
         {/* Live Pulse Indicator Badge */}
-        <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>Real-Time Sync</span>
+        <div 
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold shrink-0"
+          title="Connected: Real-Time Sync Active"
+        >
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+          <span className="hidden 2xl:inline">Real-Time Sync</span>
         </div>
 
         {/* Locked Logged-in User Badge */}
         <div 
-          className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200"
-          title={`Authenticated as ${currentUser?.name}`}
+          className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-slate-100 border border-slate-200 shrink-0"
+          title={`Authenticated as ${currentUser?.name} (${isAakash ? 'Admin' : 'Member'})`}
         >
           <div 
-            className="w-6 h-6 rounded-md flex items-center justify-center font-bold text-[10px] text-white shadow-sm"
+            className="w-6 h-6 rounded-md flex items-center justify-center font-bold text-[10px] text-white shadow-xs shrink-0"
             style={{ backgroundColor: currentUser?.color || '#2563eb' }}
           >
             {currentUser?.avatar || '??'}
           </div>
-          <span className="text-xs font-bold text-slate-800 hidden sm:inline-block max-w-[120px] truncate">
+          <span className="text-xs font-bold text-slate-800 hidden 2xl:inline max-w-[100px] truncate">
             {currentUser?.name}
           </span>
           {isAakash && (
-            <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-extrabold border border-amber-200">
+            <span className="text-[9px] px-1 py-0.2 rounded bg-amber-100 text-amber-800 font-extrabold border border-amber-200 shrink-0 hidden 2xl:inline">
               Admin
             </span>
           )}
