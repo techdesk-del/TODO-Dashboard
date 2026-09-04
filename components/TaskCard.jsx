@@ -13,7 +13,8 @@ import {
   ChevronUp,
   BookOpen,
   Sparkles,
-  Plus
+  Plus,
+  MessageSquare
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { sounds } from '../lib/audio';
@@ -25,7 +26,8 @@ export default function TaskCard({
   onStatusChange, 
   onEditTask, 
   onDeleteTask,
-  onLogDailyReading
+  onLogDailyReading,
+  onOpenRemarkModal
 }) {
   const [showSubtasks, setShowSubtasks] = useState(false);
   const [isDailyLogOpen, setIsDailyLogOpen] = useState(false);
@@ -161,6 +163,18 @@ export default function TaskCard({
         {/* Action icons */}
         <div className="flex items-center gap-0.5 shrink-0 opacity-80 group-hover:opacity-100 transition-opacity">
           <button
+            onClick={() => { sounds.playClick(); onOpenRemarkModal && onOpenRemarkModal(task); }}
+            title={task.remarks?.length > 0 ? `${task.remarks.length} Remark(s)` : 'Add Remark'}
+            className={`h-6 px-1.5 rounded-lg flex items-center gap-1 transition-all cursor-pointer ${
+              task.remarks?.length > 0 
+                ? 'bg-indigo-50 text-indigo-700 font-bold text-[10px] border border-indigo-200' 
+                : 'w-6 justify-center text-slate-400 hover:text-indigo-600 hover:bg-slate-100'
+            }`}
+          >
+            <MessageSquare className="w-3 h-3 text-indigo-600" />
+            {task.remarks?.length > 0 && <span>{task.remarks.length}</span>}
+          </button>
+          <button
             onClick={() => onEditTask(task)}
             title="Edit Task"
             className="w-6 h-6 rounded-lg flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-slate-100 transition-all cursor-pointer"
@@ -205,6 +219,34 @@ export default function TaskCard({
               <p className="text-[11px] mt-1 line-clamp-2 leading-relaxed text-slate-500 break-words">
                 {task.description}
               </p>
+            )}
+
+            {/* Latest Remark Snippet */}
+            {(task.latest_remark || task.remarks?.[0]?.text) && (
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  sounds.playClick();
+                  if (onOpenRemarkModal) onOpenRemarkModal(task);
+                }}
+                className="mt-1.5 p-1.5 rounded-lg bg-indigo-50/70 hover:bg-indigo-50 border border-indigo-100/90 text-[10px] text-indigo-950 flex items-start gap-1.5 cursor-pointer transition-colors"
+                title="Click to view/add remarks"
+              >
+                <MessageSquare className="w-3 h-3 text-indigo-600 shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <span className="font-extrabold text-indigo-700 mr-1">
+                    {task.remarks?.[0]?.author_name ? `${task.remarks[0].author_name}:` : 'Remark:'}
+                  </span>
+                  <span className="text-slate-700 italic truncate inline-block max-w-full">
+                    "{task.latest_remark || task.remarks?.[0]?.text}"
+                  </span>
+                </div>
+                {task.remarks?.length > 1 && (
+                  <span className="px-1 py-0.2 rounded bg-indigo-200/70 text-[8.5px] font-black text-indigo-900 shrink-0">
+                    +{task.remarks.length - 1}
+                  </span>
+                )}
+              </div>
             )}
           </div>
         </div>

@@ -6,7 +6,8 @@ import {
   Calendar, 
   User, 
   Save,
-  BookOpen
+  BookOpen,
+  MessageSquare
 } from 'lucide-react';
 import { sounds } from '../lib/audio';
 
@@ -24,6 +25,7 @@ export default function TaskModal({
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [remarkText, setRemarkText] = useState('');
   const [assignedTo, setAssignedTo] = useState('');
   const [status, setStatus] = useState('todo');
   const [priority, setPriority] = useState('medium');
@@ -171,6 +173,19 @@ export default function TaskModal({
       ? (activeBook?.author || description.trim() || '')
       : description.trim();
 
+    let updatedRemarks = Array.isArray(initialTask?.remarks) ? [...initialTask.remarks] : [];
+    if (initialTask && remarkText.trim()) {
+      updatedRemarks.unshift({
+        id: 'rem_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4),
+        text: remarkText.trim(),
+        author_id: currentUser?.id || 'usr_unknown',
+        author_name: currentUser?.name || 'Team Member',
+        author_avatar: currentUser?.avatar || '??',
+        author_color: currentUser?.color || '#6366f1',
+        created_at: new Date()
+      });
+    }
+
     onSave({
       id: initialTask?.id,
       title: finalTitle,
@@ -186,6 +201,9 @@ export default function TaskModal({
       estimated_hours: initialTask?.estimated_hours || 2,
       is_book_reading: isBookReading,
       books_list: booksList,
+      initial_remark: !initialTask && remarkText.trim() ? remarkText.trim() : undefined,
+      remarks: initialTask ? updatedRemarks : undefined,
+      latest_remark: remarkText.trim() || initialTask?.latest_remark || '',
       book_stats: {
         total_books: Number(totalBooks) || 0,
         completed: Number(completedBooks) || 0,
@@ -254,6 +272,44 @@ export default function TaskModal({
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full p-2.5 text-xs rounded-xl clean-input resize-none"
+                />
+              </div>
+
+              {/* Remarks & Task Information */}
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <MessageSquare className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>{initialTask ? 'Task Remarks & Information Log' : 'Initial Remark / Status Note (Optional)'}</span>
+                  </label>
+                  {initialTask?.remarks?.length > 0 && (
+                    <span className="text-[10px] font-extrabold px-2 py-0.2 rounded-full bg-indigo-100 text-indigo-800">
+                      {initialTask.remarks.length} remark{initialTask.remarks.length > 1 ? 's' : ''}
+                    </span>
+                  )}
+                </div>
+
+                {/* History of existing remarks if editing */}
+                {initialTask?.remarks?.length > 0 && (
+                  <div className="max-h-24 overflow-y-auto space-y-1.5 pr-1">
+                    {initialTask.remarks.map((rem, rIdx) => (
+                      <div key={rem.id || rIdx} className="p-2 bg-white rounded-lg border border-slate-200/90 text-[10.5px] space-y-0.5 shadow-2xs">
+                        <div className="flex items-center justify-between text-[9.5px] text-slate-500 font-semibold">
+                          <span className="text-indigo-700 font-bold">{rem.author_name}</span>
+                          <span>{new Date(rem.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
+                        </div>
+                        <p className="text-slate-800 leading-snug">{rem.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <input
+                  type="text"
+                  placeholder={initialTask ? "Enter a new remark or status update..." : "e.g. Waiting on client approval, API PR link..."}
+                  value={remarkText}
+                  onChange={(e) => setRemarkText(e.target.value)}
+                  className="w-full px-3 py-1.5 text-xs rounded-lg clean-input font-medium bg-white"
                 />
               </div>
             </>

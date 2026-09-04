@@ -11,7 +11,21 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH') {
-      const { action, reading_log, updates, user } = req.body || {};
+      const { action, reading_log, remark, updates, user } = req.body || {};
+
+      if (action === 'add_remark' || remark) {
+        const remarkData = remark || req.body;
+        const updatedTask = await dbHelpers.addRemark(id, remarkData, user);
+        if (!updatedTask) return res.status(404).json({ error: 'Task not found or remark empty' });
+        return res.status(200).json({ success: true, task: updatedTask });
+      }
+
+      if (action === 'delete_remark') {
+        const { remarkId } = req.body || {};
+        const updatedTask = await dbHelpers.deleteRemark(id, remarkId, user);
+        if (!updatedTask) return res.status(404).json({ error: 'Task or remark not found' });
+        return res.status(200).json({ success: true, task: updatedTask });
+      }
 
       if (action === 'log_daily_reading' || reading_log) {
         const logData = reading_log || req.body;

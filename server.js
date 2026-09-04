@@ -249,6 +249,76 @@ app.prepare().then(async () => {
       }
     });
 
+    // Add Remark to Task
+    socket.on('task:add_remark', async ({ taskId, remark, user }, callback) => {
+      try {
+        const updatedTask = await dbHelpers.addRemark(taskId, remark, user);
+        if (!updatedTask) {
+          if (typeof callback === 'function') callback({ success: false, error: 'Failed to add remark' });
+          return;
+        }
+
+        const tasks = await dbHelpers.getTasks();
+        const overview = await dbHelpers.getCompanyOverview();
+        const activityLogs = await dbHelpers.getActivityLogs(25);
+
+        const payload = {
+          task: updatedTask,
+          tasks,
+          overview,
+          activityLogs,
+          newRemark: updatedTask.remarks?.[0] || null
+        };
+
+        io.emit('task:updated', payload);
+        io.emit('task:remark_added', { taskId, task: updatedTask, remark: updatedTask.remarks?.[0] });
+
+        if (typeof callback === 'function') {
+          callback({ success: true, task: updatedTask });
+        }
+      } catch (err) {
+        console.error('Error adding remark:', err);
+        if (typeof callback === 'function') {
+          callback({ success: false, error: err.message });
+        }
+      }
+    });
+
+    // Delete Remark from Task
+    socket.on('task:delete_remark', async ({ taskId, remarkId, user }, callback) => {
+      try {
+        const updatedTask = await dbHelpers.deleteRemark(taskId, remarkId, user);
+        if (!updatedTask) {
+          if (typeof callback === 'function') callback({ success: false, error: 'Failed to delete remark' });
+          return;
+        }
+
+        const tasks = await dbHelpers.getTasks();
+        const overview = await dbHelpers.getCompanyOverview();
+        const activityLogs = await dbHelpers.getActivityLogs(25);
+
+        const payload = {
+          task: updatedTask,
+          tasks,
+          overview,
+          activityLogs,
+          deletedRemarkId: remarkId
+        };
+
+        io.emit('task:updated', payload);
+        io.emit('task:remark_deleted', { taskId, remarkId, task: updatedTask });
+
+        if (typeof callback === 'function') {
+          callback({ success: true, task: updatedTask });
+        }
+      } catch (err) {
+        console.error('Error deleting remark:', err);
+        if (typeof callback === 'function') {
+          callback({ success: false, error: err.message });
+        }
+      }
+    });
+
     // Log Daily Reading Check-in
     socket.on('task:log_reading', async ({ taskId, logData, user }, callback) => {
       try {

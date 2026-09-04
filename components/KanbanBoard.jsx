@@ -23,10 +23,12 @@ import {
   Trash2,
   Sparkles,
   Calendar,
-  X
+  X,
+  MessageSquare
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import DailyReadingModal from './DailyReadingModal';
+import TaskRemarkModal from './TaskRemarkModal';
 import { sounds } from '../lib/audio';
 
 export default function KanbanBoard({ 
@@ -37,12 +39,16 @@ export default function KanbanBoard({
   onEditTask, 
   onDeleteTask,
   onLogDailyReading,
+  onSaveRemark,
+  onDeleteRemark,
   openNewTaskModal, 
   searchQuery, 
   selectedMemberFilter, 
   setSelectedMemberFilter 
 }) {
   const [activeDailyTask, setActiveDailyTask] = useState(null);
+  const [activeRemarkTask, setActiveRemarkTask] = useState(null);
+  const [activeRemarkCandidateTasks, setActiveRemarkCandidateTasks] = useState([]);
   const [bookToFinish, setBookToFinish] = useState(null);
   const [priorityFilter, setPriorityFilter] = useState('all');
   const todayStr = new Date().toISOString().split('T')[0];
@@ -361,6 +367,7 @@ export default function KanbanBoard({
                   <th className="py-3 px-4 border-r border-slate-700/60 min-w-[190px]">Candidate / Team Member</th>
                   <th className="py-3 px-4 border-r border-slate-700/60 min-w-[220px] bg-slate-800/80">📝 To Do</th>
                   <th className="py-3 px-4 border-r border-slate-700/60 min-w-[260px] bg-blue-950/60">📖 In Progress</th>
+                  <th className="py-3 px-4 border-r border-slate-700/60 min-w-[270px] bg-indigo-950/70">💬 Remarks & Info</th>
                   <th className="py-3 px-4 border-r border-slate-700/60 min-w-[140px]">Workload & Pages</th>
                   <th className="py-3 px-4 border-r border-slate-700/60 min-w-[180px] bg-rose-950/50">🚫 Blocked</th>
                   <th className="py-3 px-4 min-w-[220px] bg-emerald-950/60">✅ Completed</th>
@@ -369,6 +376,13 @@ export default function KanbanBoard({
               <tbody className="divide-y divide-slate-200/90 bg-white">
                 {memberMatrixData.map((member, idx) => {
                   const user = member.user;
+                  const candidateTasks = [
+                    ...member.todoTasks,
+                    ...member.inProgressTasks,
+                    ...member.blockedTasks,
+                    ...member.regularCompletedTasks,
+                    ...(member.bookTask ? [member.bookTask] : [])
+                  ];
                   const completedCount = member.totalCompletedCount ?? ((member.regularCompletedTasks?.length || 0) + (member.completedBooks?.length || 0));
                   const completionRate = member.total > 0 ? Math.round((completedCount / member.total) * 100) : 0;
 
@@ -472,12 +486,45 @@ export default function KanbanBoard({
                                 {t.description && (
                                   <p className="text-[10px] text-slate-500 line-clamp-1">{t.description}</p>
                                 )}
+
+                                {/* Remark Preview */}
+                                {(t.latest_remark || t.remarks?.[0]?.text) && (
+                                  <div
+                                    onClick={() => { sounds.playClick(); setActiveRemarkTask(t); setActiveRemarkCandidateTasks(candidateTasks); }}
+                                    className="p-1.5 rounded-lg bg-indigo-50/70 hover:bg-indigo-50 border border-indigo-100/80 text-[9.5px] text-indigo-950 flex items-center gap-1 cursor-pointer transition-colors"
+                                    title="Click to view/add remarks"
+                                  >
+                                    <MessageSquare className="w-2.5 h-2.5 text-indigo-600 shrink-0" />
+                                    <span className="truncate italic">"{t.latest_remark || t.remarks?.[0]?.text}"</span>
+                                    {t.remarks?.length > 1 && (
+                                      <span className="px-1 rounded bg-indigo-200/70 text-[8px] font-black text-indigo-900 shrink-0">
+                                        +{t.remarks.length - 1}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+
                                 <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-[9.5px]">
-                                  <span className="text-slate-400">{t.due_date ? `📅 ${t.due_date.split('-').slice(1).join('/')}` : 'No date'}</span>
+                                  <div className="flex items-center gap-1 text-slate-400">
+                                    <span>{t.due_date ? `📅 ${t.due_date.split('-').slice(1).join('/')}` : 'No date'}</span>
+                                  </div>
                                   <div className="flex items-center gap-1.5">
                                     <button
+                                      type="button"
+                                      onClick={() => { sounds.playClick(); setActiveRemarkTask(t); setActiveRemarkCandidateTasks(candidateTasks); }}
+                                      className={`inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded cursor-pointer transition-colors ${
+                                        t.remarks?.length > 0
+                                          ? 'bg-indigo-50 text-indigo-700 font-bold border border-indigo-200'
+                                          : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-100'
+                                      }`}
+                                      title={t.remarks?.length > 0 ? `${t.remarks.length} remark(s)` : 'Add Remark'}
+                                    >
+                                      <MessageSquare className="w-2.5 h-2.5 text-indigo-600" />
+                                      <span>{t.remarks?.length > 0 ? t.remarks.length : 'Remark'}</span>
+                                    </button>
+                                    <button
                                       onClick={() => { sounds.playClick(); onEditTask(t); }}
-                                      className="text-slate-400 hover:text-blue-600 cursor-pointer"
+                                      className="text-slate-400 hover:text-blue-600 cursor-pointer p-0.5"
                                       title="Edit Task"
                                     >
                                       <Edit2 className="w-3 h-3" />
@@ -518,11 +565,42 @@ export default function KanbanBoard({
                                 {t.description && (
                                   <p className="text-[10px] text-slate-500 line-clamp-1">{t.description}</p>
                                 )}
+
+                                {/* Remark Preview */}
+                                {(t.latest_remark || t.remarks?.[0]?.text) && (
+                                  <div
+                                    onClick={() => { sounds.playClick(); setActiveRemarkTask(t); setActiveRemarkCandidateTasks(candidateTasks); }}
+                                    className="p-1.5 rounded-lg bg-indigo-50/70 hover:bg-indigo-50 border border-indigo-100/80 text-[9.5px] text-indigo-950 flex items-center gap-1 cursor-pointer transition-colors"
+                                    title="Click to view/add remarks"
+                                  >
+                                    <MessageSquare className="w-2.5 h-2.5 text-indigo-600 shrink-0" />
+                                    <span className="truncate italic">"{t.latest_remark || t.remarks?.[0]?.text}"</span>
+                                    {t.remarks?.length > 1 && (
+                                      <span className="px-1 rounded bg-indigo-200/70 text-[8px] font-black text-indigo-900 shrink-0">
+                                        +{t.remarks.length - 1}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+
                                 <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-[9.5px]">
-                                  <div className="flex items-center gap-1">
+                                  <div className="flex items-center gap-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => { sounds.playClick(); setActiveRemarkTask(t); setActiveRemarkCandidateTasks(candidateTasks); }}
+                                      className={`inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded cursor-pointer transition-colors ${
+                                        t.remarks?.length > 0
+                                          ? 'bg-indigo-50 text-indigo-700 font-bold border border-indigo-200'
+                                          : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-100'
+                                      }`}
+                                      title={t.remarks?.length > 0 ? `${t.remarks.length} remark(s)` : 'Add Remark'}
+                                    >
+                                      <MessageSquare className="w-2.5 h-2.5 text-indigo-600" />
+                                      <span>{t.remarks?.length > 0 ? t.remarks.length : 'Remark'}</span>
+                                    </button>
                                     <button
                                       onClick={() => { sounds.playClick(); onEditTask(t); }}
-                                      className="p-1 rounded text-slate-400 hover:text-blue-600 cursor-pointer"
+                                      className="p-0.5 rounded text-slate-400 hover:text-blue-600 cursor-pointer"
                                       title="Edit Task"
                                     >
                                       <Edit2 className="w-3 h-3" />
@@ -628,7 +706,94 @@ export default function KanbanBoard({
                         )}
                       </td>
 
-                      {/* 5. Workload Summary & Pages Read */}
+                      {/* 5. REMARKS & INFORMATION COLUMN (DIRECT OUTSIDE TABLE DISPLAY) */}
+                      <td className="py-3 px-3.5 border-r border-slate-200 align-top bg-indigo-50/15 min-w-[270px]">
+                        {(() => {
+                          const candidateTasks = [
+                            ...member.todoTasks,
+                            ...member.inProgressTasks,
+                            ...member.blockedTasks,
+                            ...member.regularCompletedTasks,
+                            ...(member.bookTask ? [member.bookTask] : [])
+                          ];
+                          const tasksWithRemarks = candidateTasks.filter(t => (t.remarks && t.remarks.length > 0) || t.latest_remark);
+
+                          return (
+                            <div className="space-y-2">
+                              {/* Header inside cell with Quick + Add Remark */}
+                              <div className="flex items-center justify-between gap-1 pb-1.5 border-b border-indigo-200/80">
+                                <span className="text-[10px] font-black uppercase tracking-wider text-indigo-950 flex items-center gap-1">
+                                  <MessageSquare className="w-3 h-3 text-indigo-600" />
+                                  <span>Remarks ({tasksWithRemarks.length})</span>
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    sounds.playClick();
+                                    const target = member.todoTasks[0] || member.inProgressTasks[0] || member.blockedTasks[0] || candidateTasks[0];
+                                    if (target) {
+                                      setActiveRemarkTask(target);
+                                      setActiveRemarkCandidateTasks(candidateTasks);
+                                    }
+                                  }}
+                                  className="px-2 py-0.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[9.5px] flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-2xs"
+                                  title={`Add remark for ${user.name}'s task`}
+                                >
+                                  <Plus className="w-3 h-3 stroke-[3]" />
+                                  <span>Add Remark</span>
+                                </button>
+                              </div>
+
+                              {/* Remarks Cards List */}
+                              {tasksWithRemarks.length === 0 ? (
+                                <div className="py-3 text-center text-slate-400 italic text-[10.5px]">
+                                  — No task remarks yet —
+                                </div>
+                              ) : (
+                                <div className="space-y-1.5">
+                                  {tasksWithRemarks.map(t => {
+                                    const latest = t.latest_remark || t.remarks?.[0]?.text;
+                                    const author = t.remarks?.[0]?.author_name || 'Team';
+                                    const count = t.remarks?.length || 1;
+
+                                    return (
+                                      <div
+                                        key={t.id}
+                                        onClick={() => {
+                                          sounds.playClick();
+                                          setActiveRemarkTask(t);
+                                          setActiveRemarkCandidateTasks(candidateTasks);
+                                        }}
+                                        className="p-2 rounded-xl bg-white border border-indigo-200/90 hover:border-indigo-400 shadow-2xs space-y-1 cursor-pointer transition-all hover:shadow-xs group"
+                                        title="Click to view full remark timeline or add update"
+                                      >
+                                        <div className="flex items-center justify-between gap-1 text-[10px]">
+                                          <span className="font-extrabold text-indigo-950 truncate flex items-center gap-1">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />
+                                            <span className="truncate">{t.title}</span>
+                                          </span>
+                                          <span className="text-[8.5px] font-black px-1.5 py-0.2 rounded bg-indigo-100 text-indigo-800 shrink-0">
+                                            💬 {count}
+                                          </span>
+                                        </div>
+                                        <p className="text-[10.5px] text-slate-700 leading-snug line-clamp-2 italic font-medium pl-2 border-l-2 border-indigo-400">
+                                          "{latest}"
+                                        </p>
+                                        <div className="flex items-center justify-between text-[9px] text-slate-400 pt-0.5">
+                                          <span className="font-semibold text-indigo-700">{author}</span>
+                                          <span className="text-indigo-600 font-bold group-hover:underline">View / Add →</span>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </td>
+
+                      {/* 6. Workload Summary & Pages Read */}
                       <td className="py-4 px-4 border-r border-slate-200 align-top whitespace-nowrap space-y-1.5">
                         <div className="text-[11px] font-extrabold text-slate-800">
                           {member.totalCompletedCount}/{member.total} Tasks Done ({completionRate}%)
@@ -665,18 +830,49 @@ export default function KanbanBoard({
                                   </span>
                                 </div>
                                 <p className="text-[10px] text-rose-700 line-clamp-1">{t.description || 'Action required'}</p>
+
+                                {/* Remark Preview */}
+                                {(t.latest_remark || t.remarks?.[0]?.text) && (
+                                  <div
+                                    onClick={() => { sounds.playClick(); setActiveRemarkTask(t); setActiveRemarkCandidateTasks(candidateTasks); }}
+                                    className="p-1.5 rounded-lg bg-rose-50/80 hover:bg-rose-100/70 border border-rose-200 text-[9.5px] text-rose-950 flex items-center gap-1 cursor-pointer transition-colors"
+                                    title="Click to view/add blocker remark"
+                                  >
+                                    <MessageSquare className="w-2.5 h-2.5 text-rose-600 shrink-0" />
+                                    <span className="truncate italic font-medium">"{t.latest_remark || t.remarks?.[0]?.text}"</span>
+                                    {t.remarks?.length > 1 && (
+                                      <span className="px-1 rounded bg-rose-200 text-[8px] font-black text-rose-900 shrink-0">
+                                        +{t.remarks.length - 1}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+
                                 <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-[9.5px]">
-                                  <div className="flex items-center gap-1.5">
+                                  <div className="flex items-center gap-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => { sounds.playClick(); setActiveRemarkTask(t); setActiveRemarkCandidateTasks(candidateTasks); }}
+                                      className={`inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded cursor-pointer transition-colors ${
+                                        t.remarks?.length > 0
+                                          ? 'bg-rose-50 text-rose-800 font-bold border border-rose-200'
+                                          : 'text-slate-400 hover:text-rose-600 hover:bg-slate-100'
+                                      }`}
+                                      title={t.remarks?.length > 0 ? `${t.remarks.length} remark(s)` : 'Add Blocker Remark'}
+                                    >
+                                      <MessageSquare className="w-2.5 h-2.5 text-rose-600" />
+                                      <span>{t.remarks?.length > 0 ? t.remarks.length : 'Remark'}</span>
+                                    </button>
                                     <button
                                       onClick={() => { sounds.playClick(); onEditTask(t); }}
-                                      className="text-slate-400 hover:text-blue-600 cursor-pointer"
+                                      className="text-slate-400 hover:text-blue-600 cursor-pointer p-0.5"
                                       title="Edit Task"
                                     >
                                       <Edit2 className="w-3 h-3" />
                                     </button>
                                     <button
                                       onClick={() => { sounds.playTrash(); onDeleteTask(t.id); }}
-                                      className="text-slate-400 hover:text-rose-600 cursor-pointer"
+                                      className="text-slate-400 hover:text-rose-600 cursor-pointer p-0.5"
                                       title="Delete"
                                     >
                                       <Trash2 className="w-3 h-3" />
@@ -716,6 +912,17 @@ export default function KanbanBoard({
                                 </div>
                                 <div className="flex items-center justify-between text-[9px] pt-0.5 text-slate-400">
                                   <div className="flex items-center gap-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => { sounds.playClick(); setActiveRemarkTask(t); setActiveRemarkCandidateTasks(candidateTasks); }}
+                                      className={`inline-flex items-center gap-0.5 text-[8.5px] px-1 py-0.2 rounded cursor-pointer ${
+                                        t.remarks?.length > 0 ? 'bg-indigo-50 text-indigo-700 font-bold' : 'hover:text-indigo-600'
+                                      }`}
+                                      title="Remarks"
+                                    >
+                                      <MessageSquare className="w-2.5 h-2.5" />
+                                      {t.remarks?.length > 0 && <span>{t.remarks.length}</span>}
+                                    </button>
                                     <button
                                       onClick={() => { sounds.playClick(); onEditTask(t); }}
                                       className="hover:text-blue-600 cursor-pointer"
@@ -800,6 +1007,23 @@ export default function KanbanBoard({
             </table>
           </div>
         </div>
+      )}
+
+      {/* Task Remark Modal */}
+      {activeRemarkTask && (
+        <TaskRemarkModal
+          isOpen={Boolean(activeRemarkTask)}
+          onClose={() => {
+            setActiveRemarkTask(null);
+            setActiveRemarkCandidateTasks([]);
+          }}
+          task={tasks.find(t => t.id === activeRemarkTask.id) || activeRemarkTask}
+          candidateTasks={activeRemarkCandidateTasks}
+          allTasks={tasks}
+          currentUser={currentUser}
+          onSaveRemark={onSaveRemark}
+          onDeleteRemark={onDeleteRemark}
+        />
       )}
 
       {/* Daily Reading Log Modal for Table View */}

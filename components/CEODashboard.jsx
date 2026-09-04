@@ -24,8 +24,10 @@ import {
   BookOpen,
   Sparkles,
   History,
-  Award
+  Award,
+  MessageSquare
 } from 'lucide-react';
+import TaskRemarkModal from './TaskRemarkModal';
 import { sounds } from '../lib/audio';
 
 export default function CEODashboard({ 
@@ -38,9 +40,12 @@ export default function CEODashboard({
   onEditTask,
   onDeleteTask,
   onSelectMemberFilter,
-  openNewTaskModal 
+  openNewTaskModal,
+  onSaveRemark,
+  onDeleteRemark
 }) {
   const [activeReportModal, setActiveReportModal] = useState(null);
+  const [activeRemarkTask, setActiveRemarkTask] = useState(null);
   const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedReadingHistoryTask, setSelectedReadingHistoryTask] = useState(null);
@@ -765,6 +770,7 @@ export default function CEODashboard({
                 <th className="py-3 px-4">Assignee</th>
                 <th className="py-3 px-4">Priority</th>
                 <th className="py-3 px-4">Due Date</th>
+                <th className="py-3 px-4 min-w-[150px]">💬 Remarks & Notes</th>
                 <th className="py-3 px-4">Status & Quick Change</th>
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
@@ -772,7 +778,7 @@ export default function CEODashboard({
             <tbody className="divide-y divide-slate-100">
               {filteredCompanyTasks.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="py-8 text-center text-slate-400">
+                  <td colSpan="7" className="py-8 text-center text-slate-400">
                     No tasks found matching your filter.
                   </td>
                 </tr>
@@ -867,6 +873,40 @@ export default function CEODashboard({
                         </div>
                       </td>
 
+                      {/* Remarks & Notes */}
+                      <td className="py-3 px-4 max-w-xs">
+                        {task.latest_remark || task.remarks?.[0]?.text ? (
+                          <div 
+                            onClick={() => { sounds.playClick(); setActiveRemarkTask(task); }}
+                            className="p-1.5 rounded-lg bg-indigo-50/70 hover:bg-indigo-100/70 border border-indigo-100 text-[10.5px] text-indigo-950 cursor-pointer space-y-0.5 transition-colors"
+                            title="Click to view full remark history"
+                          >
+                            <div className="flex items-center justify-between text-[9.5px]">
+                              <span className="font-extrabold text-indigo-700 flex items-center gap-1">
+                                <MessageSquare className="w-2.5 h-2.5 text-indigo-600" />
+                                {task.remarks?.[0]?.author_name || 'Remark'}
+                              </span>
+                              {task.remarks?.length > 1 && (
+                                <span className="px-1 py-0.2 rounded bg-indigo-200/80 font-black text-[8px] text-indigo-900">
+                                  {task.remarks.length}
+                                </span>
+                              )}
+                            </div>
+                            <p className="italic text-slate-700 truncate line-clamp-1">
+                              "{task.latest_remark || task.remarks?.[0]?.text}"
+                            </p>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => { sounds.playClick(); setActiveRemarkTask(task); }}
+                            className="px-2 py-1 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 border border-dashed border-slate-200 hover:border-indigo-200 text-[10px] font-semibold inline-flex items-center gap-1 cursor-pointer transition-colors"
+                          >
+                            <MessageSquare className="w-3 h-3" />
+                            <span>+ Add Remark</span>
+                          </button>
+                        )}
+                      </td>
+
                       {/* Status Dropdown (Direct Executive Modify) */}
                       <td className="py-3 px-4">
                         <select
@@ -892,6 +932,17 @@ export default function CEODashboard({
                       {/* Action Buttons */}
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => { sounds.playClick(); setActiveRemarkTask(task); }}
+                            title={task.remarks?.length > 0 ? `${task.remarks.length} Remark(s)` : 'Add Remark'}
+                            className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                              task.remarks?.length > 0 
+                                ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' 
+                                : 'bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-600'
+                            }`}
+                          >
+                            <MessageSquare className="w-3.5 h-3.5" />
+                          </button>
                           <button
                             onClick={() => onEditTask(task)}
                             title="Edit Task Details"
@@ -1225,6 +1276,19 @@ export default function CEODashboard({
 
           </div>
         </div>
+      )}
+
+      {/* Task Remark Modal for CEO View */}
+      {activeRemarkTask && (
+        <TaskRemarkModal
+          isOpen={Boolean(activeRemarkTask)}
+          onClose={() => setActiveRemarkTask(null)}
+          task={tasks.find(t => t.id === activeRemarkTask.id) || activeRemarkTask}
+          allTasks={tasks}
+          currentUser={currentUser}
+          onSaveRemark={onSaveRemark}
+          onDeleteRemark={onDeleteRemark}
+        />
       )}
 
     </div>

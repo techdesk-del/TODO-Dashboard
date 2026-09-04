@@ -219,6 +219,31 @@ export default function Home() {
         if (newOverview) setOverview(newOverview);
       });
 
+      socket.on('task:remark_added', ({ taskId, task, remark }) => {
+        if (task) {
+          setTasks(prev => prev.map(t => t.id === taskId ? task : t));
+          showToast('💬 New Remark Added', `"${remark?.author_name || 'Team member'}": ${remark?.text ? (remark.text.length > 40 ? remark.text.substring(0, 40) + '...' : remark.text) : 'Added note'}`, 'info');
+        }
+      });
+
+      socket.on('task:remark_deleted', ({ taskId, remarkId, task }) => {
+        if (task) {
+          setTasks(prev => prev.map(t => t.id === taskId ? task : t));
+        } else {
+          setTasks(prev => prev.map(t => {
+            if (t.id === taskId) {
+              const filtered = (t.remarks || []).filter(r => r.id !== remarkId && r._id !== remarkId && String(r._id) !== String(remarkId));
+              return {
+                ...t,
+                remarks: filtered,
+                latest_remark: filtered.length > 0 ? filtered[0].text : ''
+              };
+            }
+            return t;
+          }));
+        }
+      });
+
       socket.on('eod:submitted', ({ report, eodReports: newReports, users: newUsers, overview: newOverview }) => {
         if (newReports) setEodReports(newReports);
         if (newUsers) setUsers(newUsers);
@@ -409,6 +434,105 @@ export default function Home() {
     }
   };
 
+  const handleSaveRemark = async (taskId, remarkText) => {
+    if (!remarkText || !remarkText.trim()) return;
+
+    // 1. Optimistic Real-time UI update
+    const newRemark = {
+      id: 'rem_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4),
+      text: remarkText.trim(),
+      author_id: currentUser?.id || 'usr_unknown',
+      author_name: currentUser?.name || 'Team Member',
+      author_avatar: currentUser?.avatar || currentUser?.name?.substring(0, 2).toUpperCase() || '??',
+      author_color: currentUser?.color || '#6366f1',
+      created_at: new Date().toISOString()
+    };
+
+    setTasks(prev => prev.map(t => {
+      if (t.id === taskId) {
+        const currentRemarks = Array.isArray(t.remarks) ? [...t.remarks] : [];
+        currentRemarks.unshift(newRemark);
+        return {
+          ...t,
+          remarks: currentRemarks,
+          latest_remark: newRemark.text
+        };
+      }
+      return t;
+    }));
+
+    showToast('💬 Remark Added', `Remark posted to task successfully`, 'info');
+
+    // 2. Broadcast via Socket.IO
+    if (socketRef.current && socketConnected) {
+      socketRef.current.emit('task:add_remark', {
+        taskId,
+        remark: newRemark,
+        user: currentUser
+      });
+    }
+
+    // 3. Persistent REST API call
+    try {
+      await fetch(`/api/tasks/${taskId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'add_remark',
+          remark: newRemark,
+          user: currentUser
+        })
+      });
+      refreshData();
+    } catch (e) {
+      console.error('Error adding remark:', e);
+    }
+  };
+
+  const handleDeleteRemark = async (taskId, remarkId) => {
+    sounds.playTrash();
+
+    // 1. Optimistic UI update
+    setTasks(prev => prev.map(t => {
+      if (t.id === taskId) {
+        const filtered = (t.remarks || []).filter(r => r.id !== remarkId && r._id !== remarkId && String(r._id) !== String(remarkId));
+        return {
+          ...t,
+          remarks: filtered,
+          latest_remark: filtered.length > 0 ? filtered[0].text : ''
+        };
+      }
+      return t;
+    }));
+
+    showToast('🗑️ Remark Removed', `Remark deleted from task`, 'info');
+
+    // 2. Broadcast via Socket.IO
+    if (socketRef.current && socketConnected) {
+      socketRef.current.emit('task:delete_remark', {
+        taskId,
+        remarkId,
+        user: currentUser
+      });
+    }
+
+    // 3. Persistent REST API call
+    try {
+      await fetch(`/api/tasks/${taskId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'delete_remark',
+          remarkId,
+          user: currentUser
+        })
+      });
+      refreshData();
+    } catch (e) {
+      console.error('Error deleting remark:', e);
+    }
+  };
+
   const handleOpenNewTaskModal = (defaultStatus = 'todo', defaultAssignee = null) => {
     if (defaultAssignee) {
       setEditingTask({ assigned_to: defaultAssignee, status: defaultStatus });
@@ -569,6 +693,8 @@ export default function Home() {
                   onEditTask={handleOpenEditTaskModal}
                   onDeleteTask={handleDeleteTask}
                   onLogDailyReading={handleLogDailyReading}
+                  onSaveRemark={handleSaveRemark}
+                  onDeleteRemark={handleDeleteRemark}
                   openNewTaskModal={handleOpenNewTaskModal}
                   searchQuery={searchQuery}
                   selectedMemberFilter={selectedMemberFilter}
@@ -598,6 +724,8 @@ export default function Home() {
               onStatusChange={handleStatusChange}
               onEditTask={handleOpenEditTaskModal}
               onDeleteTask={handleDeleteTask}
+              onSaveRemark={handleSaveRemark}
+              onDeleteRemark={handleDeleteRemark}
               onSelectMemberFilter={(memberId) => {
                 setSelectedMemberFilter(memberId);
                 setActiveTab('workspace');
