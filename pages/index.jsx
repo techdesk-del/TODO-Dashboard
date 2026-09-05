@@ -9,12 +9,14 @@ import TaskModal from '../components/TaskModal';
 import EODCheckoutModal from '../components/EODCheckoutModal';
 import AuthScreen from '../components/AuthScreen';
 import { sounds } from '../lib/audio';
+import { checkEodAllowed } from '../lib/timeUtils';
 import { 
   Bell, 
   CheckCircle2, 
   Clock, 
   ShieldCheck, 
-  Lock 
+  Lock,
+  Flame
 } from 'lucide-react';
 
 const AUTH_STORAGE_KEY = 'urbangaon_auth_user_v1';
@@ -27,11 +29,21 @@ export default function Home() {
   const [overview, setOverview] = useState(null);
   const [eodReports, setEodReports] = useState([]);
   const [socketConnected, setSocketConnected] = useState(false);
+  const [eodStatus, setEodStatus] = useState(() => checkEodAllowed());
+
+  useEffect(() => {
+    setEodStatus(checkEodAllowed());
+    const interval = setInterval(() => {
+      setEodStatus(checkEodAllowed());
+    }, 15000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Layout, View Mode & Filters
   const [activeTab, setActiveTab] = useState('workspace'); // 'workspace' | 'ceo'
   const [viewMode, setViewMode] = useState('kanban'); // 'kanban' | 'calendar' (Point 3)
   const [selectedMemberFilter, setSelectedMemberFilter] = useState('all');
+  const [boardStatusFilter, setBoardStatusFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Notifications State (Point 4)
@@ -588,6 +600,7 @@ export default function Home() {
   const currentUserTasks = (tasks || []).filter(t => t.assigned_to === currentUser?.id);
   const myCompletedCount = currentUserTasks.filter(t => t.status === 'completed').length;
   const myPendingCount = currentUserTasks.filter(t => t.status !== 'completed').length;
+  const myOverdueCount = currentUserTasks.filter(t => t.status !== 'completed' && t.due_date && new Date(t.due_date).getTime() < new Date(todayDateStr).getTime()).length;
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex font-sans w-full">
@@ -658,9 +671,83 @@ export default function Home() {
                     Authenticated Session
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 mt-0.5 truncate">
-                  My Tasks: <strong className="text-emerald-600">{myCompletedCount} Done</strong> • <strong className="text-amber-600">{myPendingCount} Pending</strong>
-                </p>
+
+                {/* 1-Click Interactive Status Tabs in Welcome Bar */}
+                <div className="flex items-center gap-1.5 mt-2 flex-wrap text-xs">
+                  <span className="text-slate-500 font-medium mr-0.5">Quick Filters:</span>
+                  <button
+                    onClick={() => {
+                      sounds.playClick();
+                      setActiveTab('workspace');
+                      setViewMode('kanban');
+                      setBoardStatusFilter('all');
+                    }}
+                    className={`px-2.5 py-1 rounded-lg font-bold text-xs transition-all cursor-pointer flex items-center gap-1 ${
+                      boardStatusFilter === 'all' && activeTab === 'workspace' && viewMode === 'kanban'
+                        ? 'bg-slate-900 text-white shadow-xs'
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                    }`}
+                    title="View all my tasks"
+                  >
+                    <span>All ({currentUserTasks.length})</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      sounds.playClick();
+                      setActiveTab('workspace');
+                      setViewMode('kanban');
+                      setBoardStatusFilter(boardStatusFilter === 'pending' ? 'all' : 'pending');
+                    }}
+                    className={`px-2.5 py-1 rounded-lg font-bold text-xs transition-all cursor-pointer flex items-center gap-1.5 ${
+                      boardStatusFilter === 'pending' && activeTab === 'workspace' && viewMode === 'kanban'
+                        ? 'bg-amber-500 text-white shadow-sm ring-2 ring-amber-300'
+                        : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200'
+                    }`}
+                    title="Click to view pending tasks"
+                  >
+                    <span className={`w-2 h-2 rounded-full ${boardStatusFilter === 'pending' && activeTab === 'workspace' && viewMode === 'kanban' ? 'bg-white' : 'bg-amber-500 animate-pulse'}`} />
+                    <span>{myPendingCount} Pending</span>
+                  </button>
+
+                  {myOverdueCount > 0 && (
+                    <button
+                      onClick={() => {
+                        sounds.playClick();
+                        setActiveTab('workspace');
+                        setViewMode('kanban');
+                        setBoardStatusFilter(boardStatusFilter === 'overdue' ? 'all' : 'overdue');
+                      }}
+                      className={`px-2.5 py-1 rounded-lg font-bold text-xs transition-all cursor-pointer flex items-center gap-1.5 ${
+                        boardStatusFilter === 'overdue' && activeTab === 'workspace' && viewMode === 'kanban'
+                          ? 'bg-rose-600 text-white shadow-sm ring-2 ring-rose-300'
+                          : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
+                      }`}
+                      title="Click to view overdue tasks"
+                    >
+                      <Flame className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                      <span>{myOverdueCount} Overdue</span>
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => {
+                      sounds.playClick();
+                      setActiveTab('workspace');
+                      setViewMode('kanban');
+                      setBoardStatusFilter(boardStatusFilter === 'completed' ? 'all' : 'completed');
+                    }}
+                    className={`px-2.5 py-1 rounded-lg font-bold text-xs transition-all cursor-pointer flex items-center gap-1.5 ${
+                      boardStatusFilter === 'completed' && activeTab === 'workspace' && viewMode === 'kanban'
+                        ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-300'
+                        : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200'
+                    }`}
+                    title="Click to view completed tasks"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>{myCompletedCount} Done</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -668,10 +755,27 @@ export default function Home() {
               {!eodSubmittedToday ? (
                 <button
                   onClick={() => { sounds.playClick(); setEodModalOpen(true); }}
-                  className="text-xs font-bold px-4 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 shadow-xs hover:border-amber-400 transition-all flex items-center gap-2 cursor-pointer shrink-0 whitespace-nowrap active:scale-95"
+                  className={`text-xs font-bold px-4 py-2.5 rounded-xl border shadow-xs transition-all flex items-center gap-2 cursor-pointer shrink-0 whitespace-nowrap active:scale-95 ${
+                    !eodStatus.isAllowed
+                      ? 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-300 hover:border-amber-400'
+                      : 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600 shadow-emerald-600/20'
+                  }`}
+                  title={
+                    !eodStatus.isAllowed
+                      ? `EOD Checkout unlocks strictly after 6:30 PM (${eodStatus.formattedRemaining} remaining)`
+                      : 'Clock Out & Submit EOD Report'
+                  }
                 >
-                  <Clock className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span>Clock Out & Submit EOD Report</span>
+                  {!eodStatus.isAllowed ? (
+                    <Lock className="w-4 h-4 text-amber-600 shrink-0" />
+                  ) : (
+                    <Clock className="w-4 h-4 text-white shrink-0" />
+                  )}
+                  <span>
+                    {!eodStatus.isAllowed
+                      ? `EOD Opens at 6:30 PM (${eodStatus.formattedRemaining})`
+                      : 'Clock Out & Submit EOD Report'}
+                  </span>
                 </button>
               ) : (
                 <div className="flex items-center gap-2 text-xs font-bold text-emerald-800 bg-emerald-50 px-4 py-2.5 rounded-xl border border-emerald-300 shadow-xs shrink-0 whitespace-nowrap">
@@ -690,6 +794,8 @@ export default function Home() {
                   tasks={tasks}
                   users={users}
                   currentUser={currentUser}
+                  statusFilter={boardStatusFilter}
+                  onStatusFilterChange={setBoardStatusFilter}
                   onStatusChange={handleStatusChange}
                   onEditTask={handleOpenEditTaskModal}
                   onDeleteTask={handleDeleteTask}

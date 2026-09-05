@@ -1,15 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { 
-  ChevronLeft, 
-  ChevronRight, 
   Plus, 
   Calendar as CalendarIcon, 
-  Flame, 
-  CheckCircle2, 
-  Clock, 
-  AlertCircle,
-  Users,
-  Filter
+  CheckCircle2
 } from 'lucide-react';
 import { sounds } from '../lib/audio';
 
@@ -21,35 +14,19 @@ export default function CalendarView({
   openNewTaskModal, 
   onEditTask 
 }) {
-  const [currentDate, setCurrentDate] = useState(new Date());
-
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
+  // Always locked to the current live active month (e.g. September now, automatically October when October arrives)
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
 
   // First day and total days in current month
   const firstDayOfMonth = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const daysInPrevMonth = new Date(year, month, 0).getDate();
 
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
-
-  const handlePrevMonth = () => {
-    sounds.playClick();
-    setCurrentDate(new Date(year, month - 1, 1));
-  };
-
-  const handleNextMonth = () => {
-    sounds.playClick();
-    setCurrentDate(new Date(year, month + 1, 1));
-  };
-
-  const handleToday = () => {
-    sounds.playClick();
-    setCurrentDate(new Date());
-  };
 
   // Filter tasks based on member selection
   const isAakash = currentUser?.id === 'usr_aakash' || currentUser?.name?.toLowerCase().includes('aakash');
@@ -64,75 +41,56 @@ export default function CalendarView({
     baseTasks = tasks.filter(t => t.assigned_to === currentUser?.id);
   }
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  // Timezone-safe local date string (YYYY-MM-DD)
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-  // Calendar cells generation (prev month trailing days + current month + next month)
+  // Calendar cells generation: ONLY dates of current active month!
   const calendarCells = [];
 
-  // Trailing days from previous month
-  for (let i = firstDayOfMonth - 1; i >= 0; i--) {
-    const day = daysInPrevMonth - i;
-    const dateStr = new Date(year, month - 1, day).toISOString().split('T')[0];
-    calendarCells.push({ day, isCurrentMonth: false, dateStr });
+  // Empty placeholder cells before the 1st of the current month
+  for (let i = 0; i < firstDayOfMonth; i++) {
+    calendarCells.push({ day: null, isCurrentMonth: false, dateStr: null });
   }
 
-  // Days of current month
+  // Days of current month only
   for (let d = 1; d <= daysInMonth; d++) {
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
     calendarCells.push({ day: d, isCurrentMonth: true, dateStr });
   }
 
-  // Remaining cells to fill grid (up to 35 or 42 cells)
+  // Trailing empty placeholder cells to complete the 7-day grid row
   const remaining = (7 - (calendarCells.length % 7)) % 7;
-  for (let d = 1; d <= remaining; d++) {
-    const dateStr = new Date(year, month + 1, d).toISOString().split('T')[0];
-    calendarCells.push({ day: d, isCurrentMonth: false, dateStr });
+  for (let d = 0; d < remaining; d++) {
+    calendarCells.push({ day: null, isCurrentMonth: false, dateStr: null });
   }
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4 animate-fade-in w-full">
       
-      {/* Calendar Navigation Header */}
+      {/* Calendar Header - Always Fixed to Current Month */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
+          <div className="p-2.5 rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
             <CalendarIcon className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-base font-extrabold text-slate-900">
-              {monthNames[month]} {year}
-            </h3>
-            <p className="text-xs text-slate-500">
-              Visual Sprint & Task Due Dates Roadmap
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-extrabold text-slate-900 tracking-tight">
+                {monthNames[month]} {year}
+              </h3>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-extrabold">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                Current Active Month
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Current sprint schedule & task roadmap ({monthNames[month]} {year})
             </p>
           </div>
         </div>
 
         {/* Controls */}
         <div className="flex items-center gap-2">
-          <button
-            onClick={handleToday}
-            className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all cursor-pointer"
-          >
-            Today
-          </button>
-          <div className="flex items-center border border-slate-200 rounded-xl overflow-hidden shadow-xs">
-            <button
-              onClick={handlePrevMonth}
-              className="p-1.5 hover:bg-slate-50 text-slate-600 transition-colors cursor-pointer"
-              title="Previous Month"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button
-              onClick={handleNextMonth}
-              className="p-1.5 hover:bg-slate-50 text-slate-600 transition-colors border-l border-slate-200 cursor-pointer"
-              title="Next Month"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-
           <button
             onClick={() => { sounds.playClick(); openNewTaskModal('todo'); }}
             className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
@@ -157,6 +115,16 @@ export default function CalendarView({
       {/* Monthly Grid */}
       <div className="grid grid-cols-7 gap-1.5 border-t border-slate-100 pt-2">
         {calendarCells.map((cell, idx) => {
+          // If cell is empty (before 1st or after last day), render blank slot
+          if (!cell.day) {
+            return (
+              <div
+                key={idx}
+                className="min-h-[115px] rounded-xl p-2 border border-slate-100 bg-slate-50/25"
+              />
+            );
+          }
+
           const isToday = cell.dateStr === todayStr;
           const dayTasks = baseTasks.filter(t => t.due_date === cell.dateStr);
 
@@ -164,9 +132,7 @@ export default function CalendarView({
             <div
               key={idx}
               className={`min-h-[115px] rounded-xl p-2 border transition-all flex flex-col justify-between ${
-                !cell.isCurrentMonth
-                  ? 'bg-slate-50/50 border-slate-100 text-slate-300 opacity-60'
-                  : isToday
+                isToday
                   ? 'bg-blue-50/40 border-blue-300 ring-1 ring-blue-400'
                   : 'bg-white border-slate-200/80 hover:border-slate-300'
               }`}
@@ -176,20 +142,18 @@ export default function CalendarView({
                 <span className={`text-xs font-bold ${
                   isToday 
                     ? 'w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-xs' 
-                    : cell.isCurrentMonth ? 'text-slate-800' : 'text-slate-400'
+                    : 'text-slate-800'
                 }`}>
                   {cell.day}
                 </span>
 
-                {cell.isCurrentMonth && (
-                  <button
-                    onClick={() => { sounds.playClick(); openNewTaskModal('todo'); }}
-                    title={`Add task for ${cell.dateStr}`}
-                    className="opacity-0 group-hover:opacity-100 hover:opacity-100 p-0.5 rounded text-slate-400 hover:text-blue-600 transition-opacity cursor-pointer"
-                  >
-                    <Plus className="w-3 h-3" />
-                  </button>
-                )}
+                <button
+                  onClick={() => { sounds.playClick(); openNewTaskModal('todo'); }}
+                  title={`Add task for ${cell.dateStr}`}
+                  className="opacity-0 hover:opacity-100 p-0.5 rounded text-slate-400 hover:text-blue-600 transition-opacity cursor-pointer"
+                >
+                  <Plus className="w-3 h-3" />
+                </button>
               </div>
 
               {/* Tasks Pills List for Day */}
@@ -205,7 +169,7 @@ export default function CalendarView({
                       title={`${task.title} (${task.assignee_name}) - Click to Edit`}
                       className={`px-1.5 py-1 rounded-md text-[10px] font-bold border truncate transition-all cursor-pointer flex items-center justify-between gap-1 shadow-2xs ${
                         isCompleted
-                          ? 'bg-emerald-50 text-emerald-800 border-emerald-200 line-through opacity-75'
+                          ? 'bg-emerald-50 text-emerald-900 border-emerald-300 font-semibold'
                           : isOverdue
                           ? 'bg-rose-50 text-rose-800 border-rose-300 ring-1 ring-rose-300'
                           : task.priority === 'urgent'
@@ -217,7 +181,6 @@ export default function CalendarView({
                     >
                       <span className="truncate">{task.title}</span>
                       <div className="flex items-center gap-0.5 shrink-0">
-                        {isOverdue && <Flame className="w-2.5 h-2.5 text-rose-600" />}
                         {isCompleted && <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />}
                         <span 
                           className="w-3.5 h-3.5 rounded-full text-[8px] flex items-center justify-center text-white font-extrabold"

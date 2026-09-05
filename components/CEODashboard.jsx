@@ -328,15 +328,41 @@ export default function CEODashboard({
         </div>
 
         {/* Pending Active Workload */}
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <span className="text-xs font-semibold text-slate-500 block mb-1">Active Pending Tasks</span>
+        <div 
+          onClick={() => {
+            sounds.playClick();
+            setTaskStatusFilter('pending');
+            const el = document.getElementById('ceo-tasks-section');
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
+          }}
+          className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm cursor-pointer hover:border-amber-400 hover:shadow-md transition-all group"
+          title="Click to view all pending tasks"
+        >
+          <span className="text-xs font-semibold text-slate-500 group-hover:text-amber-700 block mb-1">Active Pending Tasks</span>
           <div className="flex items-baseline gap-2">
             <span className="text-2xl font-bold text-amber-600">{pendingCount}</span>
             <span className="text-xs font-semibold text-slate-500">of {stats.total}</span>
           </div>
-          <span className="text-[11px] text-slate-400 mt-1 block">
-            {overdueCount > 0 ? `${overdueCount} overdue` : 'All tasks on schedule'}
-          </span>
+          <div className="mt-1">
+            {overdueCount > 0 ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  sounds.playClick();
+                  setTaskStatusFilter('overdue');
+                  const el = document.getElementById('ceo-tasks-section');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="text-[11px] font-bold text-rose-600 hover:text-rose-800 hover:underline inline-flex items-center gap-1 cursor-pointer"
+                title="Click to view overdue tasks"
+              >
+                🔥 {overdueCount} overdue (Click to view)
+              </button>
+            ) : (
+              <span className="text-[11px] text-slate-400 block">All tasks on schedule</span>
+            )}
+          </div>
         </div>
 
         {/* Sprint Completion Rate */}
@@ -681,7 +707,7 @@ export default function CEODashboard({
       })()}
 
       {/* SECTION 1: LIVE TASK QUEUE & EXECUTIVE MODIFICATION MATRIX */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+      <div id="ceo-tasks-section" className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
         
         {/* Header & Controls */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100">
@@ -793,7 +819,7 @@ export default function CEODashboard({
                       {/* Title & Description */}
                       <td className="py-3 px-4 max-w-xs">
                         <div className="space-y-0.5">
-                          <h4 className={`font-bold text-slate-900 ${isCompleted ? 'line-through text-slate-400' : ''}`}>
+                          <h4 className={`font-bold ${isCompleted ? 'text-slate-800' : 'text-slate-900'}`}>
                             {task.title}
                           </h4>
                           {task.description && (

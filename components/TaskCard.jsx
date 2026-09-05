@@ -211,7 +211,7 @@ export default function TaskCard({
               </span>
             )}
             <h4 className={`text-xs font-bold leading-snug break-words ${
-              isCompleted ? 'line-through text-slate-400 font-normal' : 'text-slate-900'
+              isCompleted ? 'text-slate-800' : 'text-slate-900'
             }`}>
               {task.title}
             </h4>

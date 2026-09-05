@@ -12,9 +12,11 @@ import {
   Calendar,
   Layers,
   X,
-  CheckCheck
+  CheckCheck,
+  Lock
 } from 'lucide-react';
 import { sounds } from '../lib/audio';
+import { checkEodAllowed } from '../lib/timeUtils';
 
 export default function TopNavbar({ 
   totalTasks, 
@@ -29,6 +31,15 @@ export default function TopNavbar({
   notifications = [],
   setNotifications
 }) {
+  const [eodStatus, setEodStatus] = useState(() => checkEodAllowed());
+
+  useEffect(() => {
+    setEodStatus(checkEodAllowed());
+    const interval = setInterval(() => {
+      setEodStatus(checkEodAllowed());
+    }, 15000);
+    return () => clearInterval(interval);
+  }, []);
   const [showNotifications, setShowNotifications] = useState(false);
   const notifRef = useRef(null);
 
@@ -79,7 +90,7 @@ export default function TopNavbar({
               }`}
             >
               <Layers className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Kanban</span>
+              <span className="hidden sm:inline">Task Board</span>
             </button>
 
             <button
@@ -116,18 +127,38 @@ export default function TopNavbar({
       {/* Right: Actions, Live Badge & Notification Center (Pushed to the right with ml-auto) */}
       <div className="flex items-center gap-2.5 shrink-0 ml-auto">
         
-        {/* + EOD Checkout (Green Button - Clean, Distinct, Protected) */}
+        {/* + EOD Checkout (Protected by 6:30 PM Rule) */}
         <button
           onClick={() => { sounds.playClick(); openEODModal(); }}
           className={`flex items-center gap-1.5 px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold shadow-xs transition-all active:scale-95 cursor-pointer shrink-0 whitespace-nowrap ${
             eodSubmittedToday
               ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+              : !eodStatus.isAllowed
+              ? 'bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 shadow-none'
               : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm shadow-emerald-600/20'
           }`}
-          title="Submit End of Day Checkout"
+          title={
+            eodSubmittedToday
+              ? "Today's EOD Report Logged"
+              : !eodStatus.isAllowed
+              ? `EOD Checkout unlocks at 6:30 PM (${eodStatus.formattedRemaining} left)`
+              : "Submit End of Day Checkout"
+          }
         >
-          <Clock className="w-3.5 h-3.5 shrink-0" />
-          <span>{eodSubmittedToday ? '✓ EOD Logged' : '+ EOD Checkout'}</span>
+          {eodSubmittedToday ? (
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+          ) : !eodStatus.isAllowed ? (
+            <Lock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+          ) : (
+            <Clock className="w-3.5 h-3.5 shrink-0" />
+          )}
+          <span>
+            {eodSubmittedToday 
+              ? '✓ EOD Logged' 
+              : !eodStatus.isAllowed 
+              ? `EOD at 6:30 PM (${eodStatus.formattedRemaining})` 
+              : '+ EOD Checkout'}
+          </span>
         </button>
 
         {/* + New Task */}

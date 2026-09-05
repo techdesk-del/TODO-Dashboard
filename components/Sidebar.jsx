@@ -19,13 +19,24 @@ export default function Sidebar({
   setSelectedMemberFilter, 
   onLogout 
 }) {
-  // EXCLUSIVE ACCESS: Only Aakash Das has Executive Overview access
+  // EXCLUSIVE ACCESS: Only Aakash Das has Executive Overview & full team view access
   const isAakash = currentUser?.id === 'usr_aakash' || currentUser?.name?.toLowerCase().includes('aakash');
-  const onlineCount = users.filter(u => u.status === 'online').length;
+
+  // Visible users in sidebar: Only Aakash sees all team members.
+  // Normal team members (e.g. Ayaz) only see their own profile in the sidebar.
+  const visibleUsers = isAakash
+    ? users
+    : (users.filter(u => u.id === currentUser?.id || u.name?.toLowerCase() === currentUser?.name?.toLowerCase()).length > 0
+        ? users.filter(u => u.id === currentUser?.id || u.name?.toLowerCase() === currentUser?.name?.toLowerCase())
+        : (currentUser ? [currentUser] : []));
+
+  const onlineCount = isAakash
+    ? users.filter(u => u.status === 'online').length
+    : visibleUsers.filter(u => u.status === 'online').length;
 
   const handleSelectMember = (userId) => {
     sounds.playClick();
-    if (selectedMemberFilter === userId) {
+    if (isAakash && selectedMemberFilter === userId) {
       setSelectedMemberFilter('all');
     } else {
       setSelectedMemberFilter(userId);
@@ -109,9 +120,9 @@ export default function Sidebar({
           <div className="px-3 mb-2 flex items-center justify-between">
             <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Team Presence ({onlineCount}/{users.length} Active)
+              {isAakash ? `Team Presence (${onlineCount}/${users.length} Active)` : 'My Status'}
             </span>
-            {selectedMemberFilter !== currentUser?.id && selectedMemberFilter !== 'all' && (
+            {isAakash && selectedMemberFilter !== currentUser?.id && selectedMemberFilter !== 'all' && (
               <button
                 onClick={() => { sounds.playClick(); setSelectedMemberFilter(currentUser?.id || 'all'); }}
                 className="text-[10px] text-blue-600 hover:underline font-bold"
@@ -122,7 +133,7 @@ export default function Sidebar({
           </div>
 
           <div className="space-y-1">
-            {users.map((u) => {
+            {visibleUsers.map((u) => {
               const isSelected = selectedMemberFilter === u.id;
               const isOnline = u.status === 'online';
               const isClockedOut = u.status === 'logged_out';

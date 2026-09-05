@@ -163,68 +163,75 @@ export default function TaskRemarkModal({
         </div>
 
         {/* Task Summary Strip */}
-        <div className="px-4 py-3 bg-slate-50/80 border-b border-slate-200/80 flex items-center justify-between gap-3 text-xs flex-wrap">
-          <div className="min-w-0 flex-1">
-            {candidateTasks && candidateTasks.length > 1 ? (
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-bold text-slate-500 shrink-0">Select Task:</span>
-                <select
-                  value={activeTask.id}
-                  onChange={(e) => {
-                    sounds.playClick();
-                    setSelectedTaskId(e.target.value);
-                  }}
-                  className="px-2.5 py-1 text-xs rounded-xl bg-white border border-indigo-200 font-bold text-indigo-950 cursor-pointer shadow-2xs focus:outline-none focus:border-indigo-500 max-w-xs truncate"
-                >
-                  {candidateTasks.map(t => (
-                    <option key={t.id} value={t.id}>
-                      {t.title} ({t.status.toUpperCase()})
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ) : (
-              <div className="font-extrabold text-slate-900 truncate">
-                {activeTask.title}
-              </div>
-            )}
-            {activeTask.description && (
-              <div className="text-[11px] text-slate-500 truncate mt-0.5">
-                {activeTask.description}
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            {/* Priority */}
-            <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md ${
-              activeTask.priority === 'urgent' ? 'badge-urgent' :
-              activeTask.priority === 'high' ? 'badge-high' :
-              activeTask.priority === 'medium' ? 'badge-medium' : 'badge-low'
-            }`}>
-              {activeTask.priority}
-            </span>
-
-            {/* Status */}
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md capitalize ${
-              activeTask.status === 'completed' ? 'bg-emerald-100 text-emerald-800' :
-              activeTask.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
-              activeTask.status === 'blocked' ? 'bg-rose-100 text-rose-800' : 'bg-slate-200 text-slate-700'
-            }`}>
-              {activeTask.status.replace('_', ' ')}
-            </span>
-
-            {/* Assignee */}
-            <div className="flex items-center gap-1 pl-1 border-l border-slate-200">
-              <div 
-                className="w-5 h-5 rounded-md flex items-center justify-center font-bold text-white text-[9px]"
-                style={{ backgroundColor: activeTask.assignee_color || '#2563eb' }}
+        <div className="px-4 py-3 bg-slate-50/90 border-b border-slate-200/80 space-y-2">
+          {candidateTasks && candidateTasks.length > 1 && (
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold text-slate-500 shrink-0">Select Task:</span>
+              <select
+                value={activeTask.id}
+                onChange={(e) => {
+                  sounds.playClick();
+                  setSelectedTaskId(e.target.value);
+                }}
+                className="w-full px-3 py-1.5 text-xs rounded-xl bg-white border border-indigo-200 font-bold text-indigo-950 cursor-pointer shadow-xs focus:outline-none focus:border-indigo-500"
               >
-                {activeTask.assignee_avatar || '??'}
-              </div>
-              <span className="font-bold text-slate-700 text-[11px] max-w-[90px] truncate">
-                {activeTask.assignee_name}
+                {candidateTasks.map(t => (
+                  <option key={t.id} value={t.id}>
+                    {t.title} ({t.status ? t.status.replace('_', ' ').toUpperCase() : 'TODO'})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Current Task Details & Badges Row */}
+          <div className="flex items-center justify-between gap-3 text-xs">
+            <div className="min-w-0 flex-1">
+              {(!candidateTasks || candidateTasks.length <= 1) && (
+                <div className="font-extrabold text-slate-900 truncate text-xs" title={activeTask.title}>
+                  {activeTask.title}
+                </div>
+              )}
+              {activeTask.description && (
+                <div className="text-[11px] text-slate-500 truncate" title={activeTask.description}>
+                  {activeTask.description}
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Priority */}
+              <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md ${
+                activeTask.priority === 'urgent' ? 'badge-urgent' :
+                activeTask.priority === 'high' ? 'badge-high' :
+                activeTask.priority === 'medium' ? 'badge-medium' : 'badge-low'
+              }`}>
+                {activeTask.priority || 'Normal'}
               </span>
+
+              {/* Status */}
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md capitalize ${
+                activeTask.status === 'completed' ? 'bg-emerald-100 text-emerald-800' :
+                activeTask.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
+                activeTask.status === 'blocked' ? 'bg-rose-100 text-rose-800' : 'bg-slate-200 text-slate-700'
+              }`}>
+                {(activeTask.status || 'todo').replace('_', ' ')}
+              </span>
+
+              {/* Assignee */}
+              {activeTask.assignee_name && (
+                <div className="flex items-center gap-1.5 pl-2 border-l border-slate-200">
+                  <div 
+                    className="w-5 h-5 rounded-md flex items-center justify-center font-bold text-white text-[9px] shrink-0"
+                    style={{ backgroundColor: activeTask.assignee_color || '#2563eb' }}
+                  >
+                    {activeTask.assignee_avatar || '??'}
+                  </div>
+                  <span className="font-bold text-slate-700 text-[11px] max-w-[100px] truncate" title={activeTask.assignee_name}>
+                    {activeTask.assignee_name}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -351,9 +358,8 @@ export default function TaskRemarkModal({
             </button>
           </div>
 
-          <div className="flex items-center justify-between text-[10.5px] text-slate-400 px-1">
+          <div className="flex items-center justify-start text-[10.5px] text-slate-400 px-1">
             <span>Press <kbd className="px-1.5 py-0.5 rounded bg-slate-100 font-mono text-[9.5px] border border-slate-200">Ctrl + Enter</kbd> to submit</span>
-            <span className="font-semibold text-indigo-600">Syncs live across all screens</span>
           </div>
         </form>
 
