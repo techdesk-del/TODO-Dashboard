@@ -537,18 +537,18 @@ export default function KanbanBoard({
         /* EXCEL SPREADSHEET 4-STATUS MATRIX (To Do, In Progress, Blocked, Completed Columns) */
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden w-full p-0">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse min-w-[1100px]">
+            <table className="w-full text-left text-xs border-collapse min-w-[1400px]">
               {/* Excel Table Header */}
-              <thead>
-                <tr className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white font-extrabold text-[11px] uppercase tracking-wider">
-                  <th className="py-3 px-3 text-center w-12 border-r border-slate-700/60 shrink-0">#</th>
-                  <th className="py-3 px-4 border-r border-slate-700/60 min-w-[190px] w-[200px]">Candidate / Team Member</th>
-                  <th className="py-3 px-4 border-r border-slate-700/60 min-w-[320px] max-w-[460px] w-[380px] bg-slate-800/80">📝 To Do</th>
-                  <th className="py-3 px-4 border-r border-slate-700/60 min-w-[360px] max-w-[500px] w-[440px] bg-blue-950/60">📖 In Progress</th>
-                  <th className="py-3 px-4 border-r border-slate-700/60 min-w-[320px] max-w-[460px] w-[380px] bg-indigo-950/70">💬 Remarks & Info</th>
-                  <th className="py-3 px-4 border-r border-slate-700/60 min-w-[160px] w-[180px]">Workload & Pages</th>
-                  <th className="py-3 px-4 border-r border-slate-700/60 min-w-[280px] max-w-[420px] w-[340px] bg-rose-950/50">🚫 Blocked</th>
-                  <th className="py-3 px-4 min-w-[320px] max-w-[460px] w-[380px] bg-emerald-950/60">✅ Completed</th>
+              <thead className="sticky top-0 z-10 shadow-xs">
+                <tr className="bg-slate-900 text-white font-bold text-[11px] tracking-wide uppercase">
+                  <th className="py-3 px-3 text-center w-12 border-r border-slate-800 shrink-0">#</th>
+                  <th className="py-3 px-4 border-r border-slate-800 min-w-[190px] w-[190px]">Candidate / Member</th>
+                  <th className="py-3 px-3 border-r border-slate-800 min-w-[260px] max-w-[320px] w-[280px] bg-slate-800">📝 To Do</th>
+                  <th className="py-3 px-3 border-r border-slate-800 min-w-[280px] max-w-[360px] w-[320px] bg-blue-950/80">📖 In Progress</th>
+                  <th className="py-3 px-3 border-r border-slate-800 min-w-[240px] max-w-[300px] w-[260px] bg-indigo-950/80">💬 Remarks & Info</th>
+                  <th className="py-3 px-3 border-r border-slate-800 min-w-[130px] w-[140px] text-center">Workload</th>
+                  <th className="py-3 px-3 border-r border-slate-800 min-w-[220px] max-w-[280px] w-[240px] bg-rose-950/70">🚫 Blocked</th>
+                  <th className="py-3 px-3 min-w-[240px] max-w-[300px] w-[260px] bg-emerald-950/80">✅ Completed</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200/90 bg-white">
@@ -566,48 +566,61 @@ export default function KanbanBoard({
 
                   return (
                     <tr 
-                      key={user.id}
+                      key={user.id} 
                       className={`hover:bg-indigo-50/20 transition-colors ${
                         idx % 2 === 1 ? 'bg-slate-50/40' : 'bg-white'
                       }`}
                     >
                       {/* 1. Row # */}
-                      <td className="py-4 px-3 text-center font-extrabold text-slate-500 border-r border-slate-200 bg-slate-50/60 align-top">
+                      <td className="py-3.5 px-3 text-center font-extrabold text-slate-500 border-r border-slate-200 bg-slate-50/60 align-top">
                         {idx + 1}
                       </td>
 
-                      {/* 2. Candidate / Team Member Profile + Quick + Add Task Action at Front */}
-                      <td className="py-4 px-4 border-r border-slate-200 align-top whitespace-nowrap space-y-2.5">
+                      {/* 2. Candidate / Team Member Profile + Quick Action Buttons */}
+                      <td className="py-3 px-3.5 border-r border-slate-200 align-top whitespace-nowrap">
                         <div className="flex items-center gap-2.5">
-                          <div
-                            className="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black text-white shadow-2xs shrink-0"
-                            style={{ backgroundColor: user.color || '#2563eb' }}
-                          >
-                            {user.avatar || '??'}
+                          <div className="relative shrink-0">
+                            <div
+                              className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-black text-white shadow-2xs"
+                              style={{ backgroundColor: user.color || '#2563eb' }}
+                            >
+                              {user.avatar || '??'}
+                            </div>
+                            <span 
+                              className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${
+                                user.status === 'online' ? 'bg-emerald-500 shadow-xs' : 'bg-slate-300'
+                              }`}
+                              title={user.status === 'online' ? 'Online' : 'Offline'}
+                            />
                           </div>
-                          <div>
-                            <div className="font-extrabold text-slate-900 leading-snug">{user.name}</div>
-                            <div className="text-[10.5px] text-slate-400 font-medium">{user.role}</div>
-                            <div className="mt-0.5 flex items-center gap-1">
-                              <span className={`w-1.5 h-1.5 rounded-full ${user.status === 'online' ? 'bg-emerald-500' : 'bg-slate-400'}`} />
-                              <span className="text-[9.5px] text-slate-500 font-semibold capitalize">{user.status}</span>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-extrabold text-slate-900 text-xs leading-snug truncate" title={user.name}>
+                              {user.name}
+                            </div>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="text-[9.5px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded capitalize">
+                                {user.role}
+                              </span>
+                              <span className={`text-[9px] font-medium ${user.status === 'online' ? 'text-emerald-600 font-semibold' : 'text-slate-400'}`}>
+                                {user.status === 'online' ? 'Active' : 'Offline'}
+                              </span>
                             </div>
                           </div>
                         </div>
 
-                        {/* Starting Quick Actions: + Add Task & Manage Books for this specific candidate */}
-                        <div className="space-y-1.5 pt-1">
+                        {/* Quick Actions (Compact Dual Buttons) */}
+                        <div className="grid grid-cols-2 gap-1.5 pt-2">
                           <button
                             type="button"
                             onClick={() => {
                               sounds.playClick();
                               openNewTaskModal('todo', user.id);
                             }}
-                            className="w-full py-1.5 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-extrabold text-[11px] flex items-center justify-center gap-1.5 shadow-xs shadow-blue-500/20 transition-all cursor-pointer"
+                            className="py-1 px-2 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-[10.5px] flex items-center justify-center gap-1 shadow-xs shadow-blue-500/20 transition-all cursor-pointer truncate"
                             title={`Add task for ${user.name}`}
                           >
-                            <Plus className="w-3.5 h-3.5 stroke-[3]" />
-                            <span>+ Add Task</span>
+                            <Plus className="w-3 h-3 stroke-[2.5] shrink-0" />
+                            <span>Add Task</span>
                           </button>
 
                           {member.bookTask ? (
@@ -617,11 +630,11 @@ export default function KanbanBoard({
                                 sounds.playClick();
                                 onEditTask(member.bookTask);
                               }}
-                              className="w-full py-1.5 px-3 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 active:scale-98 font-black text-[10.5px] flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+                              className="py-1 px-2 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200/90 active:scale-95 font-bold text-[10px] flex items-center justify-center gap-1 transition-all cursor-pointer shadow-2xs truncate"
                               title="Manage individual books, authors, dates, & reading list"
                             >
-                              <BookOpen className="w-3.5 h-3.5 text-indigo-600" />
-                              <span>Manage Books ({member.bookTask.books_list?.length || 1})</span>
+                              <BookOpen className="w-3 h-3 text-indigo-600 shrink-0" />
+                              <span>Books ({member.bookTask.books_list?.length || 1})</span>
                             </button>
                           ) : (
                             <button
@@ -630,24 +643,24 @@ export default function KanbanBoard({
                                 sounds.playClick();
                                 openNewTaskModal('in_progress', user.id);
                               }}
-                              className="w-full py-1.5 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 active:scale-98 font-bold text-[10px] flex items-center justify-center gap-1 transition-all cursor-pointer"
+                              className="py-1 px-2 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 active:scale-95 font-bold text-[10px] flex items-center justify-center gap-1 transition-all cursor-pointer truncate"
                               title="Assign a book reading task"
                             >
-                              <BookOpen className="w-3 h-3 text-slate-500" />
-                              <span>+ Add Book</span>
+                              <BookOpen className="w-3 h-3 text-slate-500 shrink-0" />
+                              <span>+ Book</span>
                             </button>
                           )}
                         </div>
                       </td>
 
                       {/* 3. TO DO COLUMN (HORIZONTALLY SCROLLABLE) */}
-                      <td className="py-2.5 px-3 border-r border-slate-200 align-top bg-slate-50/30 min-w-[320px] max-w-[460px] w-[380px]">
+                      <td className="py-2.5 px-3 border-r border-slate-200 align-top bg-slate-50/20 min-w-[260px] max-w-[320px] w-[280px]">
                         {member.todoTasks.length === 0 ? (
-                          <div className="h-full min-h-[110px] flex items-center justify-center p-3 rounded-xl border border-dashed border-slate-200/90 bg-white/40 text-center text-slate-400 italic text-[10.5px]">
-                            — No To Do tasks —
+                          <div className="h-full min-h-[72px] flex items-center justify-center p-2 rounded-xl bg-white/60 border border-slate-200/60 text-center text-slate-400 text-xs">
+                            <span className="font-medium text-[11px]">No To Do tasks</span>
                           </div>
                         ) : (
-                          <div className="w-[300px] sm:w-[360px] max-w-full space-y-1.5 h-full flex flex-col">
+                          <div className="w-full space-y-1.5 h-full flex flex-col">
                             {/* Track Header */}
                             <div className="flex items-center justify-between text-[10px] text-slate-800 font-bold px-0.5 pb-1 border-b border-slate-200/80">
                               <span className="flex items-center gap-1.5">
@@ -655,14 +668,13 @@ export default function KanbanBoard({
                                 <span>{member.todoTasks.length} To Do</span>
                               </span>
                               {member.todoTasks.length > 1 && (
-                                <div className="flex items-center gap-1 text-[9px] text-slate-400 font-semibold">
-                                  <span className="hidden sm:inline">↔ Scroll</span>
+                                <div className="flex items-center gap-1">
                                   <button
                                     type="button"
                                     onClick={(e) => {
                                       sounds.playClick();
                                       const container = e.currentTarget.closest('td')?.querySelector('.horizontal-tasks-track');
-                                      if (container) container.scrollBy({ left: -260, behavior: 'smooth' });
+                                      if (container) container.scrollBy({ left: -240, behavior: 'smooth' });
                                     }}
                                     className="w-5 h-5 rounded-md bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center cursor-pointer shadow-2xs active:scale-95 transition-all text-xs"
                                     title="Scroll left"
@@ -674,7 +686,7 @@ export default function KanbanBoard({
                                     onClick={(e) => {
                                       sounds.playClick();
                                       const container = e.currentTarget.closest('td')?.querySelector('.horizontal-tasks-track');
-                                      if (container) container.scrollBy({ left: 260, behavior: 'smooth' });
+                                      if (container) container.scrollBy({ left: 240, behavior: 'smooth' });
                                     }}
                                     className="w-5 h-5 rounded-md bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center cursor-pointer shadow-2xs active:scale-95 transition-all text-xs"
                                     title="Scroll right"
@@ -687,8 +699,7 @@ export default function KanbanBoard({
 
                             {/* Horizontal Cards Rail */}
                             <div 
-                              className="horizontal-tasks-track flex flex-row gap-2.5 overflow-x-auto pb-2 pt-0.5 custom-scrollbar snap-x snap-mandatory flex-1 items-stretch"
-                              style={{ scrollbarWidth: 'thin' }}
+                              className="horizontal-tasks-track flex flex-row gap-2 overflow-x-auto pb-1 pt-0.5 no-scrollbar snap-x snap-mandatory flex-1 items-stretch"
                               onWheel={(e) => {
                                 if (e.deltaY !== 0) e.currentTarget.scrollLeft += e.deltaY;
                               }}
@@ -696,7 +707,7 @@ export default function KanbanBoard({
                               {member.todoTasks.map((t, tIdx) => (
                                 <div 
                                   key={t.id} 
-                                  className="w-[240px] sm:w-[260px] shrink-0 p-2.5 rounded-xl bg-white border border-slate-200 hover:border-slate-400 shadow-2xs space-y-1.5 snap-start flex flex-col justify-between transition-all"
+                                  className="w-[230px] shrink-0 p-2.5 rounded-xl bg-white border border-slate-200 hover:border-slate-400 shadow-2xs space-y-1.5 snap-start flex flex-col justify-between transition-all"
                                 >
                                   <div>
                                     <div className="flex items-start justify-between gap-1">
@@ -705,9 +716,10 @@ export default function KanbanBoard({
                                       </span>
                                       <span className={`text-[8.5px] font-extrabold px-1.5 py-0.2 rounded uppercase shrink-0 ${
                                         t.priority === 'urgent' ? 'bg-rose-100 text-rose-800' :
-                                        t.priority === 'high' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'
+                                        t.priority === 'high' ? 'bg-amber-100 text-amber-800' :
+                                        t.priority === 'medium' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-600'
                                       }`}>
-                                        {t.priority}
+                                        {t.priority || 'normal'}
                                       </span>
                                     </div>
                                     {t.description && (
@@ -772,14 +784,14 @@ export default function KanbanBoard({
                         )}
                       </td>
 
-                      {/* 4. IN PROGRESS COLUMN (HORIZONTALLY SCROLLABLE TO ELIMINATE VERTICAL STRETCHING) */}
-                      <td className="py-3 px-3 border-r border-slate-200 align-top bg-blue-50/15 min-w-[360px] max-w-[540px] w-[460px]">
+                      {/* 4. IN PROGRESS COLUMN */}
+                      <td className="py-2.5 px-3 border-r border-slate-200 align-top bg-blue-50/10 min-w-[280px] max-w-[360px] w-[320px]">
                         {member.inProgressTasks.length === 0 && (!member.bookTask || member.inProgressBooks.length === 0) ? (
-                          <div className="h-full min-h-[110px] flex items-center justify-center p-3 rounded-xl border border-dashed border-blue-200/90 bg-white/40 text-center text-slate-400 italic text-[10.5px]">
-                            — None active —
+                          <div className="h-full min-h-[72px] flex items-center justify-center p-2 rounded-xl bg-white/60 border border-blue-100 text-center text-slate-400 text-xs">
+                            <span className="font-medium text-[11px]">None active</span>
                           </div>
                         ) : (
-                          <div className="w-[340px] sm:w-[400px] lg:w-[450px] max-w-full space-y-1.5 h-full flex flex-col">
+                          <div className="w-full space-y-1.5 h-full flex flex-col">
                             {/* Horizontal Track Header with Item Count & Scroll Nav */}
                             <div className="flex items-center justify-between text-[10px] text-blue-950 font-bold px-0.5 pb-1 border-b border-blue-100">
                               <span className="flex items-center gap-1.5">
@@ -787,16 +799,15 @@ export default function KanbanBoard({
                                 <span>{member.inProgressTasks.length + (member.bookTask && member.inProgressBooks.length > 0 ? 1 : 0)} Active Items</span>
                               </span>
                               {(member.inProgressTasks.length + (member.bookTask && member.inProgressBooks.length > 0 ? 1 : 0)) > 1 && (
-                                <div className="flex items-center gap-1 text-[9px] text-slate-400 font-semibold">
-                                  <span className="hidden sm:inline">↔ Scroll</span>
+                                <div className="flex items-center gap-1">
                                   <button
                                     type="button"
                                     onClick={(e) => {
                                       sounds.playClick();
                                       const container = e.currentTarget.closest('td')?.querySelector('.horizontal-tasks-track');
-                                      if (container) container.scrollBy({ left: -260, behavior: 'smooth' });
+                                      if (container) container.scrollBy({ left: -240, behavior: 'smooth' });
                                     }}
-                                    className="w-5 h-5 rounded-md bg-white hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-slate-700 flex items-center justify-center cursor-pointer shadow-2xs active:scale-95 transition-all text-xs"
+                                    className="w-5 h-5 rounded-md bg-white hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-slate-600 flex items-center justify-center cursor-pointer shadow-2xs active:scale-95 transition-all text-xs"
                                     title="Scroll left"
                                   >
                                     ‹
@@ -806,7 +817,7 @@ export default function KanbanBoard({
                                     onClick={(e) => {
                                       sounds.playClick();
                                       const container = e.currentTarget.closest('td')?.querySelector('.horizontal-tasks-track');
-                                      if (container) container.scrollBy({ left: 260, behavior: 'smooth' });
+                                      if (container) container.scrollBy({ left: 240, behavior: 'smooth' });
                                     }}
                                     className="w-5 h-5 rounded-md bg-white hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-slate-700 flex items-center justify-center cursor-pointer shadow-2xs active:scale-95 transition-all text-xs"
                                     title="Scroll right"
@@ -817,10 +828,9 @@ export default function KanbanBoard({
                               )}
                             </div>
 
-                            {/* Horizontal Cards Rail with Mouse Wheel Translation */}
+                            {/* Horizontal Cards Rail without Windows scrollbar */}
                             <div 
-                              className="horizontal-tasks-track flex flex-row gap-2.5 overflow-x-auto pb-2 pt-0.5 custom-scrollbar snap-x snap-mandatory flex-1 items-stretch"
-                              style={{ scrollbarWidth: 'thin' }}
+                              className="horizontal-tasks-track flex flex-row gap-2 overflow-x-auto pb-1 pt-0.5 no-scrollbar snap-x snap-mandatory flex-1 items-stretch"
                               onWheel={(e) => {
                                 if (e.deltaY !== 0) {
                                   e.currentTarget.scrollLeft += e.deltaY;
@@ -839,15 +849,19 @@ export default function KanbanBoard({
                                 return (
                                   <div 
                                     key={t.id} 
-                                    className="w-[260px] sm:w-[280px] shrink-0 p-2.5 rounded-xl bg-white border border-blue-200 hover:border-blue-400 shadow-2xs space-y-1.5 snap-start flex flex-col justify-between transition-all"
+                                    className="w-[240px] shrink-0 p-2.5 rounded-xl bg-white border border-blue-200 hover:border-blue-400 shadow-2xs space-y-1.5 snap-start flex flex-col justify-between transition-all"
                                   >
                                     <div>
                                       <div className="flex items-start justify-between gap-1">
                                         <span className="font-bold text-slate-900 leading-tight text-xs line-clamp-2" title={t.title}>
                                           <strong className="text-blue-600 font-extrabold">{tIdx + 1}.</strong> {t.title}
                                         </span>
-                                        <span className="text-[8.5px] font-extrabold px-1.5 py-0.2 rounded bg-blue-100 text-blue-800 shrink-0">
-                                          In Progress
+                                        <span className={`text-[8.5px] font-extrabold px-1.5 py-0.2 rounded uppercase shrink-0 ${
+                                          t.priority === 'urgent' ? 'bg-rose-100 text-rose-800' :
+                                          t.priority === 'high' ? 'bg-amber-100 text-amber-800' :
+                                          t.priority === 'medium' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-600'
+                                        }`}>
+                                          {t.priority || 'Normal'}
                                         </span>
                                       </div>
                                       {t.description && (
@@ -924,7 +938,7 @@ export default function KanbanBoard({
                                 return (
                                   <div 
                                     key={t.id} 
-                                    className="w-[260px] sm:w-[280px] shrink-0 p-2.5 rounded-xl bg-white border border-indigo-200 hover:border-indigo-400 shadow-2xs space-y-1.5 snap-start flex flex-col justify-between transition-all"
+                                    className="w-[240px] shrink-0 p-2.5 rounded-xl bg-white border border-indigo-200 hover:border-indigo-400 shadow-2xs space-y-1.5 snap-start flex flex-col justify-between transition-all"
                                   >
                                     <div>
                                       <div className="flex items-start justify-between gap-1">
@@ -938,10 +952,10 @@ export default function KanbanBoard({
                                       </div>
 
                                       {/* Multi-Book In-Progress list */}
-                                      <div className="space-y-1 pt-1 max-h-[75px] overflow-y-auto custom-scrollbar pr-0.5">
+                                      <div className="space-y-1 pt-1 max-h-[75px] overflow-y-auto no-scrollbar pr-0.5">
                                         {member.inProgressBooks.map((b, bIdx) => (
                                           <div key={b.id || bIdx} className="p-1.5 rounded-lg bg-slate-50 border border-slate-200/80 text-[9.5px] flex items-center justify-between gap-1">
-                                            <span className="truncate font-semibold text-slate-800 max-w-[150px]" title={b.title}>
+                                            <span className="truncate font-semibold text-slate-800 max-w-[140px]" title={b.title}>
                                               #{bIdx + 1} {b.title}
                                             </span>
                                             <span className="px-1.5 py-0.2 rounded text-[8.5px] font-black shrink-0 bg-blue-100 text-blue-800">
@@ -1003,8 +1017,8 @@ export default function KanbanBoard({
                         )}
                       </td>
 
-                      {/* 5. REMARKS & INFORMATION COLUMN (HORIZONTALLY SCROLLABLE) */}
-                      <td className="py-2.5 px-3 border-r border-slate-200 align-top bg-indigo-50/15 min-w-[320px] max-w-[460px] w-[380px]">
+                      {/* 5. REMARKS & INFORMATION COLUMN */}
+                      <td className="py-2.5 px-3 border-r border-slate-200 align-top bg-indigo-50/10 min-w-[240px] max-w-[300px] w-[260px]">
                         {(() => {
                           const candidateTasks = [
                             ...member.todoTasks,
@@ -1016,7 +1030,7 @@ export default function KanbanBoard({
                           const tasksWithRemarks = candidateTasks.filter(t => (t.remarks && t.remarks.length > 0) || t.latest_remark);
 
                           return (
-                            <div className="w-[300px] sm:w-[360px] max-w-full space-y-1.5 h-full flex flex-col">
+                            <div className="w-full space-y-1.5 h-full flex flex-col">
                               {/* Header inside cell with Quick + Add Remark */}
                               <div className="flex items-center justify-between gap-1 pb-1 border-b border-indigo-200/80 text-[10px]">
                                 <span className="font-black uppercase tracking-wider text-indigo-950 flex items-center gap-1">
@@ -1031,7 +1045,7 @@ export default function KanbanBoard({
                                         onClick={(e) => {
                                           sounds.playClick();
                                           const container = e.currentTarget.closest('td')?.querySelector('.horizontal-tasks-track');
-                                          if (container) container.scrollBy({ left: -260, behavior: 'smooth' });
+                                          if (container) container.scrollBy({ left: -240, behavior: 'smooth' });
                                         }}
                                         className="w-5 h-5 rounded-md bg-white hover:bg-indigo-50 border border-indigo-200 text-indigo-700 flex items-center justify-center cursor-pointer shadow-2xs active:scale-95 transition-all text-xs"
                                         title="Scroll left"
@@ -1043,7 +1057,7 @@ export default function KanbanBoard({
                                         onClick={(e) => {
                                           sounds.playClick();
                                           const container = e.currentTarget.closest('td')?.querySelector('.horizontal-tasks-track');
-                                          if (container) container.scrollBy({ left: 260, behavior: 'smooth' });
+                                          if (container) container.scrollBy({ left: 240, behavior: 'smooth' });
                                         }}
                                         className="w-5 h-5 rounded-md bg-white hover:bg-indigo-50 border border-indigo-200 text-indigo-700 flex items-center justify-center cursor-pointer shadow-2xs active:scale-95 transition-all text-xs"
                                         title="Scroll right"
@@ -1065,7 +1079,7 @@ export default function KanbanBoard({
                                     className="px-2 py-0.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[9.5px] flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-2xs"
                                     title={`Add remark for ${user.name}'s task`}
                                   >
-                                    <Plus className="w-3 h-3 stroke-[3]" />
+                                    <Plus className="w-3 h-3 stroke-[2.5]" />
                                     <span>Add</span>
                                   </button>
                                 </div>
@@ -1073,13 +1087,12 @@ export default function KanbanBoard({
 
                               {/* Remarks Cards Rail */}
                               {tasksWithRemarks.length === 0 ? (
-                                <div className="h-full min-h-[110px] flex items-center justify-center p-3 rounded-xl border border-dashed border-indigo-200/90 bg-white/40 text-center text-slate-400 italic text-[10.5px]">
-                                  — No task remarks yet —
+                                <div className="h-full min-h-[72px] flex items-center justify-center p-2 rounded-xl bg-white/60 border border-indigo-100 text-center text-slate-400 text-xs">
+                                  <span className="font-medium text-[11px]">No remarks yet</span>
                                 </div>
                               ) : (
                                 <div 
-                                  className="horizontal-tasks-track flex flex-row gap-2.5 overflow-x-auto pb-2 pt-0.5 custom-scrollbar snap-x snap-mandatory flex-1 items-stretch"
-                                  style={{ scrollbarWidth: 'thin' }}
+                                  className="horizontal-tasks-track flex flex-row gap-2 overflow-x-auto pb-1 pt-0.5 no-scrollbar snap-x snap-mandatory flex-1 items-stretch"
                                   onWheel={(e) => {
                                     if (e.deltaY !== 0) e.currentTarget.scrollLeft += e.deltaY;
                                   }}
@@ -1097,7 +1110,7 @@ export default function KanbanBoard({
                                           setActiveRemarkTask(t);
                                           setActiveRemarkCandidateTasks(candidateTasks);
                                         }}
-                                        className="w-[230px] sm:w-[250px] shrink-0 p-2.5 rounded-xl bg-white border border-indigo-200/90 hover:border-indigo-400 shadow-2xs space-y-1.5 cursor-pointer transition-all hover:shadow-xs snap-start flex flex-col justify-between group"
+                                        className="w-[220px] shrink-0 p-2.5 rounded-xl bg-white border border-indigo-200/90 hover:border-indigo-400 shadow-2xs space-y-1.5 cursor-pointer transition-all hover:shadow-xs snap-start flex flex-col justify-between group"
                                         title="Click to view full remark timeline or add update"
                                       >
                                         <div>
@@ -1129,14 +1142,14 @@ export default function KanbanBoard({
                       </td>
 
                       {/* 6. Workload Summary & Pages Read */}
-                      <td className="py-2.5 px-3 border-r border-slate-200 align-top whitespace-nowrap min-w-[160px] w-[180px]">
-                        <div className="h-full flex flex-col justify-between p-2.5 rounded-xl bg-white border border-slate-200/90 shadow-2xs space-y-2">
-                          <div className="space-y-1.5">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Workload</span>
+                      <td className="py-2.5 px-3 border-r border-slate-200 align-top whitespace-nowrap min-w-[130px] w-[140px]">
+                        <div className="h-full flex flex-col justify-between p-2 rounded-xl bg-white border border-slate-200/90 shadow-2xs space-y-1.5">
+                          <div className="space-y-1">
+                            <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wide">Progress</span>
                             <div className="text-[11px] font-extrabold text-slate-800">
                               {member.totalCompletedCount}/{member.total} Tasks ({completionRate}%)
                             </div>
-                            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-200/60">
+                            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden border border-slate-200/60">
                               <div
                                 className="h-full rounded-full bg-emerald-500 transition-all duration-300"
                                 style={{ width: `${completionRate}%` }}
@@ -1144,21 +1157,21 @@ export default function KanbanBoard({
                             </div>
                           </div>
                           {member.totalPages > 0 && (
-                            <div className="text-[9.5px] text-indigo-900 font-bold bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-100 truncate">
-                              📖 {member.pagesRead}/{member.totalPages} pgs read
+                            <div className="text-[9px] text-indigo-900 font-bold bg-indigo-50 px-1.5 py-0.5 rounded-md border border-indigo-100 truncate">
+                              📖 {member.pagesRead}/{member.totalPages} pgs
                             </div>
                           )}
                         </div>
                       </td>
 
-                      {/* 6. BLOCKED COLUMN (HORIZONTALLY SCROLLABLE) */}
-                      <td className="py-2.5 px-3 border-r border-slate-200 align-top bg-rose-50/15 min-w-[280px] max-w-[420px] w-[340px]">
+                      {/* 7. BLOCKED COLUMN */}
+                      <td className="py-2.5 px-3 border-r border-slate-200 align-top bg-rose-50/10 min-w-[220px] max-w-[280px] w-[240px]">
                         {member.blockedTasks.length === 0 ? (
-                          <div className="h-full min-h-[110px] flex items-center justify-center p-3 rounded-xl border border-dashed border-rose-200/80 bg-white/40 text-center text-slate-400 italic text-[10.5px]">
-                            — No blocked tasks —
+                          <div className="h-full min-h-[72px] flex items-center justify-center p-2 rounded-xl bg-white/60 border border-rose-100 text-center text-slate-400 text-xs">
+                            <span className="font-medium text-[11px]">No blocked tasks</span>
                           </div>
                         ) : (
-                          <div className="w-[260px] sm:w-[320px] max-w-full space-y-1.5 h-full flex flex-col">
+                          <div className="w-full space-y-1.5 h-full flex flex-col">
                             {/* Track Header */}
                             <div className="flex items-center justify-between text-[10px] text-rose-950 font-bold px-0.5 pb-1 border-b border-rose-200/80">
                               <span className="flex items-center gap-1.5">
@@ -1166,14 +1179,13 @@ export default function KanbanBoard({
                                 <span>{member.blockedTasks.length} Blocked</span>
                               </span>
                               {member.blockedTasks.length > 1 && (
-                                <div className="flex items-center gap-1 text-[9px] text-slate-400 font-semibold">
-                                  <span className="hidden sm:inline">↔ Scroll</span>
+                                <div className="flex items-center gap-1">
                                   <button
                                     type="button"
                                     onClick={(e) => {
                                       sounds.playClick();
                                       const container = e.currentTarget.closest('td')?.querySelector('.horizontal-tasks-track');
-                                      if (container) container.scrollBy({ left: -260, behavior: 'smooth' });
+                                      if (container) container.scrollBy({ left: -240, behavior: 'smooth' });
                                     }}
                                     className="w-5 h-5 rounded-md bg-white hover:bg-rose-50 border border-rose-200 text-rose-700 flex items-center justify-center cursor-pointer shadow-2xs active:scale-95 transition-all text-xs"
                                     title="Scroll left"
@@ -1185,7 +1197,7 @@ export default function KanbanBoard({
                                     onClick={(e) => {
                                       sounds.playClick();
                                       const container = e.currentTarget.closest('td')?.querySelector('.horizontal-tasks-track');
-                                      if (container) container.scrollBy({ left: 260, behavior: 'smooth' });
+                                      if (container) container.scrollBy({ left: 240, behavior: 'smooth' });
                                     }}
                                     className="w-5 h-5 rounded-md bg-white hover:bg-rose-50 border border-rose-200 text-rose-700 flex items-center justify-center cursor-pointer shadow-2xs active:scale-95 transition-all text-xs"
                                     title="Scroll right"
@@ -1198,8 +1210,7 @@ export default function KanbanBoard({
 
                             {/* Horizontal Cards Rail */}
                             <div 
-                              className="horizontal-tasks-track flex flex-row gap-2.5 overflow-x-auto pb-2 pt-0.5 custom-scrollbar snap-x snap-mandatory flex-1 items-stretch"
-                              style={{ scrollbarWidth: 'thin' }}
+                              className="horizontal-tasks-track flex flex-row gap-2 overflow-x-auto pb-1 pt-0.5 no-scrollbar snap-x snap-mandatory flex-1 items-stretch"
                               onWheel={(e) => {
                                 if (e.deltaY !== 0) e.currentTarget.scrollLeft += e.deltaY;
                               }}
@@ -1207,7 +1218,7 @@ export default function KanbanBoard({
                               {member.blockedTasks.map((t, tIdx) => (
                                 <div 
                                   key={t.id} 
-                                  className="w-[230px] sm:w-[250px] shrink-0 p-2.5 rounded-xl bg-white border border-rose-200 hover:border-rose-400 shadow-2xs space-y-1.5 snap-start flex flex-col justify-between transition-all"
+                                  className="w-[220px] shrink-0 p-2.5 rounded-xl bg-white border border-rose-200 hover:border-rose-400 shadow-2xs space-y-1.5 snap-start flex flex-col justify-between transition-all"
                                 >
                                   <div>
                                     <div className="flex items-start justify-between gap-1">
@@ -1282,14 +1293,14 @@ export default function KanbanBoard({
                         )}
                       </td>
 
-                      {/* 7. COMPLETED COLUMN (HORIZONTALLY SCROLLABLE) */}
-                      <td className="py-2.5 px-3 align-top bg-emerald-50/15 min-w-[320px] max-w-[460px] w-[380px]">
+                      {/* 8. COMPLETED COLUMN */}
+                      <td className="py-2.5 px-3 align-top bg-emerald-50/10 min-w-[240px] max-w-[300px] w-[260px]">
                         {member.regularCompletedTasks.length === 0 && member.completedBooks.length === 0 ? (
-                          <div className="h-full min-h-[110px] flex items-center justify-center p-3 rounded-xl border border-dashed border-emerald-200/90 bg-white/40 text-center text-slate-400 italic text-[10.5px]">
-                            — 0 finished —
+                          <div className="h-full min-h-[72px] flex items-center justify-center p-2 rounded-xl bg-white/60 border border-emerald-100 text-center text-slate-400 text-xs">
+                            <span className="font-medium text-[11px]">0 finished</span>
                           </div>
                         ) : (
-                          <div className="w-[300px] sm:w-[360px] max-w-full space-y-1.5 h-full flex flex-col">
+                          <div className="w-full space-y-1.5 h-full flex flex-col">
                             {/* Track Header */}
                             <div className="flex items-center justify-between text-[10px] text-emerald-950 font-bold px-0.5 pb-1 border-b border-emerald-200/80">
                               <span className="flex items-center gap-1.5">
@@ -1297,14 +1308,13 @@ export default function KanbanBoard({
                                 <span>{(member.regularCompletedTasks?.length || 0) + (member.completedBooks?.length || 0)} Finished</span>
                               </span>
                               {((member.regularCompletedTasks?.length || 0) + (member.completedBooks?.length || 0)) > 1 && (
-                                <div className="flex items-center gap-1 text-[9px] text-slate-400 font-semibold">
-                                  <span className="hidden sm:inline">↔ Scroll</span>
+                                <div className="flex items-center gap-1">
                                   <button
                                     type="button"
                                     onClick={(e) => {
                                       sounds.playClick();
                                       const container = e.currentTarget.closest('td')?.querySelector('.horizontal-tasks-track');
-                                      if (container) container.scrollBy({ left: -260, behavior: 'smooth' });
+                                      if (container) container.scrollBy({ left: -240, behavior: 'smooth' });
                                     }}
                                     className="w-5 h-5 rounded-md bg-white hover:bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center cursor-pointer shadow-2xs active:scale-95 transition-all text-xs"
                                     title="Scroll left"
@@ -1316,7 +1326,7 @@ export default function KanbanBoard({
                                     onClick={(e) => {
                                       sounds.playClick();
                                       const container = e.currentTarget.closest('td')?.querySelector('.horizontal-tasks-track');
-                                      if (container) container.scrollBy({ left: 260, behavior: 'smooth' });
+                                      if (container) container.scrollBy({ left: 240, behavior: 'smooth' });
                                     }}
                                     className="w-5 h-5 rounded-md bg-white hover:bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center cursor-pointer shadow-2xs active:scale-95 transition-all text-xs"
                                     title="Scroll right"
@@ -1329,8 +1339,7 @@ export default function KanbanBoard({
 
                             {/* Horizontal Cards Rail */}
                             <div 
-                              className="horizontal-tasks-track flex flex-row gap-2.5 overflow-x-auto pb-2 pt-0.5 custom-scrollbar snap-x snap-mandatory flex-1 items-stretch"
-                              style={{ scrollbarWidth: 'thin' }}
+                              className="horizontal-tasks-track flex flex-row gap-2 overflow-x-auto pb-1 pt-0.5 no-scrollbar snap-x snap-mandatory flex-1 items-stretch"
                               onWheel={(e) => {
                                 if (e.deltaY !== 0) e.currentTarget.scrollLeft += e.deltaY;
                               }}
@@ -1339,7 +1348,7 @@ export default function KanbanBoard({
                               {member.regularCompletedTasks.map((t, tIdx) => (
                                 <div 
                                   key={t.id} 
-                                  className="w-[230px] sm:w-[250px] shrink-0 p-2.5 rounded-xl bg-white border border-emerald-200/90 hover:border-emerald-400 shadow-2xs space-y-1.5 snap-start flex flex-col justify-between transition-all border-l-3 border-l-emerald-500"
+                                  className="w-[220px] shrink-0 p-2.5 rounded-xl bg-white border border-emerald-200/90 hover:border-emerald-400 shadow-2xs space-y-1.5 snap-start flex flex-col justify-between transition-all border-l-3 border-l-emerald-500"
                                 >
                                   <div>
                                     <div className="flex items-start justify-between gap-1.5">
@@ -1367,57 +1376,56 @@ export default function KanbanBoard({
                                         }`}
                                         title="Remarks"
                                       >
-                                        <MessageSquare className="w-2.5 h-2.5" />
-                                        {t.remarks?.length > 0 && <span>{t.remarks.length}</span>}
+                                        <MessageSquare className="w-2.5 h-2.5 text-indigo-600" />
+                                        <span>{t.remarks?.length || '0'}</span>
                                       </button>
+                                      <span>{t.due_date ? `📅 ${t.due_date.split('-').slice(1).join('/')}` : ''}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
                                       <button
-                                        onClick={() => { sounds.playClick(); onEditTask(t); }}
-                                        className="hover:text-blue-600 cursor-pointer"
-                                        title="Edit"
+                                        onClick={() => { sounds.playClick(); onStatusChange(t.id, 'in_progress'); }}
+                                        className="text-[9px] text-blue-600 font-semibold hover:underline cursor-pointer"
+                                        title="Reopen task"
                                       >
-                                        <Edit2 className="w-2.5 h-2.5" />
+                                        Reopen
                                       </button>
                                       <button
                                         onClick={() => { sounds.playTrash(); onDeleteTask(t.id); }}
-                                        className="hover:text-rose-600 cursor-pointer"
+                                        className="text-slate-400 hover:text-rose-600 cursor-pointer p-0.5"
                                         title="Delete"
                                       >
                                         <Trash2 className="w-2.5 h-2.5" />
                                       </button>
                                     </div>
-                                    <button
-                                      onClick={() => { sounds.playClick(); onStatusChange(t.id, 'in_progress'); }}
-                                      className="text-slate-500 hover:text-blue-600 font-medium hover:underline cursor-pointer"
-                                      title="Reopen task"
-                                    >
-                                      ↺ Reopen
-                                    </button>
                                   </div>
                                 </div>
                               ))}
 
-                              {/* ALL Completed Books */}
+                              {/* Completed Books */}
                               {member.completedBooks.map((b, bIdx) => (
                                 <div 
                                   key={b.id || bIdx} 
-                                  className="w-[230px] sm:w-[250px] shrink-0 p-2.5 rounded-xl bg-emerald-50/80 border border-emerald-300/80 hover:border-emerald-400 shadow-2xs space-y-1.5 snap-start flex flex-col justify-between transition-all"
+                                  className="w-[220px] shrink-0 p-2.5 rounded-xl bg-white border border-emerald-200/90 shadow-2xs space-y-1.5 snap-start flex flex-col justify-between border-l-3 border-l-emerald-500"
                                 >
-                                  <div>
+                                  <div className="space-y-1">
                                     <div className="flex items-start justify-between gap-1">
-                                      <span className="font-bold text-emerald-950 text-xs line-clamp-2" title={b.title}>
-                                        {member.regularCompletedTasks.length + bIdx + 1}. 📚 {b.title || 'Book'}
+                                      <span className="font-bold text-slate-800 text-xs line-clamp-1 flex items-center gap-1" title={b.title}>
+                                        <BookOpen className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                        <span>{b.title}</span>
                                       </span>
-                                      <span className="text-[8px] font-black px-1.5 py-0.2 rounded bg-emerald-200/90 text-emerald-900 shrink-0">
-                                        ✓ Completed
+                                      <span className="text-[8.5px] font-extrabold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 shrink-0">
+                                        Finished
                                       </span>
                                     </div>
-                                    {b.author && (
-                                      <div className="text-[9.5px] text-emerald-800 font-medium truncate mt-0.5">
-                                        ✍️ {b.author}
-                                      </div>
-                                    )}
-                                    <div className="flex items-center justify-between text-[9px] pt-1 text-emerald-700 font-semibold">
-                                      <span>📖 {b.pages_read || b.total_pages || 0}/{b.total_pages || 0} pgs</span>
+                                    <div className="text-[9.5px] text-slate-500 font-medium">
+                                      Author: {b.author || 'N/A'} • {b.total_pages || 0} pgs
+                                    </div>
+                                    <div className="flex items-center gap-1 flex-wrap">
+                                      {b.completion_date && (
+                                        <span className="text-[9px] text-emerald-700 font-semibold">
+                                          Completed: {b.completion_date}
+                                        </span>
+                                      )}
                                       {b.presented && (
                                         <span className="text-[8px] px-1 py-0.2 rounded bg-purple-100 text-purple-800 font-bold">
                                           🎤 Presented

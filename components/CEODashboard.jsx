@@ -797,7 +797,7 @@ export default function CEODashboard({
                 <th className="py-3 px-4">Priority</th>
                 <th className="py-3 px-4">Due Date</th>
                 <th className="py-3 px-4 min-w-[150px]">💬 Remarks & Notes</th>
-                <th className="py-3 px-4">Status & Quick Change</th>
+                <th className="py-3 px-4 whitespace-nowrap">Status & Quick Change</th>
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
@@ -812,45 +812,60 @@ export default function CEODashboard({
                 filteredCompanyTasks.map(task => {
                   const isCompleted = task.status === 'completed';
                   const isOverdue = !isCompleted && task.due_date && new Date(task.due_date).getTime() < new Date(todayStr).getTime();
+                  const isBook = Boolean(task.is_book_reading);
+                  const booksList = Array.isArray(task.books_list) ? task.books_list : [];
+                  const totalBooks = Number(task.book_stats?.total_books) || booksList.length || 0;
+                  const completedBooks = Number(task.book_stats?.completed) || booksList.filter(b => b.status === 'completed').length || (task.status === 'completed' ? 1 : 0);
+                  const inProgressBooks = Number(task.book_stats?.in_progress) || booksList.filter(b => b.status === 'in_progress' || b.status !== 'completed').length || (task.status !== 'completed' ? 1 : 0);
+                  const presentedBooks = Number(task.book_stats?.books_presented) || booksList.filter(b => b.presented).length || 0;
+                  const totalPages = Number(task.book_stats?.total_pages) || 0;
+                  const totalPagesRead = Number(task.book_stats?.total_pages_read) || 0;
+                  const percent = totalPages > 0 ? Math.min(100, Math.round((totalPagesRead / totalPages) * 100)) : 0;
 
                   return (
                     <tr key={task.id} className="hover:bg-slate-50/70 transition-colors">
                       
                       {/* Title & Description */}
-                      <td className="py-3 px-4 max-w-xs">
-                        <div className="space-y-0.5">
-                          <h4 className={`font-bold ${isCompleted ? 'text-slate-800' : 'text-slate-900'}`}>
-                            {task.title}
-                          </h4>
+                      <td className="py-3 px-4 min-w-[280px] max-w-md">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <h4 className={`font-bold ${isCompleted ? 'text-slate-800' : 'text-slate-900'}`}>
+                              {task.title}
+                            </h4>
+                            {isBook && (
+                              <span className="text-[9.5px] font-extrabold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-2xs">
+                                📚 Book Track
+                              </span>
+                            )}
+                          </div>
                           {task.description && (
                             <p className="text-[11px] text-slate-500 line-clamp-1">
                               {task.description}
                             </p>
                           )}
-                          {task.is_book_reading && task.book_stats && (
-                            <div className="flex items-center gap-1.5 flex-wrap pt-1.5">
-                              <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
-                                📚 Total: {task.book_stats.total_books || 0}
+                          {isBook && (
+                            <div className="flex items-center gap-1.5 flex-nowrap overflow-x-auto pt-0.5 whitespace-nowrap">
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200 shadow-2xs">
+                                📚 Total: <strong className="text-slate-900">{totalBooks}</strong>
                               </span>
-                              <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                ✅ Done: {task.book_stats.completed || 0}
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs">
+                                ✅ Done: <strong className="text-emerald-900">{completedBooks}</strong>
                               </span>
-                              <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
-                                📖 Reading: {task.book_stats.in_progress || 0}
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200 shadow-2xs">
+                                📖 Reading: <strong className="text-blue-900">{inProgressBooks}</strong>
                               </span>
-                              <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">
-                                🎤 Presented: {task.book_stats.books_presented || 0}
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200 shadow-2xs">
+                                🎤 Presented: <strong className="text-purple-900">{presentedBooks}</strong>
                               </span>
-                              <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
-                                📄 Total Pages: {task.book_stats.total_pages || 0}
-                              </span>
-                              <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded bg-teal-50 text-teal-800 border border-teal-200">
-                                📖 Read: {task.book_stats.total_pages_read || 0}
-                              </span>
+                              {totalPages > 0 && (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs">
+                                  📄 Pages: <strong className="text-amber-950">{totalPagesRead}/{totalPages} ({percent}%)</strong>
+                                </span>
+                              )}
                             </div>
                           )}
-                          {Array.isArray(task.tags) && task.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1 pt-1">
+                          {!isBook && Array.isArray(task.tags) && task.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 pt-0.5">
                               {task.tags.map((t, idx) => (
                                 <span key={idx} className="text-[9px] bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded">
                                   #{t}
@@ -862,7 +877,7 @@ export default function CEODashboard({
                       </td>
 
                       {/* Assignee */}
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <div 
                             className="w-6 h-6 rounded-md flex items-center justify-center font-bold text-white text-[10px] shadow-xs shrink-0"
@@ -875,7 +890,7 @@ export default function CEODashboard({
                       </td>
 
                       {/* Priority */}
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-4 whitespace-nowrap">
                         <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md ${
                           task.priority === 'urgent' ? 'bg-rose-100 text-rose-800' :
                           task.priority === 'high' ? 'bg-amber-100 text-amber-800' :
@@ -886,7 +901,7 @@ export default function CEODashboard({
                       </td>
 
                       {/* Due Date & Overdue Badge */}
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-4 whitespace-nowrap">
                         <div className="space-y-0.5">
                           <span className="text-slate-700 font-mono text-[11px] block">
                             {task.due_date || 'No Date'}
