@@ -610,6 +610,7 @@ export default function Home() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         users={users}
+        tasks={tasks}
         currentUser={currentUser}
         selectedMemberFilter={selectedMemberFilter}
         setSelectedMemberFilter={setSelectedMemberFilter}
@@ -630,8 +631,6 @@ export default function Home() {
           setSearchQuery={setSearchQuery}
           viewMode={viewMode}
           setViewMode={setViewMode}
-          notifications={notifications}
-          setNotifications={setNotifications}
         />
 
         {/* Real-time Toast Notification */}
@@ -762,7 +761,7 @@ export default function Home() {
                   }`}
                   title={
                     !eodStatus.isAllowed
-                      ? `EOD Checkout unlocks strictly after 6:30 PM (${eodStatus.formattedRemaining} remaining)`
+                      ? `EOD Checkout unlocks strictly after 6:15 PM (${eodStatus.formattedRemaining} remaining)`
                       : 'Clock Out & Submit EOD Report'
                   }
                 >
@@ -773,7 +772,7 @@ export default function Home() {
                   )}
                   <span>
                     {!eodStatus.isAllowed
-                      ? `EOD Opens at 6:30 PM (${eodStatus.formattedRemaining})`
+                      ? `EOD Opens at 6:15 PM (${eodStatus.formattedRemaining})`
                       : 'Clock Out & Submit EOD Report'}
                   </span>
                 </button>

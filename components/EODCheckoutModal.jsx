@@ -32,11 +32,12 @@ export default function EODCheckoutModal({
   const [hoursWorked, setHoursWorked] = useState(8.0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Time & Policy Validation: 6:30 PM (18:30 IST) rule
+  // Time & Policy Validation: 6:15 PM (18:15 IST) rule
   const [timeStatus, setTimeStatus] = useState(() => checkEodAllowed());
   const [ceoOverride, setCeoOverride] = useState(false);
 
-  const isAakash = currentUser?.id === 'usr_aakash' || currentUser?.name?.toLowerCase().includes('aakash') || currentUser?.role === 'CEO';
+  const isAakash = currentUser?.id === 'usr_aakash' || 
+                   currentUser?.name?.toLowerCase().includes('aakash');
   const canSubmit = timeStatus.isAllowed || (isAakash && ceoOverride);
 
   useEffect(() => {
@@ -152,7 +153,7 @@ export default function EODCheckoutModal({
         {/* Content Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
           
-          {/* Policy Enforcer Banner: Locked Before 6:30 PM */}
+          {/* Policy Enforcer Banner: Locked Before 6:15 PM */}
           {!timeStatus.isAllowed && (
             <div className="p-4 rounded-xl bg-amber-50 border border-amber-300 shadow-xs flex flex-col gap-2.5">
               <div className="flex items-start gap-3">
@@ -162,7 +163,7 @@ export default function EODCheckoutModal({
                 <div className="flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h4 className="text-xs font-bold text-amber-950 uppercase tracking-wide">
-                      EOD Checkout Strictly Locked Until 6:30 PM (18:30 IST)
+                      EOD Checkout Strictly Locked Until 6:15 PM (18:15 IST)
                     </h4>
                     <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-200 text-amber-900 font-extrabold border border-amber-300 flex items-center gap-1">
                       <Clock className="w-3 h-3 text-amber-700" />
@@ -170,10 +171,10 @@ export default function EODCheckoutModal({
                     </span>
                   </div>
                   <p className="text-xs text-amber-900 mt-1 leading-relaxed">
-                    Company Policy: Daily work shift checkout and EOD reporting can only be submitted <strong>after 6:30 PM</strong>. Please continue your active sprint tasks until the shift ends.
+                    Company Policy: Daily work shift checkout and EOD reporting can only be submitted <strong>after 6:15 PM</strong>. Please continue your active sprint tasks until the shift ends.
                   </p>
                   <p className="text-[11px] text-amber-800 font-semibold mt-1">
-                    Current Local Time: <span className="font-bold text-amber-950">{timeStatus.currentTimeFormatted}</span> • Opens at: <span className="font-bold text-amber-950">6:30 PM</span>
+                    Current Local Time: <span className="font-bold text-amber-950">{timeStatus.currentTimeFormatted}</span> • Opens at: <span className="font-bold text-amber-950">6:15 PM</span>
                   </p>
                 </div>
               </div>
@@ -304,7 +305,7 @@ export default function EODCheckoutModal({
               {!canSubmit ? (
                 <span className="text-amber-800 font-bold flex items-center gap-1.5 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200/80">
                   <Lock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                  Locked until 6:30 PM ({timeStatus.formattedRemaining} remaining)
+                  Locked until 6:15 PM ({timeStatus.formattedRemaining} remaining)
                 </span>
               ) : (
                 <span className="text-emerald-700 font-semibold flex items-center gap-1.5 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200/80">
@@ -330,7 +331,7 @@ export default function EODCheckoutModal({
                     ? 'bg-emerald-600 hover:bg-emerald-700 text-white active:scale-95 cursor-pointer shadow-emerald-600/20'
                     : 'bg-slate-200 text-slate-400 border border-slate-300 cursor-not-allowed shadow-none'
                 }`}
-                title={!canSubmit ? 'EOD checkout is locked until 6:30 PM' : 'Submit EOD Report'}
+                title={!canSubmit ? 'EOD checkout is locked until 6:15 PM' : 'Submit EOD Report'}
               >
                 {!canSubmit ? (
                   <Lock className="w-4 h-4 text-slate-400" />
@@ -339,7 +340,7 @@ export default function EODCheckoutModal({
                 )}
                 <span>
                   {!canSubmit
-                    ? `Locked (Opens at 6:30 PM • ${timeStatus.formattedRemaining})`
+                    ? `Locked (Opens at 6:15 PM • ${timeStatus.formattedRemaining})`
                     : isSubmitting
                     ? 'Submitting...'
                     : 'Submit EOD Report & Clock Out'}

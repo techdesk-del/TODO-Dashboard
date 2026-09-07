@@ -437,11 +437,11 @@ app.prepare().then(async () => {
     socket.on('eod:submit', async (reportData, callback) => {
       try {
         const now = new Date();
-        const isAfter630 = now.getHours() > 18 || (now.getHours() === 18 && now.getMinutes() >= 30);
+        const isAfter615 = now.getHours() > 18 || (now.getHours() === 18 && now.getMinutes() >= 15);
         const isCeo = reportData.user_id === 'usr_aakash' || (reportData.user_name && reportData.user_name.toLowerCase().includes('aakash'));
 
-        if (!isAfter630 && !isCeo && !reportData.is_ceo_override) {
-          const err = 'EOD Checkout is strictly restricted before 6:30 PM IST. Please submit your EOD report after shift conclusion at 6:30 PM.';
+        if (!isAfter615 && !isCeo && !reportData.is_ceo_override) {
+          const err = 'EOD Checkout is strictly restricted before 6:15 PM IST. Please submit your EOD report after shift conclusion at 6:15 PM.';
           if (typeof callback === 'function') {
             return callback({ success: false, error: err });
           }

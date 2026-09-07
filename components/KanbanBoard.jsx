@@ -62,7 +62,8 @@ export default function KanbanBoard({
     if (onStatusFilterChange) onStatusFilterChange(newFilter);
   };
 
-  const isAakash = currentUser?.id === 'usr_aakash' || currentUser?.name?.toLowerCase().includes('aakash');
+  const isAakash = currentUser?.id === 'usr_aakash' ||
+                   currentUser?.name?.toLowerCase().includes('aakash');
   const selectedMemberObj = users.find(u => u.id === selectedMemberFilter);
   
   // Privacy Check

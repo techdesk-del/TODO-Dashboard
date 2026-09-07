@@ -11,7 +11,8 @@ import {
 } from 'lucide-react';
 
 export default function LiveActivityFeed({ activityLogs, currentUser }) {
-  const isAakash = currentUser?.id === 'usr_aakash' || currentUser?.name?.toLowerCase().includes('aakash');
+  const isAakash = currentUser?.id === 'usr_aakash' ||
+                   currentUser?.name?.toLowerCase().includes('aakash');
 
   // Strict Privacy: Only Aakash sees company-wide activity.
   // Normal members only see their OWN activities!

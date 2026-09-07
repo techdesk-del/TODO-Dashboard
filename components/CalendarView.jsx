@@ -29,7 +29,8 @@ export default function CalendarView({
   ];
 
   // Filter tasks based on member selection
-  const isAakash = currentUser?.id === 'usr_aakash' || currentUser?.name?.toLowerCase().includes('aakash');
+  const isAakash = currentUser?.id === 'usr_aakash' ||
+                   currentUser?.name?.toLowerCase().includes('aakash');
   let baseTasks = [];
   if (isAakash) {
     if (selectedMemberFilter && selectedMemberFilter !== 'all') {
