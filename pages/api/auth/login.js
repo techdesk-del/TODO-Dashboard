@@ -14,7 +14,23 @@ export default async function handler(req, res) {
     const clientIp = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '127.0.0.1';
     const result = await dbHelpers.verifyPin(userId, pin, clientIp);
     if (result.success) {
-      return res.status(200).json(result);
+      try {
+        const [tasks, overview, users, eodReports] = await Promise.all([
+          dbHelpers.getTasks(),
+          dbHelpers.getCompanyOverview(),
+          dbHelpers.getUsers(),
+          dbHelpers.getEodReports()
+        ]);
+        return res.status(200).json({
+          ...result,
+          tasks,
+          overview,
+          users,
+          eodReports
+        });
+      } catch (fetchErr) {
+        return res.status(200).json(result);
+      }
     } else if (result.rateLimited) {
       res.setHeader('Retry-After', String(result.remainingSec || 60));
       return res.status(429).json(result);

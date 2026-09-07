@@ -42,7 +42,7 @@ export default function AuthScreen({ users, onLoginSuccess }) {
 
       if (res.ok && data.success) {
         sounds.playComplete();
-        onLoginSuccess(data.user);
+        onLoginSuccess(data.user, data);
       } else {
         sounds.playClick();
         setError(data.error || 'Invalid PIN. Default PIN is 1234');
@@ -95,6 +95,7 @@ export default function AuthScreen({ users, onLoginSuccess }) {
             <div className="space-y-2">
               <select
                 value={selectedUserId}
+                suppressHydrationWarning
                 onChange={(e) => {
                   sounds.playClick();
                   setSelectedUserId(e.target.value);
@@ -103,7 +104,7 @@ export default function AuthScreen({ users, onLoginSuccess }) {
                 className="w-full px-3.5 py-2.5 text-xs font-bold rounded-xl border border-slate-200 bg-slate-50 text-slate-900 focus:outline-none focus:border-blue-500 focus:bg-white transition-all cursor-pointer"
               >
                 {users.map(u => (
-                  <option key={u.id} value={u.id}>
+                  <option key={u.id} value={u.id} suppressHydrationWarning>
                     {u.name}
                   </option>
                 ))}

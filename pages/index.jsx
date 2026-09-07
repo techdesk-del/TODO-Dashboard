@@ -20,9 +20,24 @@ import {
 } from 'lucide-react';
 
 const AUTH_STORAGE_KEY = 'urbangaon_auth_user_v1';
+const TASKS_CACHE_KEY = 'urbangaon_cached_tasks_v1';
+const OVERVIEW_CACHE_KEY = 'urbangaon_cached_overview_v1';
+const USERS_CACHE_KEY = 'urbangaon_cached_users_v1';
+
+const DEFAULT_TEAM_MEMBERS = [
+  { id: 'usr_shyamsundar', name: 'Shyamsundar Varma', color: '#f59e0b', avatar: 'SV', email: 'shyamsundar@urbangaon.com' },
+  { id: 'usr_aakash', name: 'Aakash Das', color: '#6366f1', avatar: 'AD', email: 'aakash.das@urbangaon.com' },
+  { id: 'usr_yudhister', name: 'Yudhister Tiwari', color: '#10b981', avatar: 'YT', email: 'yudhister.t@urbangaon.com' },
+  { id: 'usr_rekha', name: 'Dr Rekha Pareek', color: '#a855f7', avatar: 'RP', email: 'rekha.pareek@urbangaon.com' },
+  { id: 'usr_sanjay', name: 'Sanjay', color: '#06b6d4', avatar: 'SJ', email: 'sanjay@urbangaon.com' },
+  { id: 'usr_ayaz', name: 'Ayaz', color: '#ec4899', avatar: 'AY', email: 'ayaz@urbangaon.com' },
+  { id: 'usr_utkarsh', name: 'Utkarsh', color: '#3b82f6', avatar: 'UT', email: 'utkarsh@urbangaon.com' },
+  { id: 'usr_pratap', name: 'Pratap', color: '#14b8a6', avatar: 'PR', email: 'pratap@urbangaon.com' },
+  { id: 'usr_varun', name: 'Varun Mudgal', color: '#f97316', avatar: 'VM', email: 'varun.mudgal@urbangaon.com' }
+];
 
 export default function Home() {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState(DEFAULT_TEAM_MEMBERS);
   const [currentUser, setCurrentUser] = useState(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [tasks, setTasks] = useState([]);
@@ -100,14 +115,17 @@ export default function Home() {
       if (uRes.ok) {
         const uData = await uRes.json();
         setUsers(uData);
+        try { localStorage.setItem(USERS_CACHE_KEY, JSON.stringify(uData)); } catch (e) {}
       }
       if (tRes.ok) {
         const tData = await tRes.json();
         setTasks(tData);
+        try { localStorage.setItem(TASKS_CACHE_KEY, JSON.stringify(tData)); } catch (e) {}
       }
       if (oRes.ok) {
         const oData = await oRes.json();
         setOverview(oData);
+        try { localStorage.setItem(OVERVIEW_CACHE_KEY, JSON.stringify(oData)); } catch (e) {}
       }
       if (eRes.ok) {
         const eData = await eRes.json();
@@ -118,9 +136,18 @@ export default function Home() {
     }
   };
 
-  // Check saved login session in localStorage
+  // Check saved login session and cached data in localStorage
   useEffect(() => {
     try {
+      const cachedTasks = localStorage.getItem(TASKS_CACHE_KEY);
+      if (cachedTasks) setTasks(JSON.parse(cachedTasks));
+
+      const cachedOverview = localStorage.getItem(OVERVIEW_CACHE_KEY);
+      if (cachedOverview) setOverview(JSON.parse(cachedOverview));
+
+      const cachedUsers = localStorage.getItem(USERS_CACHE_KEY);
+      if (cachedUsers) setUsers(JSON.parse(cachedUsers));
+
       const savedUserStr = localStorage.getItem(AUTH_STORAGE_KEY);
       if (savedUserStr) {
         const savedUser = JSON.parse(savedUserStr);
@@ -206,9 +233,18 @@ export default function Home() {
       socket.on('connect_error', () => setSocketConnected(false));
 
       socket.on('sync:initial', (data) => {
-        if (data.users && data.users.length > 0) setUsers(data.users);
-        if (data.tasks) setTasks(data.tasks);
-        if (data.overview) setOverview(data.overview);
+        if (data.users && data.users.length > 0) {
+          setUsers(data.users);
+          try { localStorage.setItem(USERS_CACHE_KEY, JSON.stringify(data.users)); } catch (e) {}
+        }
+        if (data.tasks) {
+          setTasks(data.tasks);
+          try { localStorage.setItem(TASKS_CACHE_KEY, JSON.stringify(data.tasks)); } catch (e) {}
+        }
+        if (data.overview) {
+          setOverview(data.overview);
+          try { localStorage.setItem(OVERVIEW_CACHE_KEY, JSON.stringify(data.overview)); } catch (e) {}
+        }
         if (data.eodReports) setEodReports(data.eodReports);
       });
 
@@ -275,13 +311,33 @@ export default function Home() {
     };
   }, []);
 
-  // Login Success Handler
-  const handleLoginSuccess = (authenticatedUser) => {
+  // Login Success Handler (Instant 0ms Task Reflection)
+  const handleLoginSuccess = (authenticatedUser, payload = {}) => {
     try {
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(authenticatedUser));
     } catch (e) {}
+
+    // INSTANT REFLECT: If tasks or overview came in login response, apply immediately!
+    if (payload.tasks && Array.isArray(payload.tasks) && payload.tasks.length > 0) {
+      setTasks(payload.tasks);
+      try { localStorage.setItem(TASKS_CACHE_KEY, JSON.stringify(payload.tasks)); } catch (e) {}
+    }
+    if (payload.overview) {
+      setOverview(payload.overview);
+      try { localStorage.setItem(OVERVIEW_CACHE_KEY, JSON.stringify(payload.overview)); } catch (e) {}
+    }
+    if (payload.users && Array.isArray(payload.users)) {
+      setUsers(payload.users);
+      try { localStorage.setItem(USERS_CACHE_KEY, JSON.stringify(payload.users)); } catch (e) {}
+    }
+    if (payload.eodReports && Array.isArray(payload.eodReports)) {
+      setEodReports(payload.eodReports);
+    }
+
     setCurrentUser(authenticatedUser);
     setSelectedMemberFilter(authenticatedUser.id);
+    
+    // Background revalidation
     refreshData();
     if (socketRef.current) {
       socketRef.current.emit('user:join', authenticatedUser);
@@ -319,50 +375,60 @@ export default function Home() {
         updates: { status: newStatus },
         user: currentUser
       });
+    } else {
+      try {
+        await fetch(`/api/tasks/${taskId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ updates: { status: newStatus }, user: currentUser })
+        });
+        refreshData();
+      } catch (e) {
+        console.error('Error updating task status via REST:', e);
+      }
     }
-
-    try {
-      await fetch(`/api/tasks/${taskId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ updates: { status: newStatus }, user: currentUser })
-      });
-      refreshData();
-    } catch (e) {}
   };
 
   const handleSaveTask = async (taskData) => {
     if (taskData.id) {
+      // Edit Task: Socket primary, fallback to REST if offline
       if (socketRef.current && socketConnected) {
         socketRef.current.emit('task:update', {
           id: taskData.id,
           updates: taskData,
           user: currentUser
         });
+      } else {
+        try {
+          await fetch(`/api/tasks/${taskData.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ updates: taskData, user: currentUser })
+          });
+          refreshData();
+        } catch (e) {
+          console.error('Error updating task via REST:', e);
+        }
       }
-      try {
-        await fetch(`/api/tasks/${taskData.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ updates: taskData, user: currentUser })
-        });
-        refreshData();
-      } catch (e) {}
     } else {
+      // Create Task: Single execution path prevents duplicate task creation
       if (socketRef.current && socketConnected) {
         socketRef.current.emit('task:create', {
           ...taskData,
           creator_name: currentUser?.name || 'Admin'
         });
+      } else {
+        try {
+          await fetch('/api/tasks', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...taskData, creator_name: currentUser?.name || 'Admin' })
+          });
+          refreshData();
+        } catch (e) {
+          console.error('Error creating task via REST:', e);
+        }
       }
-      try {
-        await fetch('/api/tasks', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...taskData, creator_name: currentUser?.name || 'Admin' })
-        });
-        refreshData();
-      } catch (e) {}
     }
   };
 
@@ -375,15 +441,18 @@ export default function Home() {
           id: taskId,
           user: currentUser
         });
+      } else {
+        try {
+          await fetch(`/api/tasks/${taskId}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user: currentUser })
+          });
+          refreshData();
+        } catch (e) {
+          console.error('Error deleting task via REST:', e);
+        }
       }
-      try {
-        await fetch(`/api/tasks/${taskId}`, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user: currentUser })
-        });
-        refreshData();
-      } catch (e) {}
     }
   };
 
@@ -547,11 +616,14 @@ export default function Home() {
   };
 
   const handleOpenNewTaskModal = (defaultStatus = 'todo', defaultAssignee = null) => {
-    if (defaultAssignee) {
-      setEditingTask({ assigned_to: defaultAssignee, status: defaultStatus });
-    } else {
-      setEditingTask(null);
-    }
+    const isExecutive = currentUser?.role?.toLowerCase() === 'ceo' ||
+                        currentUser?.role?.toLowerCase() === 'admin' ||
+                        currentUser?.id === 'usr_aakash' || 
+                        currentUser?.id === 'usr_shyamsundar' || 
+                        currentUser?.name?.toLowerCase().includes('aakash') || 
+                        currentUser?.name?.toLowerCase().includes('shyam');
+    const targetAssignee = isExecutive ? (defaultAssignee || currentUser?.id) : currentUser?.id;
+    setEditingTask({ assigned_to: targetAssignee, status: defaultStatus });
     setDefaultTaskStatus(defaultStatus);
     setTaskModalOpen(true);
   };
@@ -578,17 +650,7 @@ export default function Home() {
   if (!isAuthReady || !currentUser) {
     return (
       <AuthScreen 
-        users={users.length > 0 ? users : [
-          { id: 'usr_aakash', name: 'Aakash Das', color: '#6366f1', avatar: 'AD', email: 'aakash.das@urbangaon.com' },
-          { id: 'usr_shyamsundar', name: 'Shyamsundar Varma', color: '#f59e0b', avatar: 'SV', email: 'shyamsundar@urbangaon.com' },
-          { id: 'usr_yudhister', name: 'Yudhister Tiwari', color: '#10b981', avatar: 'YT', email: 'yudhister.t@urbangaon.com' },
-          { id: 'usr_rekha', name: 'Dr Rekha Pareek', color: '#a855f7', avatar: 'RP', email: 'rekha.pareek@urbangaon.com' },
-          { id: 'usr_sanjay', name: 'Sanjay', color: '#06b6d4', avatar: 'SJ', email: 'sanjay@urbangaon.com' },
-          { id: 'usr_ayaz', name: 'Ayaz', color: '#ec4899', avatar: 'AY', email: 'ayaz@urbangaon.com' },
-          { id: 'usr_utkarsh', name: 'Utkarsh', color: '#3b82f6', avatar: 'UT', email: 'utkarsh@urbangaon.com' },
-          { id: 'usr_pratap', name: 'Pratap', color: '#14b8a6', avatar: 'PR', email: 'pratap@urbangaon.com' },
-          { id: 'usr_varun', name: 'Varun Mudgal', color: '#f97316', avatar: 'VM', email: 'varun.mudgal@urbangaon.com' }
-        ]} 
+        users={users} 
         onLoginSuccess={handleLoginSuccess} 
       />
     );

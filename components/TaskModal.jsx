@@ -41,13 +41,25 @@ export default function TaskModal({
   const [booksPresented, setBooksPresented] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalPagesRead, setTotalPagesRead] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Executive Delegation Privilege: Only Executives (CEO Shyamsundar Varma / Admin Aakash Das) can assign tasks across other team members
+  const isExecutive = currentUser?.role?.toLowerCase() === 'ceo' || 
+                      currentUser?.role?.toLowerCase() === 'admin' || 
+                      currentUser?.id === 'usr_aakash' || 
+                      currentUser?.id === 'usr_shyamsundar' || 
+                      currentUser?.name?.toLowerCase().includes('aakash') || 
+                      currentUser?.name?.toLowerCase().includes('shyam');
+
+  // Active task assignee
+  const activeAssignee = users.find(u => u.id === (assignedTo || currentUser?.id)) || currentUser;
 
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0];
     if (initialTask) {
       setTitle(initialTask.title || '');
       setDescription(initialTask.description || '');
-      setAssignedTo(initialTask.assigned_to || (users[0]?.id || ''));
+      setAssignedTo(isExecutive ? (initialTask.assigned_to || currentUser?.id || users[0]?.id || '') : (currentUser?.id || ''));
       setStatus(initialTask.status || 'todo');
       setPriority(initialTask.priority || 'medium');
       setStartDate(initialTask.start_date || today);
@@ -100,7 +112,8 @@ export default function TaskModal({
       setTotalPages(0);
       setTotalPagesRead(0);
     }
-  }, [initialTask, defaultStatus, isOpen]);
+    setIsSubmitting(false);
+  }, [initialTask, defaultStatus, isOpen, isExecutive]);
 
   // Handle book item changes
   const handleAddBook = () => {
@@ -147,14 +160,14 @@ export default function TaskModal({
   const recalculateBookStats = (list) => {
     const total = list.length;
     const completed = list.filter(b => b.status === 'completed').length;
-    const inProg = list.filter(b => b.status === 'in_progress' || b.status !== 'completed').length;
-    const pres = list.filter(b => b.presented || b.status === 'presented').length;
+    const inProgress = list.filter(b => b.status === 'in_progress').length;
+    const pres = list.filter(b => b.presented).length;
     const pages = list.reduce((sum, b) => sum + (Number(b.total_pages) || 0), 0);
     const pagesR = list.reduce((sum, b) => sum + (Number(b.pages_read) || 0), 0);
 
     setTotalBooks(total);
     setCompletedBooks(completed);
-    setInProgressBooks(inProg);
+    setInProgressBooks(inProgress);
     setBooksPresented(pres);
     setTotalPages(pages);
     setTotalPagesRead(pagesR);
@@ -162,7 +175,9 @@ export default function TaskModal({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!title.trim() && !isBookReading) return;
+    setIsSubmitting(true);
 
     sounds.playClick();
     const activeBook = booksList.find(b => b.status === 'reading') || booksList[0];
@@ -190,7 +205,7 @@ export default function TaskModal({
       id: initialTask?.id,
       title: finalTitle,
       description: finalDesc,
-      assigned_to: assignedTo,
+      assigned_to: isExecutive ? (assignedTo || currentUser?.id) : (currentUser?.id || 'usr_unknown'),
       created_by: initialTask?.created_by || currentUser?.id || 'usr_ceo',
       status,
       priority,
@@ -201,8 +216,8 @@ export default function TaskModal({
       estimated_hours: initialTask?.estimated_hours || 2,
       is_book_reading: isBookReading,
       books_list: booksList,
-      initial_remark: !initialTask && remarkText.trim() ? remarkText.trim() : undefined,
-      remarks: initialTask ? updatedRemarks : undefined,
+      initial_remark: !initialTask?.id && remarkText.trim() ? remarkText.trim() : undefined,
+      remarks: initialTask?.id ? updatedRemarks : undefined,
       latest_remark: remarkText.trim() || initialTask?.latest_remark || '',
       book_stats: {
         total_books: Number(totalBooks) || 0,
@@ -225,7 +240,7 @@ export default function TaskModal({
           <div>
             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
               {isBookReading && <BookOpen className="w-4 h-4 text-indigo-600" />}
-              {initialTask ? (isBookReading ? 'Edit Book Reading' : 'Edit Task') : (isBookReading ? 'New Book Reading Tracker' : 'Create New Task')}
+              {initialTask?.id ? (isBookReading ? 'Edit Book Reading' : 'Edit Task') : (isBookReading ? 'New Book Reading Tracker' : 'Create New Task')}
             </h3>
             <p className="text-xs text-slate-500">
               Changes sync in real time across all team member screens
@@ -547,20 +562,65 @@ export default function TaskModal({
               {/* Assignee & Priority */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">
-                    Assignee
-                  </label>
-                  <select
-                    value={assignedTo}
-                    onChange={(e) => setAssignedTo(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl clean-input cursor-pointer font-medium"
-                  >
-                    {users.map(u => (
-                      <option key={u.id} value={u.id}>
-                        {u.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="flex items-center justify-between mb-1">
+                    <label htmlFor="task-assignee-select" className="text-xs font-bold text-slate-700">
+                      Assignee
+                    </label>
+                    {isExecutive ? (
+                      <span className="text-[10px] font-extrabold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
+                        👑 Executive Access
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-bold text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
+                        🔒 Locked
+                      </span>
+                    )}
+                  </div>
+
+                  {isExecutive ? (
+                    <div className="space-y-1.5">
+                      <select
+                        id="task-assignee-select"
+                        value={assignedTo || currentUser?.id || ''}
+                        onChange={(e) => setAssignedTo(e.target.value)}
+                        className="w-full px-3 py-2 text-xs rounded-xl clean-input cursor-pointer font-bold bg-white text-slate-800 border border-indigo-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                      >
+                        {users.map(u => (
+                          <option key={u.id} value={u.id}>
+                            {u.name} {u.id === currentUser?.id ? '(You)' : ''} {u.role ? `• ${u.role.toUpperCase()}` : ''}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-indigo-50/70 border border-indigo-100">
+                        <div 
+                          className="w-4 h-4 rounded-full flex items-center justify-center font-bold text-[8px] text-white shrink-0"
+                          style={{ backgroundColor: activeAssignee?.color || '#6366f1' }}
+                        >
+                          {activeAssignee?.avatar || '??'}
+                        </div>
+                        <span className="text-[11px] font-semibold text-indigo-900 truncate">
+                          Task Assigned To: <strong className="font-bold">{activeAssignee?.name || 'Member'}</strong>
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div 
+                          className="w-6 h-6 rounded-lg flex items-center justify-center font-bold text-[10px] text-white shadow-xs shrink-0"
+                          style={{ backgroundColor: currentUser?.color || '#2563eb' }}
+                        >
+                          {currentUser?.avatar || '??'}
+                        </div>
+                        <span className="font-extrabold text-slate-900 truncate">
+                          {currentUser?.name || 'You'}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-blue-700 font-extrabold bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full shrink-0">
+                        Private Task
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -657,10 +717,11 @@ export default function TaskModal({
               </button>
               <button
                 type="submit"
-                className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition-all active:scale-95 cursor-pointer"
+                disabled={isSubmitting}
+                className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition-all active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Save className="w-4 h-4" />
-                <span>{initialTask?.id ? 'Save Changes' : 'Create Task'}</span>
+                <span>{isSubmitting ? 'Saving...' : (initialTask?.id ? 'Save Changes' : 'Create Task')}</span>
               </button>
             </div>
           </div>

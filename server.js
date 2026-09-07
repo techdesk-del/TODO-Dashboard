@@ -82,13 +82,30 @@ app.prepare().then(async () => {
         });
       });
 
-      // Auth: Login Endpoint with Sliding-Window Rate Limiting
+      // Auth: Login Endpoint with Instant Snapshot Bundling & Rate Limiting
       if (pathname === '/api/auth/login' && req.method === 'POST') {
         const clientIp = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '127.0.0.1';
         const { userId, pin } = await parseBody();
         const result = await dbHelpers.verifyPin(userId, pin, clientIp);
         if (result.success) {
-          sendJsonResponse(200, result);
+          // Instant hydration: bundle tasks, overview, users, eod in a single response
+          try {
+            const [tasks, overview, users, eodReports] = await Promise.all([
+              dbHelpers.getTasks(),
+              dbHelpers.getCompanyOverview(),
+              dbHelpers.getUsers(),
+              dbHelpers.getEodReports()
+            ]);
+            sendJsonResponse(200, {
+              ...result,
+              tasks,
+              overview,
+              users,
+              eodReports
+            });
+          } catch (fetchErr) {
+            sendJsonResponse(200, result);
+          }
         } else if (result.rateLimited) {
           res.setHeader('Retry-After', String(result.remainingSec || 60));
           sendJsonResponse(429, result);
@@ -194,11 +211,19 @@ app.prepare().then(async () => {
       console.error('Socket initial sync error:', e);
     }
 
-    // Handle user authentication/presence announce
+    // Handle user authentication/presence announce (Instant Push)
     socket.on('user:join', async (userData) => {
       if (!userData || !userData.id) return;
       socketUserMap.set(socket.id, userData.id);
       queueBroadcastPresence();
+
+      try {
+        const [tasks, overview] = await Promise.all([
+          dbHelpers.getTasks(),
+          dbHelpers.getCompanyOverview()
+        ]);
+        socket.emit('sync:initial', { tasks, overview });
+      } catch (e) {}
     });
 
     // Handle user logout
