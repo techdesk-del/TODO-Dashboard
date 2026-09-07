@@ -43,13 +43,10 @@ export default function TaskModal({
   const [totalPagesRead, setTotalPagesRead] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Executive Delegation Privilege: Only Executives (CEO Shyamsundar Varma / Admin Aakash Das) can assign tasks across other team members
-  const isExecutive = currentUser?.role?.toLowerCase() === 'ceo' || 
-                      currentUser?.role?.toLowerCase() === 'admin' || 
+  // Executive Delegation Privilege: Exclusively for Admin (Aakash Das)
+  const isExecutive = currentUser?.role?.toLowerCase() === 'admin' || 
                       currentUser?.id === 'usr_aakash' || 
-                      currentUser?.id === 'usr_shyamsundar' || 
-                      currentUser?.name?.toLowerCase().includes('aakash') || 
-                      currentUser?.name?.toLowerCase().includes('shyam');
+                      currentUser?.name?.toLowerCase().includes('aakash');
 
   // Active task assignee
   const activeAssignee = users.find(u => u.id === (assignedTo || currentUser?.id)) || currentUser;

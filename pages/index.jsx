@@ -616,12 +616,9 @@ export default function Home() {
   };
 
   const handleOpenNewTaskModal = (defaultStatus = 'todo', defaultAssignee = null) => {
-    const isExecutive = currentUser?.role?.toLowerCase() === 'ceo' ||
-                        currentUser?.role?.toLowerCase() === 'admin' ||
+    const isExecutive = currentUser?.role?.toLowerCase() === 'admin' ||
                         currentUser?.id === 'usr_aakash' || 
-                        currentUser?.id === 'usr_shyamsundar' || 
-                        currentUser?.name?.toLowerCase().includes('aakash') || 
-                        currentUser?.name?.toLowerCase().includes('shyam');
+                        currentUser?.name?.toLowerCase().includes('aakash');
     const targetAssignee = isExecutive ? (defaultAssignee || currentUser?.id) : currentUser?.id;
     setEditingTask({ assigned_to: targetAssignee, status: defaultStatus });
     setDefaultTaskStatus(defaultStatus);

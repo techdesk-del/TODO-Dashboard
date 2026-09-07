@@ -51,7 +51,7 @@ app.prepare().then(async () => {
             res.setHeader('Vary', 'Accept-Encoding');
             res.end(compressed);
             return;
-          } catch (e) {}
+          } catch (e) { }
         }
         res.end(payloadStr);
       };
@@ -223,7 +223,7 @@ app.prepare().then(async () => {
           dbHelpers.getCompanyOverview()
         ]);
         socket.emit('sync:initial', { tasks, overview });
-      } catch (e) {}
+      } catch (e) { }
     });
 
     // Handle user logout
@@ -474,7 +474,7 @@ app.prepare().then(async () => {
         }
 
         const eodReport = await dbHelpers.createEodReport(reportData);
-        
+
         const pendingCount = (reportData.pending_tasks || []).length;
         const completedCount = (reportData.completed_tasks || []).length;
 

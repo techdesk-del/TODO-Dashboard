@@ -23,13 +23,10 @@ export default function Sidebar({
   setSelectedMemberFilter,
   onLogout 
 }) {
-  // EXECUTIVE ACCESS: Exclusively for Shyamsundar Varma (CEO) & Aakash Das (Admin)
-  const isExecutive = currentUser?.role?.toLowerCase() === 'ceo' ||
-                      currentUser?.role?.toLowerCase() === 'admin' ||
+  // EXECUTIVE ACCESS: Exclusively for Aakash Das (Admin)
+  const isExecutive = currentUser?.role?.toLowerCase() === 'admin' ||
                       currentUser?.id === 'usr_aakash' || 
-                      currentUser?.id === 'usr_shyamsundar' || 
-                      currentUser?.name?.toLowerCase().includes('aakash') ||
-                      currentUser?.name?.toLowerCase().includes('shyam');
+                      currentUser?.name?.toLowerCase().includes('aakash');
 
   // EOD live countdown status
   const [eodStatus, setEodStatus] = useState(() => checkEodAllowed());
