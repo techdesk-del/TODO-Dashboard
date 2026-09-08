@@ -1,15 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
-import Sidebar from '../components/Sidebar';
-import TopNavbar from '../components/TopNavbar';
-import KanbanBoard from '../components/KanbanBoard';
-import CalendarView from '../components/CalendarView';
-import CEODashboard from '../components/CEODashboard';
-import TaskModal from '../components/TaskModal';
-import EODCheckoutModal from '../components/EODCheckoutModal';
-import AuthScreen from '../components/AuthScreen';
-import { sounds } from '../lib/audio';
-import { checkEodAllowed } from '../lib/timeUtils';
+import {
+  Sidebar,
+  TopNavbar,
+  KanbanBoard,
+  CalendarView,
+  CEODashboard,
+  TaskModal,
+  EODCheckoutModal,
+  AuthScreen
+} from '@/components';
+import { sounds } from '@/lib/audio';
+import { checkEodAllowed } from '@/lib/timeUtils';
+import { DEFAULT_TEAM_MEMBERS, STORAGE_KEYS } from '@/config/constants';
 import { 
   Bell, 
   CheckCircle2, 
@@ -19,22 +22,10 @@ import {
   Flame
 } from 'lucide-react';
 
-const AUTH_STORAGE_KEY = 'urbangaon_auth_user_v1';
-const TASKS_CACHE_KEY = 'urbangaon_cached_tasks_v1';
-const OVERVIEW_CACHE_KEY = 'urbangaon_cached_overview_v1';
-const USERS_CACHE_KEY = 'urbangaon_cached_users_v1';
-
-const DEFAULT_TEAM_MEMBERS = [
-  { id: 'usr_shyamsundar', name: 'Shyamsundar Varma', color: '#f59e0b', avatar: 'SV', email: 'shyamsundar@urbangaon.com' },
-  { id: 'usr_aakash', name: 'Aakash Das', color: '#6366f1', avatar: 'AD', email: 'aakash.das@urbangaon.com' },
-  { id: 'usr_yudhister', name: 'Yudhister Tiwari', color: '#10b981', avatar: 'YT', email: 'yudhister.t@urbangaon.com' },
-  { id: 'usr_rekha', name: 'Dr Rekha Pareek', color: '#a855f7', avatar: 'RP', email: 'rekha.pareek@urbangaon.com' },
-  { id: 'usr_sanjay', name: 'Sanjay', color: '#06b6d4', avatar: 'SJ', email: 'sanjay@urbangaon.com' },
-  { id: 'usr_ayaz', name: 'Ayaz', color: '#ec4899', avatar: 'AY', email: 'ayaz@urbangaon.com' },
-  { id: 'usr_utkarsh', name: 'Utkarsh', color: '#3b82f6', avatar: 'UT', email: 'utkarsh@urbangaon.com' },
-  { id: 'usr_pratap', name: 'Pratap', color: '#14b8a6', avatar: 'PR', email: 'pratap@urbangaon.com' },
-  { id: 'usr_varun', name: 'Varun Mudgal', color: '#f97316', avatar: 'VM', email: 'varun.mudgal@urbangaon.com' }
-];
+const AUTH_STORAGE_KEY = STORAGE_KEYS.AUTH_USER;
+const TASKS_CACHE_KEY = STORAGE_KEYS.CACHED_TASKS;
+const OVERVIEW_CACHE_KEY = STORAGE_KEYS.CACHED_OVERVIEW;
+const USERS_CACHE_KEY = STORAGE_KEYS.CACHED_USERS;
 
 export default function Home() {
   const [users, setUsers] = useState(DEFAULT_TEAM_MEMBERS);
@@ -711,28 +702,28 @@ export default function Home() {
         <main className="flex-1 p-6 space-y-6 max-w-7xl w-full mx-auto">
           
           {/* Welcome & Workload Bar */}
-          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_0_rgba(15,23,42,0.03)] flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-3.5 min-w-0 flex-1">
               <div 
-                className="w-11 h-11 rounded-2xl flex items-center justify-center font-bold text-white shadow-sm shrink-0 text-sm"
-                style={{ backgroundColor: currentUser?.color || '#2563eb' }}
+                className="w-11 h-11 rounded-2xl flex items-center justify-center font-bold text-white shadow-2xs shrink-0 text-sm ring-2 ring-slate-100"
+                style={{ backgroundColor: currentUser?.color || '#4f46e5' }}
               >
                 {currentUser?.avatar || '??'}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-sm font-extrabold text-slate-900 truncate">
+                  <h2 className="text-sm font-bold text-slate-900 truncate tracking-tight">
                     Welcome, {currentUser?.name}
                   </h2>
-                  <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 font-bold border border-blue-200 flex items-center gap-1 shrink-0">
-                    <ShieldCheck className="w-3 h-3 text-blue-600 shrink-0" />
+                  <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-bold border border-indigo-200/80 flex items-center gap-1 shrink-0">
+                    <ShieldCheck className="w-3 h-3 text-indigo-600 shrink-0" />
                     Authenticated Session
                   </span>
                 </div>
 
                 {/* 1-Click Interactive Status Tabs in Welcome Bar */}
                 <div className="flex items-center gap-1.5 mt-2 flex-wrap text-xs">
-                  <span className="text-slate-500 font-medium mr-0.5">Quick Filters:</span>
+                  <span className="text-slate-400 font-semibold text-[11px] mr-0.5">Quick Filters:</span>
                   <button
                     onClick={() => {
                       sounds.playClick();
@@ -759,12 +750,12 @@ export default function Home() {
                     }}
                     className={`px-2.5 py-1 rounded-lg font-bold text-xs transition-all cursor-pointer flex items-center gap-1.5 ${
                       boardStatusFilter === 'pending' && activeTab === 'workspace' && viewMode === 'kanban'
-                        ? 'bg-amber-500 text-white shadow-sm ring-2 ring-amber-300'
-                        : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200'
+                        ? 'bg-amber-500 text-white shadow-xs'
+                        : 'bg-amber-50/70 hover:bg-amber-100/80 text-amber-900 border border-amber-200/70'
                     }`}
                     title="Click to view pending tasks"
                   >
-                    <span className={`w-2 h-2 rounded-full ${boardStatusFilter === 'pending' && activeTab === 'workspace' && viewMode === 'kanban' ? 'bg-white' : 'bg-amber-500 animate-pulse'}`} />
+                    <span className={`w-1.5 h-1.5 rounded-full ${boardStatusFilter === 'pending' && activeTab === 'workspace' && viewMode === 'kanban' ? 'bg-white' : 'bg-amber-500 animate-pulse'}`} />
                     <span>{myPendingCount} Pending</span>
                   </button>
 
@@ -778,8 +769,8 @@ export default function Home() {
                       }}
                       className={`px-2.5 py-1 rounded-lg font-bold text-xs transition-all cursor-pointer flex items-center gap-1.5 ${
                         boardStatusFilter === 'overdue' && activeTab === 'workspace' && viewMode === 'kanban'
-                          ? 'bg-rose-600 text-white shadow-sm ring-2 ring-rose-300'
-                          : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
+                          ? 'bg-rose-600 text-white shadow-xs'
+                          : 'bg-rose-50/70 hover:bg-rose-100/80 text-rose-700 border border-rose-200/70'
                       }`}
                       title="Click to view overdue tasks"
                     >
@@ -797,8 +788,8 @@ export default function Home() {
                     }}
                     className={`px-2.5 py-1 rounded-lg font-bold text-xs transition-all cursor-pointer flex items-center gap-1.5 ${
                       boardStatusFilter === 'completed' && activeTab === 'workspace' && viewMode === 'kanban'
-                        ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-300'
-                        : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'bg-emerald-50/70 hover:bg-emerald-100/80 text-emerald-800 border border-emerald-200/70'
                     }`}
                     title="Click to view completed tasks"
                   >
@@ -815,7 +806,7 @@ export default function Home() {
                   onClick={() => { sounds.playClick(); setEodModalOpen(true); }}
                   className={`text-xs font-bold px-4 py-2.5 rounded-xl border shadow-xs transition-all flex items-center gap-2 cursor-pointer shrink-0 whitespace-nowrap active:scale-95 ${
                     !eodStatus.isAllowed
-                      ? 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-300 hover:border-amber-400'
+                      ? 'bg-amber-50/90 hover:bg-amber-100/80 text-amber-900 border-amber-200/90 shadow-none'
                       : 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600 shadow-emerald-600/20'
                   }`}
                   title={

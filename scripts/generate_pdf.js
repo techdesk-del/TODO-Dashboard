@@ -997,8 +997,8 @@ const htmlContent = `<!DOCTYPE html>
 </body>
 </html>`;
 
-const htmlFilePath = path.join(__dirname, 'UrbanGaon_Executive_Guide.html');
-const pdfFilePath = path.join(__dirname, 'UrbanGaon_TODO_App_Executive_Documentation.pdf');
+const htmlFilePath = path.join(__dirname, '..', 'docs', 'UrbanGaon_Executive_Guide.html');
+const pdfFilePath = path.join(__dirname, '..', 'docs', 'UrbanGaon_TODO_App_Executive_Documentation.pdf');
 
 fs.writeFileSync(htmlFilePath, htmlContent, 'utf8');
 console.log('HTML file written successfully:', htmlFilePath);
