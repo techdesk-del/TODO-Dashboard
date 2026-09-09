@@ -157,7 +157,7 @@ export default function Sidebar({
         </div>
 
         {/* Personal Sprint Progress & Workload Analytics */}
-        <div className="p-3.5 rounded-2xl bg-slate-50/90 border border-slate-200/80 shadow-2xs space-y-2.5">
+        <div className="p-3.5 rounded-2xl bg-slate-50/90 border border-slate-200/80 shadow-2xs space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-[10.5px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
               <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" />
@@ -174,22 +174,6 @@ export default function Sidebar({
               className="bg-gradient-to-r from-indigo-500 to-blue-600 h-full rounded-full transition-all duration-500" 
               style={{ width: `${stats.percent}%` }}
             />
-          </div>
-
-          {/* Metrics Grid */}
-          <div className="grid grid-cols-3 gap-1.5 pt-0.5 text-center">
-            <div className="bg-white border border-slate-200/80 p-1.5 rounded-xl shadow-2xs">
-              <div className="text-[9.5px] text-slate-500 font-semibold">Total</div>
-              <div className="text-xs font-extrabold text-slate-900">{stats.total}</div>
-            </div>
-            <div className="bg-amber-50 border border-amber-200/80 p-1.5 rounded-xl shadow-2xs">
-              <div className="text-[9.5px] text-amber-700 font-semibold">Pending</div>
-              <div className="text-xs font-extrabold text-amber-800">{stats.pending}</div>
-            </div>
-            <div className="bg-rose-50 border border-rose-200/80 p-1.5 rounded-xl shadow-2xs">
-              <div className="text-[9.5px] text-rose-700 font-semibold">Overdue</div>
-              <div className="text-xs font-extrabold text-rose-800">{stats.overdue}</div>
-            </div>
           </div>
         </div>
 

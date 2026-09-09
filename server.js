@@ -107,8 +107,19 @@ app.prepare().then(async () => {
   // Attach Real-Time Socket.IO Hub
   initializeSocketServer(server);
 
-  server.listen(port, (err) => {
-    if (err) throw err;
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`\n❌ [PORT CONFLICT] Port ${port} is already in use by another process.`);
+      console.error(`👉 Run this PowerShell command to free up port ${port}:`);
+      console.error(`   Stop-Process -Id (Get-NetTCPConnection -LocalPort ${port}).OwningProcess -Force\n`);
+      process.exit(1);
+    } else {
+      console.error('Server error:', err);
+      process.exit(1);
+    }
+  });
+
+  server.listen(port, () => {
     console.log(`> 🚀 UrbanGaon Team Dashboard running on http://${hostname}:${port}`);
     console.log(`> 🍃 MongoDB Layer & Real-Time Socket.IO Hub is Active`);
   });

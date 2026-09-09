@@ -127,15 +127,6 @@ export default function TopNavbar({
           </span>
         </button>
 
-        {/* + New Task */}
-        <button
-          onClick={() => { sounds.playClick(); openNewTaskModal(); }}
-          className="flex items-center gap-1.5 px-3.5 py-1.5 sm:py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm shadow-indigo-500/20 transition-all active:scale-95 cursor-pointer shrink-0 whitespace-nowrap"
-        >
-          <Plus className="w-4 h-4 stroke-[3]" />
-          <span>New Task</span>
-        </button>
-
         {/* Live Pulse Indicator Badge */}
         <div 
           className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-50/80 border border-emerald-200/80 text-emerald-800 text-[11px] font-bold shrink-0"

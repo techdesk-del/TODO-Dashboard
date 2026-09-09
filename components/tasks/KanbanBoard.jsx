@@ -30,6 +30,28 @@ import confetti from 'canvas-confetti';
 import DailyReadingModal from '@/components/modals/DailyReadingModal';
 import TaskRemarkModal from './TaskRemarkModal';
 import { sounds } from '@/lib/audio';
+const formatFriendlyDate = (dateStr) => {
+  if (!dateStr) return '';
+  try {
+    const parts = dateStr.split('T')[0].split('-');
+    if (parts.length === 3) {
+      const year = parts[0];
+      const monthIdx = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
+      if (!isNaN(day) && monthIdx >= 0 && monthIdx < 12) {
+        return `${day} ${months[monthIdx]} ${year}`;
+      }
+    }
+    const d = new Date(dateStr);
+    if (!isNaN(d.getTime())) {
+      const day = d.getDate();
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
+      return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+    }
+  } catch (e) {}
+  return dateStr;
+};
 
 export default function KanbanBoard({ 
   tasks, 
@@ -544,22 +566,29 @@ export default function KanbanBoard({
         </div>
       ) : (
         /* EXCEL SPREADSHEET 4-STATUS MATRIX (To Do, In Progress, Blocked, Completed Columns) */
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden w-full p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse min-w-[1400px]">
-              {/* Excel Table Header */}
-              <thead className="sticky top-0 z-10 shadow-xs">
-                <tr className="bg-slate-900 text-white font-bold text-[11px] tracking-wide uppercase">
-                  <th className="py-3 px-3 text-center w-12 border-r border-slate-800 shrink-0">#</th>
-                  <th className="py-3 px-4 border-r border-slate-800 min-w-[190px] w-[190px]">Candidate / Member</th>
-                  <th className="py-3 px-3 border-r border-slate-800 min-w-[260px] max-w-[320px] w-[280px] bg-slate-800">📝 To Do</th>
-                  <th className="py-3 px-3 border-r border-slate-800 min-w-[280px] max-w-[360px] w-[320px] bg-blue-950/80">📖 In Progress</th>
-                  <th className="py-3 px-3 border-r border-slate-800 min-w-[240px] max-w-[300px] w-[260px] bg-indigo-950/80">💬 Remarks & Info</th>
-                  <th className="py-3 px-3 border-r border-slate-800 min-w-[130px] w-[140px] text-center">Workload</th>
-                  <th className="py-3 px-3 border-r border-slate-800 min-w-[220px] max-w-[280px] w-[240px] bg-rose-950/70">🚫 Blocked</th>
-                  <th className="py-3 px-3 min-w-[240px] max-w-[300px] w-[260px] bg-emerald-950/80">✅ Completed</th>
-                </tr>
-              </thead>
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm w-full p-0">
+          <table className="w-full table-fixed text-left text-xs border-collapse rounded-2xl">
+            <colgroup>
+              <col style={{ width: '3.5%' }} />
+              <col style={{ width: '15.5%' }} />
+              <col style={{ width: '21%' }} />
+              <col style={{ width: '23%' }} />
+              <col style={{ width: '9%' }} />
+              <col style={{ width: '13%' }} />
+              <col style={{ width: '15%' }} />
+            </colgroup>
+            {/* Excel Table Header - Sticky to top directly beneath top navbar */}
+            <thead className="sticky top-[53px] z-30 shadow-md">
+              <tr className="bg-slate-900 text-white font-bold text-[11px] tracking-wide uppercase">
+                <th className="sticky top-[53px] z-30 py-2.5 px-1 text-center border-r border-slate-800 bg-slate-900 rounded-tl-2xl">#</th>
+                <th className="sticky top-[53px] z-30 py-2.5 px-2.5 border-r border-slate-800 bg-slate-900">Candidate / Member</th>
+                <th className="sticky top-[53px] z-30 py-2.5 px-2 border-r border-slate-800 bg-slate-800">📝 To Do</th>
+                <th className="sticky top-[53px] z-30 py-2.5 px-2 border-r border-slate-800 bg-blue-950">📖 In Progress</th>
+                <th className="sticky top-[53px] z-30 py-2.5 px-1 border-r border-slate-800 bg-slate-900 text-center">Workload</th>
+                <th className="sticky top-[53px] z-30 py-2.5 px-2 border-r border-slate-800 bg-rose-950">🚫 Blocked</th>
+                <th className="sticky top-[53px] z-30 py-2.5 px-2 bg-emerald-950 rounded-tr-2xl">✅ Completed</th>
+              </tr>
+            </thead>
               <tbody className="divide-y divide-slate-200/90 bg-white">
                 {memberMatrixData.map((member, idx) => {
                   const user = member.user;
@@ -581,12 +610,12 @@ export default function KanbanBoard({
                       }`}
                     >
                       {/* 1. Row # */}
-                      <td className="py-3.5 px-3 text-center font-extrabold text-slate-500 border-r border-slate-200 bg-slate-50/60 align-top">
+                      <td className="py-3 px-1 text-center font-extrabold text-slate-500 border-r border-slate-200 bg-slate-50/60 align-top">
                         {idx + 1}
                       </td>
 
                       {/* 2. Candidate / Team Member Profile + Quick Action Buttons */}
-                      <td className="py-3 px-3.5 border-r border-slate-200 align-top whitespace-nowrap">
+                      <td className="py-2.5 px-2.5 border-r border-slate-200 align-top">
                         <div className="flex items-center gap-2.5">
                           <div className="relative shrink-0">
                             <div
@@ -617,18 +646,18 @@ export default function KanbanBoard({
                           </div>
                         </div>
 
-                        {/* Quick Actions (Compact Dual Buttons) */}
-                        <div className="grid grid-cols-2 gap-1.5 pt-2">
+                        {/* Quick Actions (Full-Width Vertically Stacked Clean Buttons) */}
+                        <div className="flex flex-col gap-1.5 pt-2.5 w-full">
                           <button
                             type="button"
                             onClick={() => {
                               sounds.playClick();
                               openNewTaskModal('todo', user.id);
                             }}
-                            className="py-1 px-2 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-[10.5px] flex items-center justify-center gap-1 shadow-xs shadow-blue-500/20 transition-all cursor-pointer truncate"
+                            className="w-full py-1.5 px-2 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-[11px] flex items-center justify-center gap-1.5 shadow-xs shadow-blue-500/20 transition-all cursor-pointer"
                             title={`Add task for ${user.name}`}
                           >
-                            <Plus className="w-3 h-3 stroke-[2.5] shrink-0" />
+                            <Plus className="w-3.5 h-3.5 stroke-[2.5] shrink-0" />
                             <span>Add Task</span>
                           </button>
 
@@ -639,10 +668,10 @@ export default function KanbanBoard({
                                 sounds.playClick();
                                 onEditTask(member.bookTask);
                               }}
-                              className="py-1 px-2 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200/90 active:scale-95 font-bold text-[10px] flex items-center justify-center gap-1 transition-all cursor-pointer shadow-2xs truncate"
+                              className="w-full py-1.5 px-2 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border border-indigo-200/90 active:scale-95 font-bold text-[10.5px] flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs"
                               title="Manage individual books, authors, dates, & reading list"
                             >
-                              <BookOpen className="w-3 h-3 text-indigo-600 shrink-0" />
+                              <BookOpen className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
                               <span>Books ({member.bookTask.books_list?.length || 1})</span>
                             </button>
                           ) : (
@@ -652,75 +681,45 @@ export default function KanbanBoard({
                                 sounds.playClick();
                                 openNewTaskModal('in_progress', user.id);
                               }}
-                              className="py-1 px-2 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 active:scale-95 font-bold text-[10px] flex items-center justify-center gap-1 transition-all cursor-pointer truncate"
+                              className="w-full py-1.5 px-2 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 active:scale-95 font-bold text-[10.5px] flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                               title="Assign a book reading task"
                             >
-                              <BookOpen className="w-3 h-3 text-slate-500 shrink-0" />
+                              <BookOpen className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                               <span>+ Book</span>
                             </button>
                           )}
                         </div>
                       </td>
 
-                      {/* 3. TO DO COLUMN (HORIZONTALLY SCROLLABLE) */}
-                      <td className="py-2.5 px-3 border-r border-slate-200 align-top bg-slate-50/20 min-w-[260px] max-w-[320px] w-[280px]">
+                      {/* 3. TO DO COLUMN (VERTICALLY STACKED LENGTHWISE) */}
+                      <td className="py-2.5 px-2 border-r border-slate-200 align-top bg-slate-50/20">
                         {member.todoTasks.length === 0 ? (
                           <div className="h-full min-h-[72px] flex items-center justify-center p-2 rounded-xl bg-white/60 border border-slate-200/60 text-center text-slate-400 text-xs">
                             <span className="font-medium text-[11px]">No To Do tasks</span>
                           </div>
                         ) : (
-                          <div className="w-full space-y-1.5 h-full flex flex-col">
+                          <div className="w-full space-y-2 h-full flex flex-col">
                             {/* Track Header */}
                             <div className="flex items-center justify-between text-[10px] text-slate-800 font-bold px-0.5 pb-1 border-b border-slate-200/80">
                               <span className="flex items-center gap-1.5">
                                 <span className="w-2 h-2 rounded-full bg-slate-500" />
                                 <span>{member.todoTasks.length} To Do</span>
                               </span>
-                              {member.todoTasks.length > 1 && (
-                                <div className="flex items-center gap-1">
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      sounds.playClick();
-                                      const container = e.currentTarget.closest('td')?.querySelector('.horizontal-tasks-track');
-                                      if (container) container.scrollBy({ left: -240, behavior: 'smooth' });
-                                    }}
-                                    className="w-5 h-5 rounded-md bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center cursor-pointer shadow-2xs active:scale-95 transition-all text-xs"
-                                    title="Scroll left"
-                                  >
-                                    ‹
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      sounds.playClick();
-                                      const container = e.currentTarget.closest('td')?.querySelector('.horizontal-tasks-track');
-                                      if (container) container.scrollBy({ left: 240, behavior: 'smooth' });
-                                    }}
-                                    className="w-5 h-5 rounded-md bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center cursor-pointer shadow-2xs active:scale-95 transition-all text-xs"
-                                    title="Scroll right"
-                                  >
-                                    ›
-                                  </button>
-                                </div>
-                              )}
+                              <span className="text-[9px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+                                {member.todoTasks.length} {member.todoTasks.length === 1 ? 'task' : 'tasks'}
+                              </span>
                             </div>
 
-                            {/* Horizontal Cards Rail */}
-                            <div 
-                              className="horizontal-tasks-track flex flex-row gap-2 overflow-x-auto pb-1 pt-0.5 no-scrollbar snap-x snap-mandatory flex-1 items-stretch"
-                              onWheel={(e) => {
-                                if (e.deltaY !== 0) e.currentTarget.scrollLeft += e.deltaY;
-                              }}
-                            >
+                            {/* Lengthwise Vertically Stacked Cards */}
+                            <div className="flex flex-col gap-2 w-full pt-0.5">
                               {member.todoTasks.map((t, tIdx) => (
                                 <div 
                                   key={t.id} 
-                                  className="w-[230px] shrink-0 p-2.5 rounded-xl bg-white border border-slate-200 hover:border-slate-400 shadow-2xs space-y-1.5 snap-start flex flex-col justify-between transition-all"
+                                  className="w-full p-2.5 rounded-xl bg-white border border-slate-200 hover:border-slate-300 shadow-2xs space-y-1.5 flex flex-col justify-between transition-all hover:shadow-xs"
                                 >
                                   <div>
-                                    <div className="flex items-start justify-between gap-1">
-                                      <span className="font-bold text-slate-900 leading-tight text-xs line-clamp-2" title={t.title}>
+                                    <div className="flex items-start justify-between gap-1.5">
+                                      <span className="font-bold text-slate-900 leading-tight text-xs" title={t.title}>
                                         <strong className="text-slate-500 font-extrabold">{tIdx + 1}.</strong> {t.title}
                                       </span>
                                       <span className={`text-[8.5px] font-extrabold px-1.5 py-0.2 rounded uppercase shrink-0 ${
@@ -753,15 +752,15 @@ export default function KanbanBoard({
                                     )}
                                   </div>
 
-                                  <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-[9.5px]">
-                                    <div className="flex items-center gap-1 text-slate-400">
-                                      <span>{t.due_date ? `📅 ${t.due_date.split('-').slice(1).join('/')}` : 'No date'}</span>
+                                  <div className="flex flex-wrap items-center justify-between pt-1 border-t border-slate-100 text-[9px] gap-1">
+                                    <div className="flex items-center gap-1 text-slate-400 shrink-0">
+                                      <span>{t.due_date ? `📅 ${formatFriendlyDate(t.due_date)}` : 'No date'}</span>
                                     </div>
-                                    <div className="flex items-center gap-1.5">
+                                    <div className="flex items-center gap-1 shrink-0">
                                       <button
                                         type="button"
                                         onClick={() => { sounds.playClick(); setActiveRemarkTask(t); setActiveRemarkCandidateTasks(candidateTasks); }}
-                                        className={`inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded cursor-pointer transition-colors ${
+                                        className={`inline-flex items-center gap-0.5 text-[8.5px] px-1 py-0.5 rounded cursor-pointer transition-colors ${
                                           t.remarks?.length > 0
                                             ? 'bg-indigo-50 text-indigo-700 font-bold border border-indigo-200'
                                             : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-100'
@@ -792,7 +791,7 @@ export default function KanbanBoard({
                                       </button>
                                       <button
                                         onClick={() => { sounds.playClick(); onStatusChange(t.id, 'in_progress'); }}
-                                        className="text-blue-600 font-bold hover:underline cursor-pointer"
+                                        className="text-blue-600 font-bold hover:underline cursor-pointer ml-0.5"
                                       >
                                         Start →
                                       </button>
@@ -805,59 +804,27 @@ export default function KanbanBoard({
                         )}
                       </td>
 
-                      {/* 4. IN PROGRESS COLUMN */}
-                      <td className="py-2.5 px-3 border-r border-slate-200 align-top bg-blue-50/10 min-w-[280px] max-w-[360px] w-[320px]">
+                      {/* 4. IN PROGRESS COLUMN (VERTICALLY STACKED LENGTHWISE) */}
+                      <td className="py-2.5 px-2 border-r border-slate-200 align-top bg-blue-50/10">
                         {member.inProgressTasks.length === 0 && (!member.bookTask || member.inProgressBooks.length === 0) ? (
                           <div className="h-full min-h-[72px] flex items-center justify-center p-2 rounded-xl bg-white/60 border border-blue-100 text-center text-slate-400 text-xs">
                             <span className="font-medium text-[11px]">None active</span>
                           </div>
                         ) : (
-                          <div className="w-full space-y-1.5 h-full flex flex-col">
-                            {/* Horizontal Track Header with Item Count & Scroll Nav */}
+                          <div className="w-full space-y-2 h-full flex flex-col">
+                            {/* Track Header */}
                             <div className="flex items-center justify-between text-[10px] text-blue-950 font-bold px-0.5 pb-1 border-b border-blue-100">
                               <span className="flex items-center gap-1.5">
                                 <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                                <span>{member.inProgressTasks.length + (member.bookTask && member.inProgressBooks.length > 0 ? 1 : 0)} Active Items</span>
+                                <span>{member.inProgressTasks.length + (member.bookTask && member.inProgressBooks.length > 0 ? 1 : 0)} Active</span>
                               </span>
-                              {(member.inProgressTasks.length + (member.bookTask && member.inProgressBooks.length > 0 ? 1 : 0)) > 1 && (
-                                <div className="flex items-center gap-1">
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      sounds.playClick();
-                                      const container = e.currentTarget.closest('td')?.querySelector('.horizontal-tasks-track');
-                                      if (container) container.scrollBy({ left: -240, behavior: 'smooth' });
-                                    }}
-                                    className="w-5 h-5 rounded-md bg-white hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-slate-600 flex items-center justify-center cursor-pointer shadow-2xs active:scale-95 transition-all text-xs"
-                                    title="Scroll left"
-                                  >
-                                    ‹
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      sounds.playClick();
-                                      const container = e.currentTarget.closest('td')?.querySelector('.horizontal-tasks-track');
-                                      if (container) container.scrollBy({ left: 240, behavior: 'smooth' });
-                                    }}
-                                    className="w-5 h-5 rounded-md bg-white hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-slate-700 flex items-center justify-center cursor-pointer shadow-2xs active:scale-95 transition-all text-xs"
-                                    title="Scroll right"
-                                  >
-                                    ›
-                                  </button>
-                                </div>
-                              )}
+                              <span className="text-[9px] font-bold text-blue-700 bg-blue-50 border border-blue-200/60 px-1.5 py-0.5 rounded">
+                                {member.inProgressTasks.length + (member.bookTask && member.inProgressBooks.length > 0 ? 1 : 0)} {member.inProgressTasks.length + (member.bookTask && member.inProgressBooks.length > 0 ? 1 : 0) === 1 ? 'item' : 'items'}
+                              </span>
                             </div>
 
-                            {/* Horizontal Cards Rail without Windows scrollbar */}
-                            <div 
-                              className="horizontal-tasks-track flex flex-row gap-2 overflow-x-auto pb-1 pt-0.5 no-scrollbar snap-x snap-mandatory flex-1 items-stretch"
-                              onWheel={(e) => {
-                                if (e.deltaY !== 0) {
-                                  e.currentTarget.scrollLeft += e.deltaY;
-                                }
-                              }}
-                            >
+                            {/* Lengthwise Vertically Stacked Cards */}
+                            <div className="flex flex-col gap-2 w-full pt-0.5">
                               {/* Regular In-Progress Tasks */}
                               {member.inProgressTasks.map((t, tIdx) => {
                                 const latestRemarkObj = Array.isArray(t.remarks) && t.remarks.length > 0
@@ -870,11 +837,11 @@ export default function KanbanBoard({
                                 return (
                                   <div 
                                     key={t.id} 
-                                    className="w-[240px] shrink-0 p-2.5 rounded-xl bg-white border border-blue-200 hover:border-blue-400 shadow-2xs space-y-1.5 snap-start flex flex-col justify-between transition-all"
+                                    className="w-full p-2.5 rounded-xl bg-white border border-blue-200 hover:border-blue-400 shadow-2xs space-y-1.5 flex flex-col justify-between transition-all hover:shadow-xs"
                                   >
                                     <div>
                                       <div className="flex items-start justify-between gap-1">
-                                        <span className="font-bold text-slate-900 leading-tight text-xs line-clamp-2" title={t.title}>
+                                        <span className="font-bold text-slate-900 leading-tight text-xs" title={t.title}>
                                           <strong className="text-blue-600 font-extrabold">{tIdx + 1}.</strong> {t.title}
                                         </span>
                                         <span className={`text-[8.5px] font-extrabold px-1.5 py-0.2 rounded uppercase shrink-0 ${
@@ -886,7 +853,7 @@ export default function KanbanBoard({
                                         </span>
                                       </div>
                                       {t.description && (
-                                        <p className="text-[10px] text-slate-500 line-clamp-1 mt-0.5" title={t.description}>
+                                        <p className="text-[10px] text-slate-500 line-clamp-2 mt-0.5" title={t.description}>
                                           {t.description}
                                         </p>
                                       )}
@@ -914,12 +881,12 @@ export default function KanbanBoard({
                                       )}
                                     </div>
 
-                                    <div className="flex items-center justify-between pt-1.5 border-t border-slate-100 text-[9.5px]">
-                                      <div className="flex items-center gap-1.5">
+                                    <div className="flex flex-wrap items-center justify-between pt-1.5 border-t border-slate-100 text-[9px] gap-1">
+                                      <div className="flex items-center gap-1 shrink-0">
                                         <button
                                           type="button"
                                           onClick={() => { sounds.playClick(); setActiveRemarkTask(t); setActiveRemarkCandidateTasks(candidateTasks); }}
-                                          className={`inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded cursor-pointer transition-colors ${
+                                          className={`inline-flex items-center gap-0.5 text-[8.5px] px-1.5 py-0.5 rounded cursor-pointer transition-colors ${
                                             remarksCount > 0
                                               ? 'bg-indigo-50 text-indigo-700 font-bold border border-indigo-200'
                                               : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-100'
@@ -929,7 +896,7 @@ export default function KanbanBoard({
                                           <MessageSquare className="w-2.5 h-2.5 text-indigo-600" />
                                           <span>{remarksCount > 0 ? remarksCount : 'Remark'}</span>
                                         </button>
-                                        <span className="text-slate-400">{t.due_date ? `Due ${t.due_date.split('-').slice(1).join('/')}` : ''}</span>
+                                        <span className="text-slate-400">{t.due_date ? `📅 ${formatFriendlyDate(t.due_date)}` : ''}</span>
                                       </div>
                                       <button
                                         type="button"
@@ -937,11 +904,11 @@ export default function KanbanBoard({
                                           sounds.playClick();
                                           onEditTask(t);
                                         }}
-                                        className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 border border-blue-200/80 px-2 py-0.5 rounded cursor-pointer transition-all shadow-2xs active:scale-95"
+                                        className="inline-flex items-center gap-1 text-[9.5px] font-bold text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 border border-blue-200/80 px-1.5 py-0.5 rounded cursor-pointer transition-all shadow-2xs active:scale-95 shrink-0"
                                         title="Update Task Details"
                                       >
                                         <Edit2 className="w-2.5 h-2.5 text-blue-600" />
-                                        <span>Update Task</span>
+                                        <span>Update</span>
                                       </button>
                                     </div>
                                   </div>
@@ -959,7 +926,7 @@ export default function KanbanBoard({
                                 return (
                                   <div 
                                     key={t.id} 
-                                    className="w-[240px] shrink-0 p-2.5 rounded-xl bg-white border border-indigo-200 hover:border-indigo-400 shadow-2xs space-y-1.5 snap-start flex flex-col justify-between transition-all"
+                                    className="w-full p-2.5 rounded-xl bg-white border border-indigo-200 hover:border-indigo-400 shadow-2xs space-y-1.5 flex flex-col justify-between transition-all hover:shadow-xs"
                                   >
                                     <div>
                                       <div className="flex items-start justify-between gap-1">
@@ -973,7 +940,7 @@ export default function KanbanBoard({
                                       </div>
 
                                       {/* Multi-Book In-Progress list */}
-                                      <div className="space-y-1 pt-1 max-h-[75px] overflow-y-auto no-scrollbar pr-0.5">
+                                      <div className="space-y-1 pt-1 max-h-[90px] overflow-y-auto no-scrollbar pr-0.5">
                                         {member.inProgressBooks.map((b, bIdx) => (
                                           <div key={b.id || bIdx} className="p-1.5 rounded-lg bg-slate-50 border border-slate-200/80 text-[9.5px] flex items-center justify-between gap-1">
                                             <span className="truncate font-semibold text-slate-800 max-w-[140px]" title={b.title}>
@@ -1038,139 +1005,17 @@ export default function KanbanBoard({
                         )}
                       </td>
 
-                      {/* 5. REMARKS & INFORMATION COLUMN */}
-                      <td className="py-2.5 px-3 border-r border-slate-200 align-top bg-indigo-50/10 min-w-[240px] max-w-[300px] w-[260px]">
-                        {(() => {
-                          const candidateTasks = [
-                            ...member.todoTasks,
-                            ...member.inProgressTasks,
-                            ...member.blockedTasks,
-                            ...member.regularCompletedTasks,
-                            ...(member.bookTask ? [member.bookTask] : [])
-                          ];
-                          const tasksWithRemarks = candidateTasks.filter(t => (t.remarks && t.remarks.length > 0) || t.latest_remark);
-
-                          return (
-                            <div className="w-full space-y-1.5 h-full flex flex-col">
-                              {/* Header inside cell with Quick + Add Remark */}
-                              <div className="flex items-center justify-between gap-1 pb-1 border-b border-indigo-200/80 text-[10px]">
-                                <span className="font-black uppercase tracking-wider text-indigo-950 flex items-center gap-1">
-                                  <MessageSquare className="w-3 h-3 text-indigo-600" />
-                                  <span>Remarks ({tasksWithRemarks.length})</span>
-                                </span>
-                                <div className="flex items-center gap-1">
-                                  {tasksWithRemarks.length > 1 && (
-                                    <>
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          sounds.playClick();
-                                          const container = e.currentTarget.closest('td')?.querySelector('.horizontal-tasks-track');
-                                          if (container) container.scrollBy({ left: -240, behavior: 'smooth' });
-                                        }}
-                                        className="w-5 h-5 rounded-md bg-white hover:bg-indigo-50 border border-indigo-200 text-indigo-700 flex items-center justify-center cursor-pointer shadow-2xs active:scale-95 transition-all text-xs"
-                                        title="Scroll left"
-                                      >
-                                        ‹
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          sounds.playClick();
-                                          const container = e.currentTarget.closest('td')?.querySelector('.horizontal-tasks-track');
-                                          if (container) container.scrollBy({ left: 240, behavior: 'smooth' });
-                                        }}
-                                        className="w-5 h-5 rounded-md bg-white hover:bg-indigo-50 border border-indigo-200 text-indigo-700 flex items-center justify-center cursor-pointer shadow-2xs active:scale-95 transition-all text-xs"
-                                        title="Scroll right"
-                                      >
-                                        ›
-                                      </button>
-                                    </>
-                                  )}
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      sounds.playClick();
-                                      const target = member.todoTasks[0] || member.inProgressTasks[0] || member.blockedTasks[0] || candidateTasks[0];
-                                      if (target) {
-                                        setActiveRemarkTask(target);
-                                        setActiveRemarkCandidateTasks(candidateTasks);
-                                      }
-                                    }}
-                                    className="px-2 py-0.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[9.5px] flex items-center gap-1 cursor-pointer transition-all active:scale-95 shadow-2xs"
-                                    title={`Add remark for ${user.name}'s task`}
-                                  >
-                                    <Plus className="w-3 h-3 stroke-[2.5]" />
-                                    <span>Add</span>
-                                  </button>
-                                </div>
-                              </div>
-
-                              {/* Remarks Cards Rail */}
-                              {tasksWithRemarks.length === 0 ? (
-                                <div className="h-full min-h-[72px] flex items-center justify-center p-2 rounded-xl bg-white/60 border border-indigo-100 text-center text-slate-400 text-xs">
-                                  <span className="font-medium text-[11px]">No remarks yet</span>
-                                </div>
-                              ) : (
-                                <div 
-                                  className="horizontal-tasks-track flex flex-row gap-2 overflow-x-auto pb-1 pt-0.5 no-scrollbar snap-x snap-mandatory flex-1 items-stretch"
-                                  onWheel={(e) => {
-                                    if (e.deltaY !== 0) e.currentTarget.scrollLeft += e.deltaY;
-                                  }}
-                                >
-                                  {tasksWithRemarks.map(t => {
-                                    const latest = t.latest_remark || t.remarks?.[0]?.text;
-                                    const author = t.remarks?.[0]?.author_name || 'Team';
-                                    const count = t.remarks?.length || 1;
-
-                                    return (
-                                      <div
-                                        key={t.id}
-                                        onClick={() => {
-                                          sounds.playClick();
-                                          setActiveRemarkTask(t);
-                                          setActiveRemarkCandidateTasks(candidateTasks);
-                                        }}
-                                        className="w-[220px] shrink-0 p-2.5 rounded-xl bg-white border border-indigo-200/90 hover:border-indigo-400 shadow-2xs space-y-1.5 cursor-pointer transition-all hover:shadow-xs snap-start flex flex-col justify-between group"
-                                        title="Click to view full remark timeline or add update"
-                                      >
-                                        <div>
-                                          <div className="flex items-center justify-between gap-1 text-[10px]">
-                                            <span className="font-extrabold text-indigo-950 truncate flex items-center gap-1">
-                                              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />
-                                              <span className="truncate">{t.title}</span>
-                                            </span>
-                                            <span className="text-[8.5px] font-black px-1.5 py-0.2 rounded bg-indigo-100 text-indigo-800 shrink-0">
-                                              💬 {count}
-                                            </span>
-                                          </div>
-                                          <p className="text-[10px] text-slate-700 leading-snug line-clamp-2 italic font-medium pl-2 border-l-2 border-indigo-400 mt-1">
-                                            "{latest}"
-                                          </p>
-                                        </div>
-                                        <div className="flex items-center justify-between text-[9px] text-slate-400 pt-1 border-t border-slate-100">
-                                          <span className="font-semibold text-indigo-700 truncate max-w-[120px]">{author}</span>
-                                          <span className="text-indigo-600 font-bold group-hover:underline">View / Add →</span>
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })()}
-                      </td>
 
                       {/* 6. Workload Summary & Pages Read */}
-                      <td className="py-2.5 px-3 border-r border-slate-200 align-top whitespace-nowrap min-w-[130px] w-[140px]">
-                        <div className="h-full flex flex-col justify-between p-2 rounded-xl bg-white border border-slate-200/90 shadow-2xs space-y-1.5">
-                          <div className="space-y-1">
-                            <span className="text-[9.5px] font-bold text-slate-400 uppercase tracking-wide">Progress</span>
-                            <div className="text-[11px] font-extrabold text-slate-800">
-                              {member.totalCompletedCount}/{member.total} Tasks ({completionRate}%)
+                      <td className="py-2 px-1 border-r border-slate-200 align-top">
+                        <div className="h-full flex flex-col justify-between p-1.5 rounded-xl bg-white border border-slate-200/90 shadow-2xs space-y-1">
+                          <div className="space-y-0.5">
+                            <span className="text-[8.5px] font-bold text-slate-400 uppercase tracking-wide">Progress</span>
+                            <div className="text-[10px] font-extrabold text-slate-800 leading-tight">
+                              {member.totalCompletedCount}/{member.total}
+                              <span className="text-[9px] text-slate-500 font-semibold block mt-0.5">({completionRate}%)</span>
                             </div>
-                            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden border border-slate-200/60">
+                            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden border border-slate-200/60 mt-1">
                               <div
                                 className="h-full rounded-full bg-emerald-500 transition-all duration-300"
                                 style={{ width: `${completionRate}%` }}
@@ -1178,72 +1023,42 @@ export default function KanbanBoard({
                             </div>
                           </div>
                           {member.totalPages > 0 && (
-                            <div className="text-[9px] text-indigo-900 font-bold bg-indigo-50 px-1.5 py-0.5 rounded-md border border-indigo-100 truncate">
+                            <div className="text-[8px] text-indigo-900 font-bold bg-indigo-50 px-1 py-0.5 rounded-md border border-indigo-100 truncate">
                               📖 {member.pagesRead}/{member.totalPages} pgs
                             </div>
                           )}
                         </div>
                       </td>
 
-                      {/* 7. BLOCKED COLUMN */}
-                      <td className="py-2.5 px-3 border-r border-slate-200 align-top bg-rose-50/10 min-w-[220px] max-w-[280px] w-[240px]">
+                      {/* 7. BLOCKED COLUMN (VERTICALLY STACKED LENGTHWISE) */}
+                      <td className="py-2.5 px-2 border-r border-slate-200 align-top bg-rose-50/10">
                         {member.blockedTasks.length === 0 ? (
                           <div className="h-full min-h-[72px] flex items-center justify-center p-2 rounded-xl bg-white/60 border border-rose-100 text-center text-slate-400 text-xs">
                             <span className="font-medium text-[11px]">No blocked tasks</span>
                           </div>
                         ) : (
-                          <div className="w-full space-y-1.5 h-full flex flex-col">
+                          <div className="w-full space-y-2 h-full flex flex-col">
                             {/* Track Header */}
                             <div className="flex items-center justify-between text-[10px] text-rose-950 font-bold px-0.5 pb-1 border-b border-rose-200/80">
                               <span className="flex items-center gap-1.5">
                                 <span className="w-2 h-2 rounded-full bg-rose-500" />
                                 <span>{member.blockedTasks.length} Blocked</span>
                               </span>
-                              {member.blockedTasks.length > 1 && (
-                                <div className="flex items-center gap-1">
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      sounds.playClick();
-                                      const container = e.currentTarget.closest('td')?.querySelector('.horizontal-tasks-track');
-                                      if (container) container.scrollBy({ left: -240, behavior: 'smooth' });
-                                    }}
-                                    className="w-5 h-5 rounded-md bg-white hover:bg-rose-50 border border-rose-200 text-rose-700 flex items-center justify-center cursor-pointer shadow-2xs active:scale-95 transition-all text-xs"
-                                    title="Scroll left"
-                                  >
-                                    ‹
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      sounds.playClick();
-                                      const container = e.currentTarget.closest('td')?.querySelector('.horizontal-tasks-track');
-                                      if (container) container.scrollBy({ left: 240, behavior: 'smooth' });
-                                    }}
-                                    className="w-5 h-5 rounded-md bg-white hover:bg-rose-50 border border-rose-200 text-rose-700 flex items-center justify-center cursor-pointer shadow-2xs active:scale-95 transition-all text-xs"
-                                    title="Scroll right"
-                                  >
-                                    ›
-                                  </button>
-                                </div>
-                              )}
+                              <span className="text-[9px] font-bold text-rose-700 bg-rose-50 border border-rose-200/60 px-1.5 py-0.5 rounded">
+                                {member.blockedTasks.length} {member.blockedTasks.length === 1 ? 'task' : 'tasks'}
+                              </span>
                             </div>
 
-                            {/* Horizontal Cards Rail */}
-                            <div 
-                              className="horizontal-tasks-track flex flex-row gap-2 overflow-x-auto pb-1 pt-0.5 no-scrollbar snap-x snap-mandatory flex-1 items-stretch"
-                              onWheel={(e) => {
-                                if (e.deltaY !== 0) e.currentTarget.scrollLeft += e.deltaY;
-                              }}
-                            >
+                            {/* Lengthwise Vertically Stacked Cards */}
+                            <div className="flex flex-col gap-2 w-full pt-0.5">
                               {member.blockedTasks.map((t, tIdx) => (
                                 <div 
                                   key={t.id} 
-                                  className="w-[220px] shrink-0 p-2.5 rounded-xl bg-white border border-rose-200 hover:border-rose-400 shadow-2xs space-y-1.5 snap-start flex flex-col justify-between transition-all"
+                                  className="w-full p-2.5 rounded-xl bg-white border border-rose-200 hover:border-rose-400 shadow-2xs space-y-1.5 flex flex-col justify-between transition-all hover:shadow-xs"
                                 >
                                   <div>
                                     <div className="flex items-start justify-between gap-1">
-                                      <span className="font-bold text-slate-900 leading-tight text-xs line-clamp-2" title={t.title}>
+                                      <span className="font-bold text-slate-900 leading-tight text-xs" title={t.title}>
                                         <strong className="text-rose-600 font-extrabold">{tIdx + 1}.</strong> {t.title}
                                       </span>
                                       <span className="text-[8.5px] font-black px-1.5 py-0.2 rounded bg-rose-100 text-rose-800 shrink-0">
@@ -1270,12 +1085,12 @@ export default function KanbanBoard({
                                     )}
                                   </div>
 
-                                  <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-[9.5px]">
-                                    <div className="flex items-center gap-1">
+                                  <div className="flex flex-wrap items-center justify-between pt-1 border-t border-slate-100 text-[9px] gap-1">
+                                    <div className="flex items-center gap-1 shrink-0">
                                       <button
                                         type="button"
                                         onClick={() => { sounds.playClick(); setActiveRemarkTask(t); setActiveRemarkCandidateTasks(candidateTasks); }}
-                                        className={`inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded cursor-pointer transition-colors ${
+                                        className={`inline-flex items-center gap-0.5 text-[8.5px] px-1.5 py-0.5 rounded cursor-pointer transition-colors ${
                                           t.remarks?.length > 0
                                             ? 'bg-rose-50 text-rose-800 font-bold border border-rose-200'
                                             : 'text-slate-400 hover:text-rose-600 hover:bg-slate-100'
@@ -1285,6 +1100,9 @@ export default function KanbanBoard({
                                         <MessageSquare className="w-2.5 h-2.5 text-rose-600" />
                                         <span>{t.remarks?.length > 0 ? t.remarks.length : 'Remark'}</span>
                                       </button>
+                                      {t.due_date && (
+                                        <span className="text-slate-400">📅 {formatFriendlyDate(t.due_date)}</span>
+                                      )}
                                       <button
                                         onClick={() => { sounds.playClick(); onEditTask(t); }}
                                         className="text-slate-400 hover:text-blue-600 cursor-pointer p-0.5"
@@ -1302,7 +1120,7 @@ export default function KanbanBoard({
                                     </div>
                                     <button
                                       onClick={() => { sounds.playClick(); onStatusChange(t.id, 'in_progress'); }}
-                                      className="text-[9.5px] text-blue-600 font-bold hover:underline cursor-pointer"
+                                      className="text-[9.5px] text-blue-600 font-bold hover:underline cursor-pointer shrink-0"
                                     >
                                       Unblock →
                                     </button>
@@ -1314,68 +1132,38 @@ export default function KanbanBoard({
                         )}
                       </td>
 
-                      {/* 8. COMPLETED COLUMN */}
-                      <td className="py-2.5 px-3 align-top bg-emerald-50/10 min-w-[240px] max-w-[300px] w-[260px]">
+                      {/* 8. COMPLETED COLUMN (VERTICALLY STACKED LENGTHWISE) */}
+                      <td className="py-2.5 px-2 align-top bg-emerald-50/10">
                         {member.regularCompletedTasks.length === 0 && member.completedBooks.length === 0 ? (
                           <div className="h-full min-h-[72px] flex items-center justify-center p-2 rounded-xl bg-white/60 border border-emerald-100 text-center text-slate-400 text-xs">
                             <span className="font-medium text-[11px]">0 finished</span>
                           </div>
                         ) : (
-                          <div className="w-full space-y-1.5 h-full flex flex-col">
+                          <div className="w-full space-y-2 h-full flex flex-col">
                             {/* Track Header */}
                             <div className="flex items-center justify-between text-[10px] text-emerald-950 font-bold px-0.5 pb-1 border-b border-emerald-200/80">
                               <span className="flex items-center gap-1.5">
                                 <span className="w-2 h-2 rounded-full bg-emerald-500" />
                                 <span>{(member.regularCompletedTasks?.length || 0) + (member.completedBooks?.length || 0)} Finished</span>
                               </span>
-                              {((member.regularCompletedTasks?.length || 0) + (member.completedBooks?.length || 0)) > 1 && (
-                                <div className="flex items-center gap-1">
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      sounds.playClick();
-                                      const container = e.currentTarget.closest('td')?.querySelector('.horizontal-tasks-track');
-                                      if (container) container.scrollBy({ left: -240, behavior: 'smooth' });
-                                    }}
-                                    className="w-5 h-5 rounded-md bg-white hover:bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center cursor-pointer shadow-2xs active:scale-95 transition-all text-xs"
-                                    title="Scroll left"
-                                  >
-                                    ‹
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      sounds.playClick();
-                                      const container = e.currentTarget.closest('td')?.querySelector('.horizontal-tasks-track');
-                                      if (container) container.scrollBy({ left: 240, behavior: 'smooth' });
-                                    }}
-                                    className="w-5 h-5 rounded-md bg-white hover:bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center cursor-pointer shadow-2xs active:scale-95 transition-all text-xs"
-                                    title="Scroll right"
-                                  >
-                                    ›
-                                  </button>
-                                </div>
-                              )}
+                              <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-1.5 py-0.5 rounded">
+                                {(member.regularCompletedTasks?.length || 0) + (member.completedBooks?.length || 0)} {((member.regularCompletedTasks?.length || 0) + (member.completedBooks?.length || 0)) === 1 ? 'item' : 'items'}
+                              </span>
                             </div>
 
-                            {/* Horizontal Cards Rail */}
-                            <div 
-                              className="horizontal-tasks-track flex flex-row gap-2 overflow-x-auto pb-1 pt-0.5 no-scrollbar snap-x snap-mandatory flex-1 items-stretch"
-                              onWheel={(e) => {
-                                if (e.deltaY !== 0) e.currentTarget.scrollLeft += e.deltaY;
-                              }}
-                            >
+                            {/* Lengthwise Vertically Stacked Cards */}
+                            <div className="flex flex-col gap-2 w-full pt-0.5">
                               {/* Regular Finished Tasks */}
                               {member.regularCompletedTasks.map((t, tIdx) => (
                                 <div 
                                   key={t.id} 
-                                  className="w-[220px] shrink-0 p-2.5 rounded-xl bg-white border border-emerald-200/90 hover:border-emerald-400 shadow-2xs space-y-1.5 snap-start flex flex-col justify-between transition-all border-l-3 border-l-emerald-500"
+                                  className="w-full p-2.5 rounded-xl bg-white border border-emerald-200/90 hover:border-emerald-400 shadow-2xs space-y-1.5 flex flex-col justify-between transition-all border-l-3 border-l-emerald-500 hover:shadow-xs"
                                 >
                                   <div>
                                     <div className="flex items-start justify-between gap-1.5">
                                       <div className="flex items-start gap-1.5 min-w-0">
                                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                                        <span className="font-bold text-slate-800 text-xs line-clamp-2 leading-tight" title={t.title}>
+                                        <span className="font-bold text-slate-800 text-xs leading-tight" title={t.title}>
                                           <strong className="text-emerald-700">{tIdx + 1}.</strong> {t.title}
                                         </span>
                                       </div>
@@ -1387,8 +1175,8 @@ export default function KanbanBoard({
                                       <p className="text-[10px] text-slate-500 line-clamp-2 mt-1 pl-5">{t.description}</p>
                                     )}
                                   </div>
-                                  <div className="flex items-center justify-between text-[9px] pt-1 border-t border-slate-100 text-slate-400">
-                                    <div className="flex items-center gap-1.5">
+                                  <div className="flex flex-wrap items-center justify-between text-[9px] pt-1 border-t border-slate-100 text-slate-400 gap-1">
+                                    <div className="flex items-center gap-1 shrink-0">
                                       <button
                                         type="button"
                                         onClick={() => { sounds.playClick(); setActiveRemarkTask(t); setActiveRemarkCandidateTasks(candidateTasks); }}
@@ -1400,9 +1188,9 @@ export default function KanbanBoard({
                                         <MessageSquare className="w-2.5 h-2.5 text-indigo-600" />
                                         <span>{t.remarks?.length || '0'}</span>
                                       </button>
-                                      <span>{t.due_date ? `📅 ${t.due_date.split('-').slice(1).join('/')}` : ''}</span>
+                                      <span>{t.due_date ? `📅 ${formatFriendlyDate(t.due_date)}` : ''}</span>
                                     </div>
-                                    <div className="flex items-center gap-1">
+                                    <div className="flex items-center gap-1 shrink-0">
                                       <button
                                         onClick={() => { sounds.playClick(); onStatusChange(t.id, 'in_progress'); }}
                                         className="text-[9px] text-blue-600 font-semibold hover:underline cursor-pointer"
@@ -1426,7 +1214,7 @@ export default function KanbanBoard({
                               {member.completedBooks.map((b, bIdx) => (
                                 <div 
                                   key={b.id || bIdx} 
-                                  className="w-[220px] shrink-0 p-2.5 rounded-xl bg-white border border-emerald-200/90 shadow-2xs space-y-1.5 snap-start flex flex-col justify-between border-l-3 border-l-emerald-500"
+                                  className="w-full p-2.5 rounded-xl bg-white border border-emerald-200/90 shadow-2xs space-y-1.5 flex flex-col justify-between border-l-3 border-l-emerald-500 hover:shadow-xs"
                                 >
                                   <div className="space-y-1">
                                     <div className="flex items-start justify-between gap-1">
@@ -1444,7 +1232,7 @@ export default function KanbanBoard({
                                     <div className="flex items-center gap-1 flex-wrap">
                                       {b.completion_date && (
                                         <span className="text-[9px] text-emerald-700 font-semibold">
-                                          Completed: {b.completion_date}
+                                          Completed: {formatFriendlyDate(b.completion_date)}
                                         </span>
                                       )}
                                       {b.presented && (
@@ -1455,7 +1243,7 @@ export default function KanbanBoard({
                                     </div>
                                   </div>
                                   {member.bookTask && (
-                                    <div className="flex items-center justify-between text-[9px] pt-1 border-t border-emerald-200/70 text-slate-400">
+                                    <div className="flex flex-wrap items-center justify-between text-[9px] pt-1 border-t border-emerald-200/70 text-slate-400 gap-1">
                                       <button
                                         onClick={() => { sounds.playClick(); onEditTask(member.bookTask); }}
                                         className="text-emerald-800 hover:text-emerald-950 font-bold hover:underline cursor-pointer inline-flex items-center gap-1"
@@ -1484,7 +1272,6 @@ export default function KanbanBoard({
                 })}
               </tbody>
             </table>
-          </div>
         </div>
       )}
 
