@@ -977,7 +977,7 @@ export default function KanbanBoard({
             </div>
 
           {/* 2. Desktop 7-Column Spreadsheet Matrix (EXCLUSIVELY on >= lg screens: PC & Laptop) */}
-          <div className="hidden lg:block bg-white rounded-2xl border border-slate-200/90 shadow-sm w-full lg:overflow-visible">
+          <div className="hidden lg:block bg-white rounded-2xl border border-slate-300 shadow-sm w-full lg:overflow-visible">
             <table className="w-full table-fixed text-left text-xs border-separate border-spacing-0" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
             <colgroup>
               <col style={{ width: '2.5%' }} />
@@ -991,34 +991,34 @@ export default function KanbanBoard({
             {/* Executive Table Header - Sticky top-14 (56px) right under TopNavbar */}
             <thead>
               <tr className="bg-slate-900 text-white font-bold text-[10.5px]">
-                <th style={{ width: '2.5%' }} className="sticky top-14 z-30 py-2.5 px-1 text-center border-r border-slate-800 border-b-2 border-b-slate-700 bg-slate-900 font-semibold text-slate-400 rounded-tl-2xl shadow-xs">
+                <th style={{ width: '2.5%' }} className="sticky top-14 z-30 py-2.5 px-1 text-center border-r border-slate-700 border-b-2 border-b-slate-700 bg-slate-900 font-semibold text-slate-400 rounded-tl-2xl shadow-xs">
                   #
                 </th>
-                <th style={{ width: '13.5%' }} className="sticky top-14 z-30 py-2.5 px-2 border-r border-slate-800 border-b-2 border-b-slate-500 bg-slate-900 shadow-xs">
+                <th style={{ width: '13.5%' }} className="sticky top-14 z-30 py-2.5 px-2 border-r border-slate-700 border-b-2 border-b-slate-500 bg-slate-900 shadow-xs">
                   <div className="flex items-center gap-1.5 text-slate-200">
                     <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                     <span className="truncate">Candidate / Member</span>
                   </div>
                 </th>
-                <th style={{ width: '21.5%' }} className="sticky top-14 z-30 py-2.5 px-2 border-r border-slate-800 border-b-2 border-b-slate-400 bg-slate-900 shadow-xs">
+                <th style={{ width: '21.5%' }} className="sticky top-14 z-30 py-2.5 px-2 border-r border-slate-700 border-b-2 border-b-slate-400 bg-slate-900 shadow-xs">
                   <div className="flex items-center gap-1.5 text-slate-200">
                     <span className="w-2 h-2 rounded-full bg-slate-400 ring-2 ring-slate-400/30 shrink-0" />
                     <span>To Do</span>
                   </div>
                 </th>
-                <th style={{ width: '23.5%' }} className="sticky top-14 z-30 py-2.5 px-2 border-r border-slate-800 border-b-2 border-b-blue-500 bg-slate-900 shadow-xs">
+                <th style={{ width: '23.5%' }} className="sticky top-14 z-30 py-2.5 px-2 border-r border-slate-700 border-b-2 border-b-blue-500 bg-slate-900 shadow-xs">
                   <div className="flex items-center gap-1.5 text-blue-300">
                     <span className="w-2 h-2 rounded-full bg-blue-400 ring-2 ring-blue-400/30 animate-pulse shrink-0" />
                     <span>In Progress</span>
                   </div>
                 </th>
-                <th style={{ width: '10.5%' }} className="sticky top-14 z-30 py-2.5 px-1 border-r border-slate-800 border-b-2 border-b-indigo-500 bg-slate-900 text-center shadow-xs">
+                <th style={{ width: '10.5%' }} className="sticky top-14 z-30 py-2.5 px-1 border-r border-slate-700 border-b-2 border-b-indigo-500 bg-slate-900 text-center shadow-xs">
                   <div className="flex items-center justify-center gap-1 text-indigo-300">
                     <Layers className="w-3 h-3 text-indigo-400 shrink-0" />
                     <span>Workload</span>
                   </div>
                 </th>
-                <th style={{ width: '11.5%' }} className="sticky top-14 z-30 py-2.5 px-1.5 border-r border-slate-800 border-b-2 border-b-rose-500 bg-slate-900 shadow-xs">
+                <th style={{ width: '11.5%' }} className="sticky top-14 z-30 py-2.5 px-1.5 border-r border-slate-700 border-b-2 border-b-rose-500 bg-slate-900 shadow-xs">
                   <div className="flex items-center gap-1.5 text-rose-300">
                     <span className="w-2 h-2 rounded-full bg-rose-400 ring-2 ring-rose-400/30 shrink-0" />
                     <span>Blocked</span>
@@ -1036,7 +1036,7 @@ export default function KanbanBoard({
                 {memberMatrixData.map((member, idx) => {
                   const user = member.user;
                   const isLastRow = idx === memberMatrixData.length - 1;
-                  const borderBottomClass = isLastRow ? '' : 'border-b border-slate-200/80';
+                  const borderBottomClass = isLastRow ? '' : 'border-b border-slate-300';
                   const candidateTasks = [
                     ...member.todoTasks,
                     ...member.inProgressTasks,
@@ -1053,12 +1053,12 @@ export default function KanbanBoard({
                       className="hover:brightness-[0.98] transition-all"
                     >
                       {/* 1. Row # */}
-                      <td className={`py-2 px-1 text-center font-semibold text-slate-400 border-r border-slate-200/70 bg-gradient-to-b from-slate-100/90 to-slate-50/60 align-top ${borderBottomClass} ${isLastRow ? 'rounded-bl-2xl' : ''}`}>
+                      <td className={`py-2 px-1 text-center font-semibold text-slate-400 border-r border-slate-300 bg-gradient-to-b from-slate-100/90 to-slate-50/60 align-top ${borderBottomClass} ${isLastRow ? 'rounded-bl-2xl' : ''}`}>
                         {idx + 1}
                       </td>
 
                       {/* 2. Candidate / Team Member Profile + Quick Action Buttons */}
-                      <td className={`py-2 px-2 border-r border-slate-200/70 align-top bg-gradient-to-b from-slate-100/70 via-slate-50/40 to-slate-100/30 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:16px_16px] ${borderBottomClass}`}>
+                      <td className={`py-2 px-2 border-r border-slate-300 align-top bg-gradient-to-b from-slate-100/70 via-slate-50/40 to-slate-100/30 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:16px_16px] ${borderBottomClass}`}>
                         <div className="h-full min-h-[110px] flex flex-col justify-between space-y-2 p-2 rounded-xl bg-white/85 backdrop-blur-xs border border-slate-200/80 shadow-2xs min-w-0 overflow-hidden">
                           <div className="space-y-2">
                             <div className="flex items-center gap-2">
@@ -1150,7 +1150,7 @@ export default function KanbanBoard({
                       </td>
 
                       {/* 3. TO DO COLUMN */}
-                      <td className={`py-2 px-2 border-r border-slate-200/70 align-top bg-gradient-to-b from-slate-100/70 via-slate-50/40 to-slate-100/30 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:16px_16px] ${borderBottomClass}`}>
+                      <td className={`py-2 px-2 border-r border-slate-300 align-top bg-gradient-to-b from-slate-100/70 via-slate-50/40 to-slate-100/30 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:16px_16px] ${borderBottomClass}`}>
                         {member.todoTasks.length === 0 ? (
                           <div className="h-full min-h-[140px] flex flex-col items-center justify-center p-3 rounded-xl bg-white/80 backdrop-blur-xs border border-dashed border-slate-300 text-center space-y-1 shadow-2xs transition-all">
                             <div className="w-6 h-6 rounded-lg bg-slate-100 border border-slate-200 text-slate-500 flex items-center justify-center text-xs shadow-2xs font-bold">
@@ -1312,7 +1312,7 @@ export default function KanbanBoard({
                       </td>
 
                       {/* 4. IN PROGRESS COLUMN */}
-                      <td className={`py-2 px-2 border-r border-slate-200/70 align-top bg-gradient-to-b from-blue-50/50 via-blue-50/20 to-slate-50/30 bg-[radial-gradient(#bfdbfe_1px,transparent_1px)] [background-size:16px_16px] ${borderBottomClass}`}>
+                      <td className={`py-2 px-2 border-r border-slate-300 align-top bg-gradient-to-b from-blue-50/50 via-blue-50/20 to-slate-50/30 bg-[radial-gradient(#bfdbfe_1px,transparent_1px)] [background-size:16px_16px] ${borderBottomClass}`}>
                         {member.inProgressTasks.length === 0 && (!member.bookTask || member.inProgressBooks.length === 0) ? (
                           <div className="h-full min-h-[140px] flex flex-col items-center justify-center p-3 rounded-xl bg-white/80 backdrop-blur-xs border border-dashed border-blue-200 text-center space-y-1 shadow-2xs transition-all">
                             <div className="w-6 h-6 rounded-lg bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center text-xs shadow-2xs font-bold">
@@ -1578,7 +1578,7 @@ export default function KanbanBoard({
                       </td>
 
                       {/* 5. Workload Summary & KPI */}
-                      <td className={`py-2 px-1.5 border-r border-slate-200/70 align-top bg-gradient-to-b from-indigo-50/50 via-indigo-50/20 to-slate-50/30 bg-[radial-gradient(#e0e7ff_1px,transparent_1px)] [background-size:16px_16px] ${borderBottomClass}`}>
+                      <td className={`py-2 px-1.5 border-r border-slate-300 align-top bg-gradient-to-b from-indigo-50/50 via-indigo-50/20 to-slate-50/30 bg-[radial-gradient(#e0e7ff_1px,transparent_1px)] [background-size:16px_16px] ${borderBottomClass}`}>
                         <div className="h-full min-h-[110px] flex flex-col justify-between p-2 rounded-lg bg-white border border-slate-200/80 shadow-2xs space-y-1.5 min-w-0 overflow-hidden">
                           <div>
                             <div className="flex items-center justify-between pb-1 border-b border-slate-100 min-w-0">
@@ -1623,7 +1623,7 @@ export default function KanbanBoard({
                       </td>
 
                       {/* 6. BLOCKED COLUMN */}
-                      <td className={`py-2 px-2 border-r border-slate-200/70 align-top bg-gradient-to-b from-rose-50/50 via-rose-50/20 to-slate-50/30 bg-[radial-gradient(#fecdd3_1px,transparent_1px)] [background-size:16px_16px] ${borderBottomClass}`}>
+                      <td className={`py-2 px-2 border-r border-slate-300 align-top bg-gradient-to-b from-rose-50/50 via-rose-50/20 to-slate-50/30 bg-[radial-gradient(#fecdd3_1px,transparent_1px)] [background-size:16px_16px] ${borderBottomClass}`}>
                         {member.blockedTasks.length === 0 ? (
                           <div className="h-full min-h-[140px] flex flex-col items-center justify-center p-2.5 rounded-xl bg-white/80 backdrop-blur-xs border border-dashed border-emerald-200 text-center space-y-1 shadow-2xs transition-all min-w-0 overflow-hidden">
                             <div className="w-6 h-6 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center text-xs shadow-2xs font-bold shrink-0">
