@@ -24,13 +24,14 @@ import {
   Sparkles,
   Calendar,
   X,
-  MessageSquare
+  MessageSquare,
+  Play
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import DailyReadingModal from '@/components/modals/DailyReadingModal';
 import TaskRemarkModal from './TaskRemarkModal';
 import { sounds } from '@/lib/audio';
-const formatFriendlyDate = (dateStr) => {
+const formatFriendlyDate = (dateStr, includeYear = true) => {
   if (!dateStr) return '';
   try {
     const parts = dateStr.split('T')[0].split('-');
@@ -40,17 +41,32 @@ const formatFriendlyDate = (dateStr) => {
       const day = parseInt(parts[2], 10);
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
       if (!isNaN(day) && monthIdx >= 0 && monthIdx < 12) {
-        return `${day} ${months[monthIdx]} ${year}`;
+        return includeYear ? `${day} ${months[monthIdx]} ${year}` : `${day} ${months[monthIdx]}`;
       }
     }
     const d = new Date(dateStr);
     if (!isNaN(d.getTime())) {
       const day = d.getDate();
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
-      return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+      return includeYear ? `${day} ${months[d.getMonth()]} ${d.getFullYear()}` : `${day} ${months[d.getMonth()]}`;
     }
   } catch (e) {}
   return dateStr;
+};
+
+const formatDateRange = (startDate, dueDate) => {
+  if (startDate && dueDate) {
+    if (startDate === dueDate) return formatFriendlyDate(dueDate, false);
+    const startYear = startDate.split('T')[0].split('-')[0];
+    const dueYear = dueDate.split('T')[0].split('-')[0];
+    if (startYear === dueYear) {
+      return `${formatFriendlyDate(startDate, false)} - ${formatFriendlyDate(dueDate, false)}`;
+    }
+    return `${formatFriendlyDate(startDate, false)} - ${formatFriendlyDate(dueDate)}`;
+  }
+  if (dueDate) return formatFriendlyDate(dueDate, false);
+  if (startDate) return `From ${formatFriendlyDate(startDate, false)}`;
+  return '';
 };
 
 export default function KanbanBoard({ 
@@ -566,32 +582,66 @@ export default function KanbanBoard({
         </div>
       ) : (
         /* EXCEL SPREADSHEET 4-STATUS MATRIX (To Do, In Progress, Blocked, Completed Columns) */
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm w-full p-0">
-          <table className="w-full table-fixed text-left text-xs border-collapse rounded-2xl">
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.06)] w-full p-0">
+          <table className="w-full table-fixed text-left text-xs border-separate border-spacing-0">
             <colgroup>
               <col style={{ width: '3.5%' }} />
-              <col style={{ width: '15.5%' }} />
+              <col style={{ width: '15%' }} />
               <col style={{ width: '21%' }} />
-              <col style={{ width: '23%' }} />
-              <col style={{ width: '9%' }} />
-              <col style={{ width: '13%' }} />
+              <col style={{ width: '22%' }} />
+              <col style={{ width: '11.5%' }} />
+              <col style={{ width: '12%' }} />
               <col style={{ width: '15%' }} />
             </colgroup>
-            {/* Excel Table Header - Sticky to top directly beneath top navbar */}
-            <thead className="sticky top-[53px] z-30 shadow-md">
-              <tr className="bg-slate-900 text-white font-bold text-[11px] tracking-wide uppercase">
-                <th className="sticky top-[53px] z-30 py-2.5 px-1 text-center border-r border-slate-800 bg-slate-900 rounded-tl-2xl">#</th>
-                <th className="sticky top-[53px] z-30 py-2.5 px-2.5 border-r border-slate-800 bg-slate-900">Candidate / Member</th>
-                <th className="sticky top-[53px] z-30 py-2.5 px-2 border-r border-slate-800 bg-slate-800">📝 To Do</th>
-                <th className="sticky top-[53px] z-30 py-2.5 px-2 border-r border-slate-800 bg-blue-950">📖 In Progress</th>
-                <th className="sticky top-[53px] z-30 py-2.5 px-1 border-r border-slate-800 bg-slate-900 text-center">Workload</th>
-                <th className="sticky top-[53px] z-30 py-2.5 px-2 border-r border-slate-800 bg-rose-950">🚫 Blocked</th>
-                <th className="sticky top-[53px] z-30 py-2.5 px-2 bg-emerald-950 rounded-tr-2xl">✅ Completed</th>
+            {/* Executive Table Header - Sticky to top directly beneath top navbar */}
+            <thead>
+              <tr className="bg-slate-900 text-white font-bold text-[10.5px]">
+                <th className="sticky top-[53px] z-20 py-2 px-1 text-center border-r border-b border-slate-800 bg-slate-900 rounded-tl-2xl font-semibold text-slate-400">
+                  #
+                </th>
+                <th className="sticky top-[53px] z-20 py-2 px-2 border-r border-b border-slate-800 bg-slate-900">
+                  <div className="flex items-center gap-1.5 text-slate-200">
+                    <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    <span>Candidate / Member</span>
+                  </div>
+                </th>
+                <th className="sticky top-[53px] z-20 py-2 px-2 border-r border-b border-slate-800 bg-slate-900">
+                  <div className="flex items-center gap-1.5 text-slate-200">
+                    <span className="w-2 h-2 rounded-full bg-slate-400 ring-2 ring-slate-400/30 shrink-0" />
+                    <span>To Do</span>
+                  </div>
+                </th>
+                <th className="sticky top-[53px] z-20 py-2 px-2 border-r border-b border-slate-800 bg-slate-900">
+                  <div className="flex items-center gap-1.5 text-blue-300">
+                    <span className="w-2 h-2 rounded-full bg-blue-400 ring-2 ring-blue-400/30 animate-pulse shrink-0" />
+                    <span>In Progress</span>
+                  </div>
+                </th>
+                <th className="sticky top-[53px] z-20 py-2 px-1.5 border-r border-b border-slate-800 bg-slate-900 text-center">
+                  <div className="flex items-center justify-center gap-1 text-indigo-300">
+                    <Layers className="w-3 h-3 text-indigo-400 shrink-0" />
+                    <span>Workload</span>
+                  </div>
+                </th>
+                <th className="sticky top-[53px] z-20 py-2 px-2 border-r border-b border-slate-800 bg-slate-900">
+                  <div className="flex items-center gap-1.5 text-rose-300">
+                    <span className="w-2 h-2 rounded-full bg-rose-400 ring-2 ring-rose-400/30 shrink-0" />
+                    <span>Blocked</span>
+                  </div>
+                </th>
+                <th className="sticky top-[53px] z-20 py-2 px-2 border-b border-slate-800 bg-slate-900 rounded-tr-2xl">
+                  <div className="flex items-center gap-1.5 text-emerald-300">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-emerald-400/30 shrink-0" />
+                    <span>Completed</span>
+                  </div>
+                </th>
               </tr>
             </thead>
-              <tbody className="divide-y divide-slate-200/90 bg-white">
+              <tbody className="bg-white">
                 {memberMatrixData.map((member, idx) => {
                   const user = member.user;
+                  const isLastRow = idx === memberMatrixData.length - 1;
+                  const borderBottomClass = isLastRow ? '' : 'border-b border-slate-200/80';
                   const candidateTasks = [
                     ...member.todoTasks,
                     ...member.inProgressTasks,
@@ -605,668 +655,782 @@ export default function KanbanBoard({
                   return (
                     <tr 
                       key={user.id} 
-                      className={`hover:bg-indigo-50/20 transition-colors ${
-                        idx % 2 === 1 ? 'bg-slate-50/40' : 'bg-white'
+                      className={`hover:bg-indigo-50/15 transition-colors ${
+                        idx % 2 === 1 ? 'bg-slate-50/50' : 'bg-white'
                       }`}
                     >
                       {/* 1. Row # */}
-                      <td className="py-3 px-1 text-center font-extrabold text-slate-500 border-r border-slate-200 bg-slate-50/60 align-top">
+                      <td className={`py-2 px-1 text-center font-semibold text-slate-400 border-r border-slate-200/70 bg-slate-50/70 align-top ${borderBottomClass} ${isLastRow ? 'rounded-bl-2xl' : ''}`}>
                         {idx + 1}
                       </td>
 
                       {/* 2. Candidate / Team Member Profile + Quick Action Buttons */}
-                      <td className="py-2.5 px-2.5 border-r border-slate-200 align-top">
-                        <div className="flex items-center gap-2.5">
-                          <div className="relative shrink-0">
-                            <div
-                              className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-black text-white shadow-2xs"
-                              style={{ backgroundColor: user.color || '#2563eb' }}
-                            >
-                              {user.avatar || '??'}
-                            </div>
-                            <span 
-                              className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${
-                                user.status === 'online' ? 'bg-emerald-500 shadow-xs' : 'bg-slate-300'
-                              }`}
-                              title={user.status === 'online' ? 'Online' : 'Offline'}
-                            />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="font-extrabold text-slate-900 text-xs leading-snug truncate" title={user.name}>
-                              {user.name}
-                            </div>
-                            <div className="flex items-center gap-1.5 mt-0.5">
-                              <span className="text-[9.5px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded capitalize">
-                                {user.role}
-                              </span>
-                              <span className={`text-[9px] font-medium ${user.status === 'online' ? 'text-emerald-600 font-semibold' : 'text-slate-400'}`}>
-                                {user.status === 'online' ? 'Active' : 'Offline'}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Quick Actions (Full-Width Vertically Stacked Clean Buttons) */}
-                        <div className="flex flex-col gap-1.5 pt-2.5 w-full">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              sounds.playClick();
-                              openNewTaskModal('todo', user.id);
-                            }}
-                            className="w-full py-1.5 px-2 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-[11px] flex items-center justify-center gap-1.5 shadow-xs shadow-blue-500/20 transition-all cursor-pointer"
-                            title={`Add task for ${user.name}`}
-                          >
-                            <Plus className="w-3.5 h-3.5 stroke-[2.5] shrink-0" />
-                            <span>Add Task</span>
-                          </button>
-
-                          {member.bookTask ? (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                sounds.playClick();
-                                onEditTask(member.bookTask);
-                              }}
-                              className="w-full py-1.5 px-2 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border border-indigo-200/90 active:scale-95 font-bold text-[10.5px] flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs"
-                              title="Manage individual books, authors, dates, & reading list"
-                            >
-                              <BookOpen className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                              <span>Books ({member.bookTask.books_list?.length || 1})</span>
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                sounds.playClick();
-                                openNewTaskModal('in_progress', user.id);
-                              }}
-                              className="w-full py-1.5 px-2 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 active:scale-95 font-bold text-[10.5px] flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                              title="Assign a book reading task"
-                            >
-                              <BookOpen className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                              <span>+ Book</span>
-                            </button>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* 3. TO DO COLUMN (VERTICALLY STACKED LENGTHWISE) */}
-                      <td className="py-2.5 px-2 border-r border-slate-200 align-top bg-slate-50/20">
-                        {member.todoTasks.length === 0 ? (
-                          <div className="h-full min-h-[72px] flex items-center justify-center p-2 rounded-xl bg-white/60 border border-slate-200/60 text-center text-slate-400 text-xs">
-                            <span className="font-medium text-[11px]">No To Do tasks</span>
-                          </div>
-                        ) : (
-                          <div className="w-full space-y-2 h-full flex flex-col">
-                            {/* Track Header */}
-                            <div className="flex items-center justify-between text-[10px] text-slate-800 font-bold px-0.5 pb-1 border-b border-slate-200/80">
-                              <span className="flex items-center gap-1.5">
-                                <span className="w-2 h-2 rounded-full bg-slate-500" />
-                                <span>{member.todoTasks.length} To Do</span>
-                              </span>
-                              <span className="text-[9px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
-                                {member.todoTasks.length} {member.todoTasks.length === 1 ? 'task' : 'tasks'}
-                              </span>
-                            </div>
-
-                            {/* Lengthwise Vertically Stacked Cards */}
-                            <div className="flex flex-col gap-2 w-full pt-0.5">
-                              {member.todoTasks.map((t, tIdx) => (
-                                <div 
-                                  key={t.id} 
-                                  className="w-full p-2.5 rounded-xl bg-white border border-slate-200 hover:border-slate-300 shadow-2xs space-y-1.5 flex flex-col justify-between transition-all hover:shadow-xs"
+                      <td className={`py-2 px-2 border-r border-slate-200/70 bg-white/70 align-top ${borderBottomClass}`}>
+                        <div className="h-full min-h-[110px] flex flex-col justify-between space-y-2">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <div className="relative shrink-0">
+                                <div
+                                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold text-white shadow-xs"
+                                  style={{ backgroundColor: user.color || '#2563eb' }}
                                 >
-                                  <div>
-                                    <div className="flex items-start justify-between gap-1.5">
-                                      <span className="font-bold text-slate-900 leading-tight text-xs" title={t.title}>
-                                        <strong className="text-slate-500 font-extrabold">{tIdx + 1}.</strong> {t.title}
-                                      </span>
-                                      <span className={`text-[8.5px] font-extrabold px-1.5 py-0.2 rounded uppercase shrink-0 ${
-                                        t.priority === 'urgent' ? 'bg-rose-100 text-rose-800' :
-                                        t.priority === 'high' ? 'bg-amber-100 text-amber-800' :
-                                        t.priority === 'medium' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-600'
-                                      }`}>
-                                        {t.priority || 'normal'}
-                                      </span>
-                                    </div>
-                                    {t.description && (
-                                      <p className="text-[10px] text-slate-500 line-clamp-2 mt-1" title={t.description}>{t.description}</p>
-                                    )}
-
-                                    {/* Remark Preview */}
-                                    {(t.latest_remark || t.remarks?.[0]?.text) && (
-                                      <div
-                                        onClick={() => { sounds.playClick(); setActiveRemarkTask(t); setActiveRemarkCandidateTasks(candidateTasks); }}
-                                        className="mt-1 p-1.5 rounded-lg bg-indigo-50/70 hover:bg-indigo-50 border border-indigo-100/80 text-[9.5px] text-indigo-950 flex items-center gap-1 cursor-pointer transition-colors"
-                                        title="Click to view/add remarks"
-                                      >
-                                        <MessageSquare className="w-2.5 h-2.5 text-indigo-600 shrink-0" />
-                                        <span className="truncate italic">"{t.latest_remark || t.remarks?.[0]?.text}"</span>
-                                        {t.remarks?.length > 1 && (
-                                          <span className="px-1 rounded bg-indigo-200/70 text-[8px] font-black text-indigo-900 shrink-0">
-                                            +{t.remarks.length - 1}
-                                          </span>
-                                        )}
-                                      </div>
-                                    )}
-                                  </div>
-
-                                  <div className="flex flex-wrap items-center justify-between pt-1 border-t border-slate-100 text-[9px] gap-1">
-                                    <div className="flex items-center gap-1 text-slate-400 shrink-0">
-                                      <span>{t.due_date ? `📅 ${formatFriendlyDate(t.due_date)}` : 'No date'}</span>
-                                    </div>
-                                    <div className="flex items-center gap-1 shrink-0">
-                                      <button
-                                        type="button"
-                                        onClick={() => { sounds.playClick(); setActiveRemarkTask(t); setActiveRemarkCandidateTasks(candidateTasks); }}
-                                        className={`inline-flex items-center gap-0.5 text-[8.5px] px-1 py-0.5 rounded cursor-pointer transition-colors ${
-                                          t.remarks?.length > 0
-                                            ? 'bg-indigo-50 text-indigo-700 font-bold border border-indigo-200'
-                                            : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-100'
-                                        }`}
-                                        title={t.remarks?.length > 0 ? `${t.remarks.length} remark(s)` : 'Add Remark'}
-                                      >
-                                        <MessageSquare className="w-2.5 h-2.5 text-indigo-600" />
-                                        <span>{t.remarks?.length > 0 ? t.remarks.length : 'Remark'}</span>
-                                      </button>
-                                      <button
-                                        onClick={() => { sounds.playClick(); onEditTask(t); }}
-                                        className="text-slate-400 hover:text-blue-600 hover:bg-slate-100 rounded cursor-pointer p-0.5 transition-colors"
-                                        title="Edit Task"
-                                      >
-                                        <Edit2 className="w-3 h-3" />
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          if (sounds.playTrash) sounds.playTrash();
-                                          else sounds.playClick();
-                                          onDeleteTask(t.id);
-                                        }}
-                                        className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded cursor-pointer p-0.5 transition-colors"
-                                        title="Delete Task directly (without starting)"
-                                      >
-                                        <Trash2 className="w-3 h-3" />
-                                      </button>
-                                      <button
-                                        onClick={() => { sounds.playClick(); onStatusChange(t.id, 'in_progress'); }}
-                                        className="text-blue-600 font-bold hover:underline cursor-pointer ml-0.5"
-                                      >
-                                        Start →
-                                      </button>
-                                    </div>
-                                  </div>
+                                  {user.avatar || '??'}
                                 </div>
-                              ))}
+                                <span 
+                                  className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${
+                                    user.status === 'online' ? 'bg-emerald-500 shadow-xs' : 'bg-slate-300'
+                                  }`}
+                                  title={user.status === 'online' ? 'Online' : 'Offline'}
+                                />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="font-bold text-slate-900 text-[11.5px] leading-snug truncate" title={user.name}>
+                                  {user.name}
+                                </div>
+                                <div className="flex items-center gap-1 mt-0.5">
+                                  <span className="text-[9px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.2 rounded capitalize">
+                                    {user.role}
+                                  </span>
+                                  <span className={`text-[8.5px] font-medium ${user.status === 'online' ? 'text-emerald-600 font-semibold' : 'text-slate-400'}`}>
+                                    {user.status === 'online' ? 'Active' : 'Offline'}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Quick Actions */}
+                            <div className="flex flex-col gap-1 pt-0.5 w-full">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  sounds.playClick();
+                                  openNewTaskModal('todo', user.id);
+                                }}
+                                className="w-full py-1 px-2 rounded-md bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-semibold text-[10px] flex items-center justify-center gap-1 shadow-xs shadow-blue-500/20 transition-all cursor-pointer"
+                                title={`Add task for ${user.name}`}
+                              >
+                                <Plus className="w-3 h-3 stroke-[2.5] shrink-0" />
+                                <span>Add Task</span>
+                              </button>
+
+                              {member.bookTask ? (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    sounds.playClick();
+                                    onEditTask(member.bookTask);
+                                  }}
+                                  className="w-full py-1 px-2 rounded-md bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border border-indigo-200/90 active:scale-95 font-semibold text-[10px] flex items-center justify-center gap-1 transition-all cursor-pointer shadow-2xs"
+                                  title="Manage books"
+                                >
+                                  <BookOpen className="w-3 h-3 text-indigo-600 shrink-0" />
+                                  <span>Books ({member.bookTask.books_list?.length || 1})</span>
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    sounds.playClick();
+                                    openNewTaskModal('in_progress', user.id);
+                                  }}
+                                  className="w-full py-1 px-2 rounded-md bg-slate-100/90 hover:bg-slate-200/80 text-slate-700 border border-slate-200/80 active:scale-95 font-semibold text-[10px] flex items-center justify-center gap-1 transition-all cursor-pointer"
+                                  title="Assign a book reading task"
+                                >
+                                  <BookOpen className="w-3 h-3 text-slate-500 shrink-0" />
+                                  <span>+ Book</span>
+                                </button>
+                              )}
                             </div>
                           </div>
-                        )}
+
+                          {/* Stat Pill */}
+                          <div className="pt-1.5 border-t border-slate-200/60 mt-auto space-y-0.5">
+                            <div className="px-1.5 py-0.5 rounded-md bg-slate-50 border border-slate-200/70 flex items-center justify-between text-[9px]">
+                              <span className="text-slate-500 font-medium">Sprint Total</span>
+                              <span className="font-bold text-slate-800 bg-white px-1 py-0.2 rounded shadow-2xs border border-slate-200/60">{member.total} tasks</span>
+                            </div>
+                            <div className="text-[8px] text-slate-400 font-medium text-center">
+                              {completedCount} of {member.total} done ({completionRate}%)
+                            </div>
+                          </div>
+                        </div>
                       </td>
 
-                      {/* 4. IN PROGRESS COLUMN (VERTICALLY STACKED LENGTHWISE) */}
-                      <td className="py-2.5 px-2 border-r border-slate-200 align-top bg-blue-50/10">
-                        {member.inProgressTasks.length === 0 && (!member.bookTask || member.inProgressBooks.length === 0) ? (
-                          <div className="h-full min-h-[72px] flex items-center justify-center p-2 rounded-xl bg-white/60 border border-blue-100 text-center text-slate-400 text-xs">
-                            <span className="font-medium text-[11px]">None active</span>
+                      {/* 3. TO DO COLUMN */}
+                      <td className={`py-2 px-2 border-r border-slate-200/70 align-top bg-[#f8fafc] ${borderBottomClass}`}>
+                        {member.todoTasks.length === 0 ? (
+                          <div className="h-full min-h-[110px] flex flex-col items-center justify-center p-2 rounded-lg bg-slate-100/50 border border-dashed border-slate-200 text-center space-y-0.5 transition-all">
+                            <div className="w-5 h-5 rounded-md bg-white border border-slate-200 text-slate-400 flex items-center justify-center text-[10px] shadow-2xs">
+                              📝
+                            </div>
+                            <span className="font-semibold text-slate-500 text-[10.5px]">No tasks queued</span>
+                            <span className="text-[8.5px] text-slate-400">All caught up</span>
                           </div>
                         ) : (
-                          <div className="w-full space-y-2 h-full flex flex-col">
-                            {/* Track Header */}
-                            <div className="flex items-center justify-between text-[10px] text-blue-950 font-bold px-0.5 pb-1 border-b border-blue-100">
-                              <span className="flex items-center gap-1.5">
-                                <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                                <span>{member.inProgressTasks.length + (member.bookTask && member.inProgressBooks.length > 0 ? 1 : 0)} Active</span>
-                              </span>
-                              <span className="text-[9px] font-bold text-blue-700 bg-blue-50 border border-blue-200/60 px-1.5 py-0.5 rounded">
-                                {member.inProgressTasks.length + (member.bookTask && member.inProgressBooks.length > 0 ? 1 : 0)} {member.inProgressTasks.length + (member.bookTask && member.inProgressBooks.length > 0 ? 1 : 0) === 1 ? 'item' : 'items'}
-                              </span>
-                            </div>
+                          <div className="w-full h-full min-h-[110px] space-y-1.5 flex flex-col justify-between">
+                            <div className="space-y-1.5">
+                              {/* Track Header */}
+                              <div className="flex items-center justify-between text-[9.5px] text-slate-700 font-semibold px-0.5 pb-0.5 border-b border-slate-200/70">
+                                <span className="flex items-center gap-1">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                                  <span>To Do Queue</span>
+                                </span>
+                                <span className="text-[8.5px] font-semibold text-slate-500 bg-white border border-slate-200 px-1 py-0.2 rounded shadow-2xs">
+                                  {member.todoTasks.length} {member.todoTasks.length === 1 ? 'task' : 'tasks'}
+                                </span>
+                              </div>
 
-                            {/* Lengthwise Vertically Stacked Cards */}
-                            <div className="flex flex-col gap-2 w-full pt-0.5">
-                              {/* Regular In-Progress Tasks */}
-                              {member.inProgressTasks.map((t, tIdx) => {
-                                const latestRemarkObj = Array.isArray(t.remarks) && t.remarks.length > 0
-                                  ? t.remarks[0]
-                                  : (t.latest_remark ? { text: t.latest_remark, author_name: 'Team Member' } : null);
-                                const remarksCount = Array.isArray(t.remarks) && t.remarks.length > 0 
-                                  ? t.remarks.length 
-                                  : (t.latest_remark ? 1 : 0);
-
-                                return (
+                              {/* Stacked Cards */}
+                              <div className="flex flex-col gap-1.5 w-full">
+                                {member.todoTasks.map((t, tIdx) => (
                                   <div 
                                     key={t.id} 
-                                    className="w-full p-2.5 rounded-xl bg-white border border-blue-200 hover:border-blue-400 shadow-2xs space-y-1.5 flex flex-col justify-between transition-all hover:shadow-xs"
+                                    className="w-full p-2 rounded-lg bg-white border border-slate-200/80 border-l-2 border-l-slate-300 hover:border-l-blue-500 shadow-2xs hover:shadow-xs space-y-1 flex flex-col justify-between transition-all overflow-hidden"
                                   >
                                     <div>
                                       <div className="flex items-start justify-between gap-1">
-                                        <span className="font-bold text-slate-900 leading-tight text-xs" title={t.title}>
-                                          <strong className="text-blue-600 font-extrabold">{tIdx + 1}.</strong> {t.title}
+                                        <span className="font-semibold text-slate-800 leading-tight text-[11px]" title={t.title}>
+                                          <span className="text-slate-400 font-semibold text-[10px] mr-1">#{tIdx + 1}</span>
+                                          {t.title}
                                         </span>
-                                        <span className={`text-[8.5px] font-extrabold px-1.5 py-0.2 rounded uppercase shrink-0 ${
-                                          t.priority === 'urgent' ? 'bg-rose-100 text-rose-800' :
-                                          t.priority === 'high' ? 'bg-amber-100 text-amber-800' :
-                                          t.priority === 'medium' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-600'
+                                        <span className={`text-[8px] font-semibold px-1 py-0.2 rounded uppercase shrink-0 shadow-2xs ${
+                                          t.priority === 'urgent' ? 'bg-rose-50 text-rose-700 ring-1 ring-rose-200/80' :
+                                          t.priority === 'high' ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200/80' :
+                                          t.priority === 'medium' ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-200/80' : 'bg-slate-50 text-slate-600 ring-1 ring-slate-200'
                                         }`}>
-                                          {t.priority || 'Normal'}
+                                          {t.priority || 'normal'}
                                         </span>
                                       </div>
                                       {t.description && (
-                                        <p className="text-[10px] text-slate-500 line-clamp-2 mt-0.5" title={t.description}>
-                                          {t.description}
-                                        </p>
+                                        <p className="text-[9.5px] text-slate-500 line-clamp-2 mt-0.5" title={t.description}>{t.description}</p>
                                       )}
 
-                                      {/* Inline Remark Display Box (Compact) */}
-                                      {latestRemarkObj && (
+                                      {/* Remark Preview */}
+                                      {(t.latest_remark || t.remarks?.[0]?.text) && (
                                         <div
                                           onClick={() => { sounds.playClick(); setActiveRemarkTask(t); setActiveRemarkCandidateTasks(candidateTasks); }}
-                                          className="mt-1.5 p-1.5 rounded-lg bg-indigo-50/80 border border-indigo-200/80 hover:border-indigo-300 cursor-pointer transition-all space-y-0.5"
-                                          title="Click to view full remark timeline or add new update"
+                                          className="mt-1 p-1 rounded-md bg-indigo-50/60 hover:bg-indigo-50 border border-indigo-100/80 text-[9px] text-indigo-950 flex items-center gap-1 cursor-pointer transition-colors"
+                                          title="Click to view/add remarks"
                                         >
-                                          <div className="flex items-center justify-between text-[8.5px] font-bold text-indigo-900">
-                                            <span className="truncate max-w-[120px] flex items-center gap-1">
-                                              <MessageSquare className="w-2.5 h-2.5 text-indigo-600 shrink-0" />
-                                              {latestRemarkObj.author_name || 'Remark'}
+                                          <MessageSquare className="w-2.5 h-2.5 text-indigo-600 shrink-0" />
+                                          <span className="truncate italic">"{t.latest_remark || t.remarks?.[0]?.text}"</span>
+                                          {t.remarks?.length > 1 && (
+                                            <span className="px-1 rounded bg-indigo-200/70 text-[7.5px] font-bold text-indigo-900 shrink-0">
+                                              +{t.remarks.length - 1}
                                             </span>
-                                            <span className="text-[7.5px] font-black px-1 py-0.2 rounded bg-indigo-200/70 text-indigo-900">
-                                              💬 {remarksCount}
-                                            </span>
-                                          </div>
-                                          <p className="text-[9.5px] text-slate-700 leading-snug line-clamp-2 italic font-medium pl-1.5 border-l-2 border-indigo-400">
-                                            "{latestRemarkObj.text}"
-                                          </p>
+                                          )}
                                         </div>
                                       )}
                                     </div>
 
-                                    <div className="flex flex-wrap items-center justify-between pt-1.5 border-t border-slate-100 text-[9px] gap-1">
+                                    <div className="flex flex-wrap items-center justify-between pt-1 border-t border-slate-100 text-[8.5px] gap-1">
+                                      <div className="flex items-center gap-1 text-slate-400 shrink-0">
+                                        <span>{formatDateRange(t.start_date, t.due_date) ? `📅 ${formatDateRange(t.start_date, t.due_date)}` : 'No date'}</span>
+                                      </div>
                                       <div className="flex items-center gap-1 shrink-0">
                                         <button
                                           type="button"
                                           onClick={() => { sounds.playClick(); setActiveRemarkTask(t); setActiveRemarkCandidateTasks(candidateTasks); }}
-                                          className={`inline-flex items-center gap-0.5 text-[8.5px] px-1.5 py-0.5 rounded cursor-pointer transition-colors ${
-                                            remarksCount > 0
-                                              ? 'bg-indigo-50 text-indigo-700 font-bold border border-indigo-200'
+                                          className={`inline-flex items-center gap-0.5 text-[8px] px-1 py-0.2 rounded cursor-pointer transition-colors ${
+                                            t.remarks?.length > 0
+                                              ? 'bg-indigo-50 text-indigo-700 font-semibold border border-indigo-200'
                                               : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-100'
                                           }`}
-                                          title={remarksCount > 0 ? `${remarksCount} remark(s)` : 'Add Remark'}
+                                          title={t.remarks?.length > 0 ? `${t.remarks.length} remark(s)` : 'Add Remark'}
                                         >
                                           <MessageSquare className="w-2.5 h-2.5 text-indigo-600" />
-                                          <span>{remarksCount > 0 ? remarksCount : 'Remark'}</span>
+                                          <span>{t.remarks?.length > 0 ? t.remarks.length : 'Remark'}</span>
                                         </button>
-                                        <span className="text-slate-400">{t.due_date ? `📅 ${formatFriendlyDate(t.due_date)}` : ''}</span>
+                                        <button
+                                          onClick={() => { sounds.playClick(); onEditTask(t); }}
+                                          className="text-slate-400 hover:text-blue-600 hover:bg-slate-100 rounded p-0.5 cursor-pointer transition-colors"
+                                          title="Edit Task"
+                                        >
+                                          <Edit2 className="w-2.5 h-2.5" />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            if (sounds.playTrash) sounds.playTrash();
+                                            else sounds.playClick();
+                                            onDeleteTask(t.id);
+                                          }}
+                                          className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded p-0.5 cursor-pointer transition-colors"
+                                          title="Delete Task"
+                                        >
+                                          <Trash2 className="w-2.5 h-2.5" />
+                                        </button>
+                                        <button
+                                          onClick={() => { sounds.playClick(); onStatusChange(t.id, 'in_progress'); }}
+                                          className="text-blue-600 font-bold hover:underline cursor-pointer ml-0.5 text-[8.5px]"
+                                        >
+                                          Start →
+                                        </button>
                                       </div>
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          sounds.playClick();
-                                          onEditTask(t);
-                                        }}
-                                        className="inline-flex items-center gap-1 text-[9.5px] font-bold text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 border border-blue-200/80 px-1.5 py-0.5 rounded cursor-pointer transition-all shadow-2xs active:scale-95 shrink-0"
-                                        title="Update Task Details"
-                                      >
-                                        <Edit2 className="w-2.5 h-2.5 text-blue-600" />
-                                        <span>Update</span>
-                                      </button>
                                     </div>
                                   </div>
-                                );
-                              })}
+                                ))}
+                              </div>
+                            </div>
 
-                              {/* Book Reading Tracker in In-Progress */}
-                              {member.bookTask && member.inProgressBooks.length > 0 && (() => {
-                                const t = member.bookTask;
-                                const stats = t.book_stats || {};
-                                const readP = Number(stats.total_pages_read) || 0;
-                                const totalP = Number(stats.total_pages) || 0;
-                                const pct = totalP > 0 ? Math.min(100, Math.round((readP / totalP) * 100)) : 0;
+                            {/* Minimalist Quick Add Slot */}
+                            <button
+                              type="button"
+                              onClick={() => { sounds.playClick(); openNewTaskModal('todo', user.id); }}
+                              className="w-full mt-1.5 py-1 px-2 rounded-md border border-dashed border-slate-300/80 hover:border-blue-400 hover:bg-white text-slate-400 hover:text-blue-600 font-semibold text-[9px] flex items-center justify-center gap-1 transition-all cursor-pointer opacity-75 hover:opacity-100"
+                              title={`Add task for ${user.name}`}
+                            >
+                              <Plus className="w-2.5 h-2.5 stroke-[2.5]" />
+                              <span>+ Add Task</span>
+                            </button>
+                          </div>
+                        )}
+                      </td>
 
-                                return (
+                      {/* 4. IN PROGRESS COLUMN */}
+                      <td className={`py-2 px-2 border-r border-slate-200/70 align-top bg-blue-50/20 ${borderBottomClass}`}>
+                        {member.inProgressTasks.length === 0 && (!member.bookTask || member.inProgressBooks.length === 0) ? (
+                          <div className="h-full min-h-[110px] flex flex-col items-center justify-center p-2 rounded-lg bg-blue-50/40 border border-dashed border-blue-200/70 text-center space-y-0.5 transition-all">
+                            <div className="w-5 h-5 rounded-md bg-white border border-blue-200/80 text-blue-500 flex items-center justify-center text-[10px] shadow-2xs">
+                              📖
+                            </div>
+                            <span className="font-semibold text-slate-700 text-[10.5px]">No active tasks</span>
+                            <span className="text-[8.5px] text-slate-400">Ready for next assignment</span>
+                            <button
+                              type="button"
+                              onClick={() => { sounds.playClick(); openNewTaskModal('in_progress', user.id); }}
+                              className="mt-1 py-0.5 px-2 rounded-md border border-dashed border-blue-300/80 hover:border-blue-500 hover:bg-white text-blue-600 font-semibold text-[8.5px] flex items-center justify-center gap-1 transition-all cursor-pointer opacity-80 hover:opacity-100"
+                            >
+                              <Play className="w-2 h-2 fill-blue-600 text-blue-600" />
+                              <span>+ Start Task</span>
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="w-full h-full min-h-[110px] space-y-1.5 flex flex-col justify-between">
+                            <div className="space-y-1.5">
+                              {/* Track Sub-header */}
+                              <div className="flex items-center justify-between text-[9px] text-blue-900 font-semibold px-0.5 pb-0.5 border-b border-blue-100">
+                                <span className="flex items-center gap-1">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                                  <span className="text-[9px] font-semibold text-slate-500">In Execution</span>
+                                </span>
+                                <span className="text-[8.5px] font-bold text-blue-700 bg-white border border-blue-200/70 px-1 py-0.2 rounded shadow-2xs">
+                                  {member.inProgressTasks.length + (member.bookTask && member.inProgressBooks.length > 0 ? 1 : 0)}
+                                </span>
+                              </div>
+
+                              {/* Stacked Cards */}
+                              <div className="flex flex-col gap-1.5 w-full">
+                                {member.inProgressTasks.map((t, tIdx) => {
+                                  const latestRemarkObj = Array.isArray(t.remarks) && t.remarks.length > 0
+                                    ? t.remarks[0]
+                                    : (t.latest_remark ? { text: t.latest_remark, author_name: 'Team Member' } : null);
+                                  const remarksCount = Array.isArray(t.remarks) && t.remarks.length > 0 
+                                    ? t.remarks.length 
+                                    : (t.latest_remark ? 1 : 0);
+
+                                  return (
+                                    <div 
+                                      key={t.id} 
+                                      className="w-full p-2 rounded-lg bg-white border border-slate-200/80 border-l-2 border-l-blue-500 hover:border-blue-300 shadow-2xs space-y-1 flex flex-col justify-between transition-all overflow-hidden"
+                                    >
+                                      <div>
+                                        <div className="flex items-start justify-between gap-1">
+                                          <span className="font-semibold text-slate-900 leading-snug text-[11px] flex items-start gap-1 min-w-0 flex-1 break-words" title={t.title}>
+                                            <span className="text-[10px] text-blue-600 font-semibold shrink-0 mt-0.5">#{tIdx + 1}</span>
+                                            <span className="break-words">{t.title}</span>
+                                          </span>
+                                          <span className={`text-[8px] font-semibold px-1 py-0.2 rounded uppercase shrink-0 ${
+                                            t.priority === 'urgent' ? 'bg-rose-50 text-rose-700 border border-rose-200/70' :
+                                            t.priority === 'high' ? 'bg-amber-50 text-amber-700 border border-amber-200/70' :
+                                            t.priority === 'medium' ? 'bg-blue-50 text-blue-700 border border-blue-200/70' : 'bg-slate-50 text-slate-600 border border-slate-200/70'
+                                          }`}>
+                                            {t.priority || 'Normal'}
+                                          </span>
+                                        </div>
+                                        {t.description && (
+                                          <p className="text-[9.5px] text-slate-500 line-clamp-2 mt-0.5 pl-3" title={t.description}>
+                                            {t.description}
+                                          </p>
+                                        )}
+
+                                        {/* Remark Snippet */}
+                                        {latestRemarkObj && (
+                                          <div
+                                            onClick={() => { sounds.playClick(); setActiveRemarkTask(t); setActiveRemarkCandidateTasks(candidateTasks); }}
+                                            className="mt-1 p-1 rounded-md bg-slate-50 hover:bg-indigo-50/70 border border-slate-200/70 hover:border-indigo-200 cursor-pointer transition-all space-y-0.5 group"
+                                            title="Click to view remark log"
+                                          >
+                                            <div className="flex items-center justify-between text-[8px] font-semibold text-slate-600 group-hover:text-indigo-900">
+                                              <span className="truncate max-w-[120px] flex items-center gap-1">
+                                                <MessageSquare className="w-2.5 h-2.5 text-indigo-500 shrink-0" />
+                                                {latestRemarkObj.author_name || 'Remark'}
+                                              </span>
+                                              <span className="text-[7.5px] font-bold px-1 rounded bg-indigo-100/80 text-indigo-800">
+                                                💬 {remarksCount}
+                                              </span>
+                                            </div>
+                                            <p className="text-[8.5px] text-slate-600 leading-snug line-clamp-2 italic pl-1 border-l-2 border-indigo-400">
+                                              "{latestRemarkObj.text}"
+                                            </p>
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      {/* Action Micro-bar */}
+                                      <div className="flex flex-wrap items-center justify-between pt-1 border-t border-slate-100 text-[8.5px] gap-1 w-full">
+                                        <div className="flex items-center gap-1 min-w-0 flex-1">
+                                          <button
+                                            type="button"
+                                            onClick={() => { sounds.playClick(); setActiveRemarkTask(t); setActiveRemarkCandidateTasks(candidateTasks); }}
+                                            className={`inline-flex items-center gap-0.5 text-[8px] px-1 py-0.2 rounded cursor-pointer transition-colors shrink-0 ${
+                                              remarksCount > 0
+                                                ? 'bg-indigo-50 text-indigo-700 font-semibold border border-indigo-200/80'
+                                                : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-50'
+                                            }`}
+                                            title={remarksCount > 0 ? `${remarksCount} remark(s)` : 'Add Remark'}
+                                          >
+                                            <MessageSquare className="w-2 h-2 text-indigo-500 shrink-0" />
+                                            <span>{remarksCount > 0 ? remarksCount : 'Remark'}</span>
+                                          </button>
+                                          {(t.due_date || t.start_date) && (
+                                            <span 
+                                              className="text-[8px] text-slate-400 font-medium truncate"
+                                              title={t.start_date && t.due_date ? `${formatFriendlyDate(t.start_date)} to ${formatFriendlyDate(t.due_date)}` : (t.due_date ? `Due ${formatFriendlyDate(t.due_date)}` : `From ${formatFriendlyDate(t.start_date)}`)}
+                                            >
+                                              📅 {formatDateRange(t.start_date, t.due_date)}
+                                            </span>
+                                          )}
+                                        </div>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            sounds.playClick();
+                                            onEditTask(t);
+                                          }}
+                                          className="inline-flex items-center gap-1 text-[8.5px] font-semibold text-blue-700 hover:text-blue-900 bg-blue-50/90 hover:bg-blue-100 border border-blue-200/80 px-1.5 py-0.5 rounded cursor-pointer transition-all shadow-2xs active:scale-95 shrink-0 ml-auto"
+                                          title="Update Task Details"
+                                        >
+                                          <Edit2 className="w-2 h-2 text-blue-600 shrink-0" />
+                                          <span>Update</span>
+                                        </button>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+
+                                {/* Book Reading Tracker in In-Progress */}
+                                {member.bookTask && member.inProgressBooks.length > 0 && (() => {
+                                  const t = member.bookTask;
+                                  const stats = t.book_stats || {};
+                                  const readP = Number(stats.total_pages_read) || 0;
+                                  const totalP = Number(stats.total_pages) || 0;
+                                  const pct = totalP > 0 ? Math.min(100, Math.round((readP / totalP) * 100)) : 0;
+
+                                  return (
+                                    <div 
+                                      key={t.id} 
+                                      className="w-full p-2 rounded-lg bg-white border border-slate-200/80 border-l-2 border-l-indigo-500 hover:border-indigo-300 shadow-2xs space-y-1 flex flex-col justify-between transition-all"
+                                    >
+                                      <div>
+                                        <div className="flex items-start justify-between gap-1">
+                                          <span className="font-semibold text-indigo-950 leading-snug flex items-center gap-1 text-[11px]">
+                                            <BookOpen className="w-3 h-3 text-indigo-600 shrink-0" />
+                                            <span>Active Reading ({member.inProgressBooks.length})</span>
+                                          </span>
+                                          <span className="text-[8px] font-semibold px-1 py-0.2 rounded bg-indigo-50 text-indigo-700 border border-indigo-200/70 shrink-0">
+                                            Reading
+                                          </span>
+                                        </div>
+
+                                        {/* Multi-Book In-Progress list */}
+                                        <div className="space-y-0.5 pt-1 max-h-[80px] overflow-y-auto no-scrollbar pr-0.5">
+                                          {member.inProgressBooks.map((b, bIdx) => (
+                                            <div key={b.id || bIdx} className="p-1 rounded bg-slate-50 border border-slate-200/70 text-[9px] flex items-center justify-between gap-1">
+                                              <span className="truncate font-medium text-slate-800 max-w-[130px]" title={b.title}>
+                                                <span className="text-[8.5px] text-indigo-600 font-semibold mr-1">#{bIdx + 1}</span>
+                                                {b.title}
+                                              </span>
+                                              <span className="px-1 py-0.2 rounded text-[8px] font-semibold shrink-0 bg-blue-50 text-blue-700 border border-blue-200/60">
+                                                {b.pages_read || 0}/{b.total_pages || 0} pgs
+                                              </span>
+                                            </div>
+                                          ))}
+                                        </div>
+
+                                        {/* Progress bar for book reading */}
+                                        {totalP > 0 && (
+                                          <div className="space-y-0.5 pt-1">
+                                            <div className="flex items-center justify-between text-[8.5px] font-medium text-slate-600">
+                                              <span>{readP}/{totalP} pgs</span>
+                                              <span className="text-indigo-600 font-bold">{pct}%</span>
+                                            </div>
+                                            <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden border border-slate-200/60">
+                                              <div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-600" style={{ width: `${pct}%` }} />
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      {/* Action Buttons */}
+                                      <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-[8.5px] gap-1 flex-wrap">
+                                        <div className="flex items-center gap-1">
+                                          <button
+                                            type="button"
+                                            onClick={() => { sounds.playClick(); setActiveDailyTask(t); }}
+                                            className="px-1 py-0.2 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold border border-indigo-200/70 inline-flex items-center gap-0.5 cursor-pointer shadow-2xs text-[8px]"
+                                          >
+                                            <Sparkles className="w-2 h-2" /> Log
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => { sounds.playClick(); onEditTask(t); }}
+                                            className="px-1 py-0.2 rounded bg-white hover:bg-slate-50 text-slate-700 font-semibold border border-slate-200 inline-flex items-center gap-0.5 cursor-pointer shadow-2xs text-[8px]"
+                                            title="Manage books"
+                                          >
+                                            <Edit2 className="w-2 h-2 text-slate-500" /> Books
+                                          </button>
+                                        </div>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            sounds.playClick();
+                                            setBookToFinish(t);
+                                          }}
+                                          className="text-emerald-700 font-bold hover:underline cursor-pointer text-[8.5px]"
+                                        >
+                                          Finish ✓
+                                        </button>
+                                      </div>
+                                    </div>
+                                  );
+                                })()}
+                              </div>
+                            </div>
+
+                            {/* Minimalist Quick Add Slot */}
+                            <button
+                              type="button"
+                              onClick={() => { sounds.playClick(); openNewTaskModal('in_progress', user.id); }}
+                              className="w-full mt-1.5 py-1 px-2 rounded-md border border-dashed border-blue-300/80 hover:border-blue-500 hover:bg-white text-blue-600 font-semibold text-[9px] flex items-center justify-center gap-1 transition-all cursor-pointer opacity-75 hover:opacity-100"
+                              title="Assign an in-progress task"
+                            >
+                              <Play className="w-2 h-2 fill-blue-600 text-blue-600" />
+                              <span>+ Start Task</span>
+                            </button>
+                          </div>
+                        )}
+                      </td>
+
+                      {/* 5. Workload Summary & KPI */}
+                      <td className={`py-2 px-1.5 border-r border-slate-200/70 align-top bg-slate-50/40 ${borderBottomClass}`}>
+                        <div className="h-full min-h-[110px] flex flex-col justify-between p-2 rounded-lg bg-white border border-slate-200/80 shadow-2xs space-y-1.5">
+                          <div>
+                            <div className="flex items-center justify-between pb-1 border-b border-slate-100">
+                              <span className="text-[8.5px] font-semibold text-slate-400 uppercase tracking-wide">Velocity</span>
+                              <span className={`text-[8.5px] font-bold px-1 py-0.2 rounded ${
+                                completionRate >= 80 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60' :
+                                completionRate >= 40 ? 'bg-blue-50 text-blue-700 border border-blue-200/60' :
+                                'bg-slate-50 text-slate-600 border border-slate-200/60'
+                              }`}>
+                                {completionRate}%
+                              </span>
+                            </div>
+
+                            <div className="mt-1.5 space-y-1">
+                              <div className="flex items-center justify-between text-[10.5px] font-bold text-slate-800">
+                                <span>Delivered</span>
+                                <span className="text-slate-900 font-bold">{member.totalCompletedCount} <span className="text-slate-400 font-normal text-[9px]">/ {member.total}</span></span>
+                              </div>
+                              <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden border border-slate-200/50">
+                                <div
+                                  className="h-full rounded-full bg-gradient-to-r from-blue-500 to-emerald-500 transition-all duration-300"
+                                  style={{ width: `${completionRate}%` }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="space-y-1 pt-1 border-t border-slate-100">
+                            {member.totalPages > 0 && (
+                              <div className="text-[8px] font-medium text-indigo-900 bg-indigo-50/80 px-1 py-0.5 rounded border border-indigo-100/70 truncate flex items-center justify-between">
+                                <span>📖 Reading</span>
+                                <span className="font-bold">{member.pagesRead}/{member.totalPages} pgs</span>
+                              </div>
+                            )}
+                            <div className="flex items-center justify-center gap-1.5 text-[8px] text-slate-500 font-medium">
+                              <span className="text-emerald-700 font-semibold">{completedCount} done</span>
+                              <span className="text-slate-300">•</span>
+                              <span className="text-slate-500">{member.total - completedCount} open</span>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* 6. BLOCKED COLUMN */}
+                      <td className={`py-2 px-2 border-r border-slate-200/70 align-top bg-rose-50/20 ${borderBottomClass}`}>
+                        {member.blockedTasks.length === 0 ? (
+                          <div className="h-full min-h-[110px] flex flex-col items-center justify-center p-2 rounded-lg bg-emerald-50/30 border border-dashed border-emerald-200/70 text-center space-y-0.5 transition-all">
+                            <div className="w-5 h-5 rounded-md bg-white border border-emerald-200 text-emerald-600 flex items-center justify-center text-[10px] shadow-2xs font-bold">
+                              ✓
+                            </div>
+                            <span className="font-semibold text-emerald-950 text-[10.5px]">Pipeline Clear</span>
+                            <span className="text-[8.5px] text-slate-400">Zero blockers reported</span>
+                          </div>
+                        ) : (
+                          <div className="w-full h-full min-h-[110px] space-y-1.5 flex flex-col justify-between">
+                            <div className="space-y-1.5">
+                              {/* Track Sub-header */}
+                              <div className="flex items-center justify-between text-[9px] text-rose-950 font-semibold px-0.5 pb-0.5 border-b border-rose-100">
+                                <span className="flex items-center gap-1">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                  <span className="text-[9px] font-semibold text-slate-500">Attention Needed</span>
+                                </span>
+                                <span className="text-[8.5px] font-bold text-rose-700 bg-white border border-rose-200/80 px-1 py-0.2 rounded shadow-2xs">
+                                  {member.blockedTasks.length}
+                                </span>
+                              </div>
+
+                              {/* Cards */}
+                              <div className="flex flex-col gap-1.5 w-full">
+                                {member.blockedTasks.map((t, tIdx) => (
                                   <div 
                                     key={t.id} 
-                                    className="w-full p-2.5 rounded-xl bg-white border border-indigo-200 hover:border-indigo-400 shadow-2xs space-y-1.5 flex flex-col justify-between transition-all hover:shadow-xs"
+                                    className="w-full p-2 rounded-lg bg-white border border-slate-200/80 border-l-2 border-l-rose-500 hover:border-rose-300 shadow-2xs space-y-1 flex flex-col justify-between transition-all overflow-hidden"
                                   >
                                     <div>
                                       <div className="flex items-start justify-between gap-1">
-                                        <span className="font-bold text-indigo-950 leading-tight flex items-center gap-1 text-xs">
-                                          <BookOpen className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                                          <span>Active Reading ({member.inProgressBooks.length})</span>
+                                        <span className="font-semibold text-slate-900 leading-snug text-[11px] flex items-start gap-1" title={t.title}>
+                                          <span className="text-[10px] text-rose-600 font-semibold shrink-0 mt-0.5">#{tIdx + 1}</span>
+                                          <span>{t.title}</span>
                                         </span>
-                                        <span className="text-[8.5px] font-extrabold px-1.5 py-0.2 rounded bg-indigo-100 text-indigo-800 shrink-0">
-                                          Reading
+                                        <span className="text-[8px] font-semibold px-1 py-0.2 rounded bg-rose-50 text-rose-700 border border-rose-200/70 shrink-0 uppercase">
+                                          Blocked
                                         </span>
                                       </div>
+                                      <p className="text-[9.5px] text-rose-700 line-clamp-2 mt-0.5 pl-3 font-medium">{t.description || 'Action required'}</p>
 
-                                      {/* Multi-Book In-Progress list */}
-                                      <div className="space-y-1 pt-1 max-h-[90px] overflow-y-auto no-scrollbar pr-0.5">
-                                        {member.inProgressBooks.map((b, bIdx) => (
-                                          <div key={b.id || bIdx} className="p-1.5 rounded-lg bg-slate-50 border border-slate-200/80 text-[9.5px] flex items-center justify-between gap-1">
-                                            <span className="truncate font-semibold text-slate-800 max-w-[140px]" title={b.title}>
-                                              #{bIdx + 1} {b.title}
+                                      {/* Remark Preview */}
+                                      {(t.latest_remark || t.remarks?.[0]?.text) && (
+                                        <div
+                                          onClick={() => { sounds.playClick(); setActiveRemarkTask(t); setActiveRemarkCandidateTasks(candidateTasks); }}
+                                          className="mt-1 p-1 rounded-md bg-rose-50/60 hover:bg-rose-100/60 border border-rose-200/70 text-[8.5px] text-rose-950 flex items-center gap-1 cursor-pointer transition-colors"
+                                          title="Click to view blocker remark"
+                                        >
+                                          <MessageSquare className="w-2 h-2 text-rose-600 shrink-0" />
+                                          <span className="truncate italic font-medium">"{t.latest_remark || t.remarks?.[0]?.text}"</span>
+                                          {t.remarks?.length > 1 && (
+                                            <span className="px-1 rounded bg-rose-200/80 text-[7.5px] font-bold text-rose-900 shrink-0">
+                                              +{t.remarks.length - 1}
                                             </span>
-                                            <span className="px-1.5 py-0.2 rounded text-[8.5px] font-black shrink-0 bg-blue-100 text-blue-800">
-                                              {b.pages_read || 0}/{b.total_pages || 0} pgs
-                                            </span>
-                                          </div>
-                                        ))}
-                                      </div>
-
-                                      {/* Progress bar for book reading */}
-                                      {totalP > 0 && (
-                                        <div className="space-y-0.5 pt-1">
-                                          <div className="flex items-center justify-between text-[9.5px] font-bold text-slate-600">
-                                            <span>{readP}/{totalP} pgs</span>
-                                            <span className="text-indigo-600 font-black">{pct}%</span>
-                                          </div>
-                                          <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden border border-slate-200/60">
-                                            <div className="h-full rounded-full bg-indigo-600" style={{ width: `${pct}%` }} />
-                                          </div>
+                                          )}
                                         </div>
                                       )}
                                     </div>
 
-                                    {/* Action Buttons */}
-                                    <div className="flex items-center justify-between pt-1.5 border-t border-slate-100 text-[9.5px] gap-1 flex-wrap">
-                                      <div className="flex items-center gap-1">
+                                    <div className="flex flex-wrap items-center justify-between pt-1 border-t border-slate-100 text-[8.5px] gap-1">
+                                      <div className="flex items-center gap-1 shrink-0">
                                         <button
                                           type="button"
-                                          onClick={() => { sounds.playClick(); setActiveDailyTask(t); }}
-                                          className="px-2 py-0.5 rounded-md bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold border border-indigo-200 inline-flex items-center gap-1 cursor-pointer shadow-2xs"
+                                          onClick={() => { sounds.playClick(); setActiveRemarkTask(t); setActiveRemarkCandidateTasks(candidateTasks); }}
+                                          className={`inline-flex items-center gap-0.5 text-[8px] px-1 py-0.2 rounded cursor-pointer transition-colors ${
+                                            t.remarks?.length > 0
+                                              ? 'bg-rose-50 text-rose-800 font-semibold border border-rose-200/80'
+                                              : 'text-slate-400 hover:text-rose-600 hover:bg-slate-50'
+                                          }`}
+                                          title={t.remarks?.length > 0 ? `${t.remarks.length} remark(s)` : 'Add Blocker Remark'}
                                         >
-                                          <Sparkles className="w-2.5 h-2.5" /> Log
+                                          <MessageSquare className="w-2 h-2 text-rose-600" />
+                                          <span>{t.remarks?.length > 0 ? t.remarks.length : 'Remark'}</span>
+                                        </button>
+                                        {(t.due_date || t.start_date) && (
+                                          <span className="text-[8px] text-slate-400 font-medium">📅 {formatDateRange(t.start_date, t.due_date)}</span>
+                                        )}
+                                        <button
+                                          onClick={() => { sounds.playClick(); onEditTask(t); }}
+                                          className="text-slate-400 hover:text-blue-600 cursor-pointer p-0.5"
+                                          title="Edit Task"
+                                        >
+                                          <Edit2 className="w-2 h-2" />
                                         </button>
                                         <button
-                                          type="button"
-                                          onClick={() => { sounds.playClick(); onEditTask(t); }}
-                                          className="px-2 py-0.5 rounded-md bg-white hover:bg-slate-100 text-slate-700 font-bold border border-slate-200 inline-flex items-center gap-1 cursor-pointer shadow-2xs"
-                                          title="Manage books, add new book, change status"
+                                          onClick={() => { sounds.playTrash(); onDeleteTask(t.id); }}
+                                          className="text-slate-400 hover:text-rose-600 cursor-pointer p-0.5"
+                                          title="Delete"
                                         >
-                                          <Edit2 className="w-2.5 h-2.5 text-slate-500" /> Books
+                                          <Trash2 className="w-2 h-2" />
                                         </button>
                                       </div>
                                       <button
-                                        type="button"
-                                        onClick={() => {
-                                          sounds.playClick();
-                                          setBookToFinish(t);
-                                        }}
-                                        className="text-emerald-700 font-extrabold hover:underline cursor-pointer"
+                                        onClick={() => { sounds.playClick(); onStatusChange(t.id, 'in_progress'); }}
+                                        className="text-[8.5px] text-blue-600 font-semibold hover:underline cursor-pointer shrink-0"
                                       >
-                                        Finish ✓
+                                        Unblock →
                                       </button>
                                     </div>
                                   </div>
-                                );
-                              })()}
+                                ))}
+                              </div>
                             </div>
                           </div>
                         )}
                       </td>
 
-
-                      {/* 6. Workload Summary & Pages Read */}
-                      <td className="py-2 px-1 border-r border-slate-200 align-top">
-                        <div className="h-full flex flex-col justify-between p-1.5 rounded-xl bg-white border border-slate-200/90 shadow-2xs space-y-1">
-                          <div className="space-y-0.5">
-                            <span className="text-[8.5px] font-bold text-slate-400 uppercase tracking-wide">Progress</span>
-                            <div className="text-[10px] font-extrabold text-slate-800 leading-tight">
-                              {member.totalCompletedCount}/{member.total}
-                              <span className="text-[9px] text-slate-500 font-semibold block mt-0.5">({completionRate}%)</span>
+                      {/* 7. COMPLETED COLUMN */}
+                      <td className={`py-2 px-2 align-top bg-emerald-50/20 ${borderBottomClass} ${isLastRow ? 'rounded-br-2xl' : ''}`}>
+                        {member.regularCompletedTasks.length === 0 && member.completedBooks.length === 0 ? (
+                          <div className="h-full min-h-[110px] flex flex-col items-center justify-center p-2 rounded-lg bg-slate-50/60 border border-dashed border-slate-200/80 text-center space-y-0.5 transition-all">
+                            <div className="w-5 h-5 rounded-md bg-white border border-slate-200 text-slate-400 flex items-center justify-center text-[10px] shadow-2xs">
+                              ⏳
                             </div>
-                            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden border border-slate-200/60 mt-1">
-                              <div
-                                className="h-full rounded-full bg-emerald-500 transition-all duration-300"
-                                style={{ width: `${completionRate}%` }}
-                              />
-                            </div>
-                          </div>
-                          {member.totalPages > 0 && (
-                            <div className="text-[8px] text-indigo-900 font-bold bg-indigo-50 px-1 py-0.5 rounded-md border border-indigo-100 truncate">
-                              📖 {member.pagesRead}/{member.totalPages} pgs
-                            </div>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* 7. BLOCKED COLUMN (VERTICALLY STACKED LENGTHWISE) */}
-                      <td className="py-2.5 px-2 border-r border-slate-200 align-top bg-rose-50/10">
-                        {member.blockedTasks.length === 0 ? (
-                          <div className="h-full min-h-[72px] flex items-center justify-center p-2 rounded-xl bg-white/60 border border-rose-100 text-center text-slate-400 text-xs">
-                            <span className="font-medium text-[11px]">No blocked tasks</span>
+                            <span className="font-semibold text-slate-600 text-[10.5px]">0 Completed</span>
+                            <span className="text-[8.5px] text-slate-400">Tasks in progress</span>
                           </div>
                         ) : (
-                          <div className="w-full space-y-2 h-full flex flex-col">
-                            {/* Track Header */}
-                            <div className="flex items-center justify-between text-[10px] text-rose-950 font-bold px-0.5 pb-1 border-b border-rose-200/80">
-                              <span className="flex items-center gap-1.5">
-                                <span className="w-2 h-2 rounded-full bg-rose-500" />
-                                <span>{member.blockedTasks.length} Blocked</span>
-                              </span>
-                              <span className="text-[9px] font-bold text-rose-700 bg-rose-50 border border-rose-200/60 px-1.5 py-0.5 rounded">
-                                {member.blockedTasks.length} {member.blockedTasks.length === 1 ? 'task' : 'tasks'}
-                              </span>
-                            </div>
+                          <div className="w-full h-full min-h-[110px] space-y-1.5 flex flex-col justify-between">
+                            <div className="space-y-1.5">
+                              {/* Track Sub-header */}
+                              <div className="flex items-center justify-between text-[9px] text-emerald-950 font-semibold px-0.5 pb-0.5 border-b border-emerald-100">
+                                <span className="flex items-center gap-1">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                  <span className="text-[9px] font-semibold text-slate-500">Delivered</span>
+                                </span>
+                                <span className="text-[8.5px] font-bold text-emerald-700 bg-white border border-emerald-200/80 px-1 py-0.2 rounded shadow-2xs">
+                                  {(member.regularCompletedTasks?.length || 0) + (member.completedBooks?.length || 0)}
+                                </span>
+                              </div>
 
-                            {/* Lengthwise Vertically Stacked Cards */}
-                            <div className="flex flex-col gap-2 w-full pt-0.5">
-                              {member.blockedTasks.map((t, tIdx) => (
-                                <div 
-                                  key={t.id} 
-                                  className="w-full p-2.5 rounded-xl bg-white border border-rose-200 hover:border-rose-400 shadow-2xs space-y-1.5 flex flex-col justify-between transition-all hover:shadow-xs"
-                                >
-                                  <div>
-                                    <div className="flex items-start justify-between gap-1">
-                                      <span className="font-bold text-slate-900 leading-tight text-xs" title={t.title}>
-                                        <strong className="text-rose-600 font-extrabold">{tIdx + 1}.</strong> {t.title}
-                                      </span>
-                                      <span className="text-[8.5px] font-black px-1.5 py-0.2 rounded bg-rose-100 text-rose-800 shrink-0">
-                                        Blocked
-                                      </span>
+                              {/* Stacked Cards */}
+                              <div className="flex flex-col gap-1.5 w-full">
+                                {/* Regular Finished Tasks */}
+                                {member.regularCompletedTasks.map((t, tIdx) => (
+                                  <div 
+                                    key={t.id} 
+                                    className="w-full p-2 rounded-lg bg-white border border-slate-200/80 border-l-2 border-l-emerald-500 hover:border-emerald-300 shadow-2xs space-y-1 flex flex-col justify-between transition-all overflow-hidden"
+                                  >
+                                    <div>
+                                      <div className="flex items-start justify-between gap-1">
+                                        <div className="flex items-start gap-1 min-w-0">
+                                          <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0 mt-0.5" />
+                                          <span className="font-semibold text-slate-800 text-[11px] leading-snug" title={t.title}>
+                                            <span className="text-[10px] text-emerald-700 font-semibold mr-1">#{tIdx + 1}</span>
+                                            {t.title}
+                                          </span>
+                                        </div>
+                                        <span className="text-[8px] font-semibold px-1 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200/70 shrink-0">
+                                          ✓ Done
+                                        </span>
+                                      </div>
+                                      {t.description && (
+                                        <p className="text-[9.5px] text-slate-500 line-clamp-2 mt-0.5 pl-4">{t.description}</p>
+                                      )}
                                     </div>
-                                    <p className="text-[10px] text-rose-700 line-clamp-2 mt-1">{t.description || 'Action required'}</p>
+                                    <div className="flex flex-wrap items-center justify-between text-[8.5px] pt-1 border-t border-slate-100 text-slate-400 gap-1">
+                                      <div className="flex items-center gap-1 shrink-0">
+                                        <button
+                                          type="button"
+                                          onClick={() => { sounds.playClick(); setActiveRemarkTask(t); setActiveRemarkCandidateTasks(candidateTasks); }}
+                                          className={`inline-flex items-center gap-0.5 text-[8px] px-1 py-0.2 rounded cursor-pointer ${
+                                            t.remarks?.length > 0 ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'hover:text-indigo-600'
+                                          }`}
+                                          title="Remarks"
+                                        >
+                                          <MessageSquare className="w-2 h-2 text-indigo-600" />
+                                          <span>{t.remarks?.length || '0'}</span>
+                                        </button>
+                                        {(t.due_date || t.start_date) && (
+                                          <span className="text-[8px] text-slate-400">📅 {formatDateRange(t.start_date, t.due_date)}</span>
+                                        )}
+                                      </div>
+                                      <div className="flex items-center gap-1 shrink-0">
+                                        <button
+                                          onClick={() => { sounds.playClick(); onStatusChange(t.id, 'in_progress'); }}
+                                          className="text-[8.5px] text-blue-600 font-semibold hover:underline cursor-pointer"
+                                          title="Reopen task"
+                                        >
+                                          Reopen
+                                        </button>
+                                        <button
+                                          onClick={() => { sounds.playTrash(); onDeleteTask(t.id); }}
+                                          className="text-slate-400 hover:text-rose-600 cursor-pointer p-0.5"
+                                          title="Delete"
+                                        >
+                                          <Trash2 className="w-2 h-2" />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
 
-                                    {/* Remark Preview */}
-                                    {(t.latest_remark || t.remarks?.[0]?.text) && (
-                                      <div
-                                        onClick={() => { sounds.playClick(); setActiveRemarkTask(t); setActiveRemarkCandidateTasks(candidateTasks); }}
-                                        className="mt-1 p-1.5 rounded-lg bg-rose-50/80 hover:bg-rose-100/70 border border-rose-200 text-[9.5px] text-rose-950 flex items-center gap-1 cursor-pointer transition-colors"
-                                        title="Click to view/add blocker remark"
-                                      >
-                                        <MessageSquare className="w-2.5 h-2.5 text-rose-600 shrink-0" />
-                                        <span className="truncate italic font-medium">"{t.latest_remark || t.remarks?.[0]?.text}"</span>
-                                        {t.remarks?.length > 1 && (
-                                          <span className="px-1 rounded bg-rose-200 text-[8px] font-black text-rose-900 shrink-0">
-                                            +{t.remarks.length - 1}
+                                {/* Completed Books */}
+                                {member.completedBooks.map((b, bIdx) => (
+                                  <div 
+                                    key={b.id || bIdx} 
+                                    className="w-full p-2 rounded-lg bg-white border border-slate-200/80 border-l-2 border-l-emerald-500 shadow-2xs space-y-1 flex flex-col justify-between transition-all"
+                                  >
+                                    <div className="space-y-0.5">
+                                      <div className="flex items-start justify-between gap-1">
+                                        <span className="font-semibold text-slate-800 text-[11px] line-clamp-1 flex items-center gap-1" title={b.title}>
+                                          <BookOpen className="w-3 h-3 text-emerald-600 shrink-0" />
+                                          <span className="text-[9.5px] text-emerald-700 font-semibold mr-1">#{bIdx + 1}</span>
+                                          <span>{b.title}</span>
+                                        </span>
+                                        <span className="text-[8px] font-semibold px-1 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200/70 shrink-0">
+                                          Finished
+                                        </span>
+                                      </div>
+                                      <div className="text-[8.5px] text-slate-500 font-medium">
+                                        Author: {b.author || 'N/A'} • {b.total_pages || 0} pgs
+                                      </div>
+                                      <div className="flex items-center gap-1 flex-wrap">
+                                        {b.completion_date && (
+                                          <span className="text-[8px] text-emerald-700 font-medium">
+                                            Completed: {formatFriendlyDate(b.completion_date)}
+                                          </span>
+                                        )}
+                                        {b.presented && (
+                                          <span className="text-[7.5px] px-1 py-0.2 rounded bg-purple-100 text-purple-800 font-semibold">
+                                            🎤 Presented
                                           </span>
                                         )}
                                       </div>
-                                    )}
-                                  </div>
-
-                                  <div className="flex flex-wrap items-center justify-between pt-1 border-t border-slate-100 text-[9px] gap-1">
-                                    <div className="flex items-center gap-1 shrink-0">
-                                      <button
-                                        type="button"
-                                        onClick={() => { sounds.playClick(); setActiveRemarkTask(t); setActiveRemarkCandidateTasks(candidateTasks); }}
-                                        className={`inline-flex items-center gap-0.5 text-[8.5px] px-1.5 py-0.5 rounded cursor-pointer transition-colors ${
-                                          t.remarks?.length > 0
-                                            ? 'bg-rose-50 text-rose-800 font-bold border border-rose-200'
-                                            : 'text-slate-400 hover:text-rose-600 hover:bg-slate-100'
-                                        }`}
-                                        title={t.remarks?.length > 0 ? `${t.remarks.length} remark(s)` : 'Add Blocker Remark'}
-                                      >
-                                        <MessageSquare className="w-2.5 h-2.5 text-rose-600" />
-                                        <span>{t.remarks?.length > 0 ? t.remarks.length : 'Remark'}</span>
-                                      </button>
-                                      {t.due_date && (
-                                        <span className="text-slate-400">📅 {formatFriendlyDate(t.due_date)}</span>
-                                      )}
-                                      <button
-                                        onClick={() => { sounds.playClick(); onEditTask(t); }}
-                                        className="text-slate-400 hover:text-blue-600 cursor-pointer p-0.5"
-                                        title="Edit Task"
-                                      >
-                                        <Edit2 className="w-3 h-3" />
-                                      </button>
-                                      <button
-                                        onClick={() => { sounds.playTrash(); onDeleteTask(t.id); }}
-                                        className="text-slate-400 hover:text-rose-600 cursor-pointer p-0.5"
-                                        title="Delete"
-                                      >
-                                        <Trash2 className="w-3 h-3" />
-                                      </button>
                                     </div>
-                                    <button
-                                      onClick={() => { sounds.playClick(); onStatusChange(t.id, 'in_progress'); }}
-                                      className="text-[9.5px] text-blue-600 font-bold hover:underline cursor-pointer shrink-0"
-                                    >
-                                      Unblock →
-                                    </button>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </td>
-
-                      {/* 8. COMPLETED COLUMN (VERTICALLY STACKED LENGTHWISE) */}
-                      <td className="py-2.5 px-2 align-top bg-emerald-50/10">
-                        {member.regularCompletedTasks.length === 0 && member.completedBooks.length === 0 ? (
-                          <div className="h-full min-h-[72px] flex items-center justify-center p-2 rounded-xl bg-white/60 border border-emerald-100 text-center text-slate-400 text-xs">
-                            <span className="font-medium text-[11px]">0 finished</span>
-                          </div>
-                        ) : (
-                          <div className="w-full space-y-2 h-full flex flex-col">
-                            {/* Track Header */}
-                            <div className="flex items-center justify-between text-[10px] text-emerald-950 font-bold px-0.5 pb-1 border-b border-emerald-200/80">
-                              <span className="flex items-center gap-1.5">
-                                <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                                <span>{(member.regularCompletedTasks?.length || 0) + (member.completedBooks?.length || 0)} Finished</span>
-                              </span>
-                              <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-1.5 py-0.5 rounded">
-                                {(member.regularCompletedTasks?.length || 0) + (member.completedBooks?.length || 0)} {((member.regularCompletedTasks?.length || 0) + (member.completedBooks?.length || 0)) === 1 ? 'item' : 'items'}
-                              </span>
-                            </div>
-
-                            {/* Lengthwise Vertically Stacked Cards */}
-                            <div className="flex flex-col gap-2 w-full pt-0.5">
-                              {/* Regular Finished Tasks */}
-                              {member.regularCompletedTasks.map((t, tIdx) => (
-                                <div 
-                                  key={t.id} 
-                                  className="w-full p-2.5 rounded-xl bg-white border border-emerald-200/90 hover:border-emerald-400 shadow-2xs space-y-1.5 flex flex-col justify-between transition-all border-l-3 border-l-emerald-500 hover:shadow-xs"
-                                >
-                                  <div>
-                                    <div className="flex items-start justify-between gap-1.5">
-                                      <div className="flex items-start gap-1.5 min-w-0">
-                                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                                        <span className="font-bold text-slate-800 text-xs leading-tight" title={t.title}>
-                                          <strong className="text-emerald-700">{tIdx + 1}.</strong> {t.title}
-                                        </span>
+                                    {member.bookTask && (
+                                      <div className="flex flex-wrap items-center justify-between text-[8.5px] pt-1 border-t border-slate-100 text-slate-400 gap-1">
+                                        <button
+                                          onClick={() => { sounds.playClick(); onEditTask(member.bookTask); }}
+                                          className="text-emerald-800 hover:text-emerald-950 font-semibold hover:underline cursor-pointer inline-flex items-center gap-0.5"
+                                          title="Manage this book"
+                                        >
+                                          <Edit2 className="w-2 h-2" /> Manage
+                                        </button>
+                                        <button
+                                          onClick={() => { sounds.playClick(); onEditTask(member.bookTask); }}
+                                          className="text-slate-500 hover:text-blue-700 font-medium hover:underline cursor-pointer"
+                                          title="Update book status"
+                                        >
+                                          Edit Status
+                                        </button>
                                       </div>
-                                      <span className="text-[8.5px] font-extrabold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 shrink-0 shadow-2xs">
-                                        ✓ Done
-                                      </span>
-                                    </div>
-                                    {t.description && (
-                                      <p className="text-[10px] text-slate-500 line-clamp-2 mt-1 pl-5">{t.description}</p>
                                     )}
                                   </div>
-                                  <div className="flex flex-wrap items-center justify-between text-[9px] pt-1 border-t border-slate-100 text-slate-400 gap-1">
-                                    <div className="flex items-center gap-1 shrink-0">
-                                      <button
-                                        type="button"
-                                        onClick={() => { sounds.playClick(); setActiveRemarkTask(t); setActiveRemarkCandidateTasks(candidateTasks); }}
-                                        className={`inline-flex items-center gap-0.5 text-[8.5px] px-1 py-0.2 rounded cursor-pointer ${
-                                          t.remarks?.length > 0 ? 'bg-indigo-50 text-indigo-700 font-bold' : 'hover:text-indigo-600'
-                                        }`}
-                                        title="Remarks"
-                                      >
-                                        <MessageSquare className="w-2.5 h-2.5 text-indigo-600" />
-                                        <span>{t.remarks?.length || '0'}</span>
-                                      </button>
-                                      <span>{t.due_date ? `📅 ${formatFriendlyDate(t.due_date)}` : ''}</span>
-                                    </div>
-                                    <div className="flex items-center gap-1 shrink-0">
-                                      <button
-                                        onClick={() => { sounds.playClick(); onStatusChange(t.id, 'in_progress'); }}
-                                        className="text-[9px] text-blue-600 font-semibold hover:underline cursor-pointer"
-                                        title="Reopen task"
-                                      >
-                                        Reopen
-                                      </button>
-                                      <button
-                                        onClick={() => { sounds.playTrash(); onDeleteTask(t.id); }}
-                                        className="text-slate-400 hover:text-rose-600 cursor-pointer p-0.5"
-                                        title="Delete"
-                                      >
-                                        <Trash2 className="w-2.5 h-2.5" />
-                                      </button>
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
+                                ))}
+                              </div>
 
-                              {/* Completed Books */}
-                              {member.completedBooks.map((b, bIdx) => (
-                                <div 
-                                  key={b.id || bIdx} 
-                                  className="w-full p-2.5 rounded-xl bg-white border border-emerald-200/90 shadow-2xs space-y-1.5 flex flex-col justify-between border-l-3 border-l-emerald-500 hover:shadow-xs"
-                                >
-                                  <div className="space-y-1">
-                                    <div className="flex items-start justify-between gap-1">
-                                      <span className="font-bold text-slate-800 text-xs line-clamp-1 flex items-center gap-1" title={b.title}>
-                                        <BookOpen className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                                        <span>{b.title}</span>
-                                      </span>
-                                      <span className="text-[8.5px] font-extrabold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 shrink-0">
-                                        Finished
-                                      </span>
-                                    </div>
-                                    <div className="text-[9.5px] text-slate-500 font-medium">
-                                      Author: {b.author || 'N/A'} • {b.total_pages || 0} pgs
-                                    </div>
-                                    <div className="flex items-center gap-1 flex-wrap">
-                                      {b.completion_date && (
-                                        <span className="text-[9px] text-emerald-700 font-semibold">
-                                          Completed: {formatFriendlyDate(b.completion_date)}
-                                        </span>
-                                      )}
-                                      {b.presented && (
-                                        <span className="text-[8px] px-1 py-0.2 rounded bg-purple-100 text-purple-800 font-bold">
-                                          🎤 Presented
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                  {member.bookTask && (
-                                    <div className="flex flex-wrap items-center justify-between text-[9px] pt-1 border-t border-emerald-200/70 text-slate-400 gap-1">
-                                      <button
-                                        onClick={() => { sounds.playClick(); onEditTask(member.bookTask); }}
-                                        className="text-emerald-800 hover:text-emerald-950 font-bold hover:underline cursor-pointer inline-flex items-center gap-1"
-                                        title="Manage this book"
-                                      >
-                                        <Edit2 className="w-2.5 h-2.5" /> Manage
-                                      </button>
-                                      <button
-                                        onClick={() => { sounds.playClick(); onEditTask(member.bookTask); }}
-                                        className="text-slate-500 hover:text-blue-700 font-medium hover:underline cursor-pointer"
-                                        title="Update book status"
-                                      >
-                                        Edit Status
-                                      </button>
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
+                              {/* Completed Bottom Velocity Pill */}
+                              <div className="mt-1.5 py-1 px-1.5 rounded-md bg-emerald-50 border border-emerald-200/70 text-[8.5px] font-semibold text-emerald-800 flex items-center justify-between shadow-2xs">
+                                <span className="flex items-center gap-1">
+                                  <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
+                                  <span>Velocity</span>
+                                </span>
+                                <span className="font-bold text-emerald-700 bg-white px-1 py-0.2 rounded border border-emerald-200/60 shadow-2xs">
+                                  {completionRate}% Delivered
+                                </span>
+                              </div>
                             </div>
                           </div>
                         )}
                       </td>
-
                     </tr>
                   );
                 })}

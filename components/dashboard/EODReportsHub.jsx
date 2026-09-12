@@ -41,7 +41,7 @@ export default function EODReportsHub({ eodReports, users }) {
             <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
               Persistent Archive
             </span>
-            <span className="text-xs text-slate-400 font-mono">
+            <span className="text-xs text-slate-400 font-semibold">
               Total Reports: {eodReports.length}
             </span>
           </div>
@@ -107,7 +107,7 @@ export default function EODReportsHub({ eodReports, users }) {
                       </h4>
                       <p className="text-xs text-slate-400">{report.department}</p>
                     </div>
-                    <span className="text-[11px] font-mono px-2 py-0.5 rounded-lg bg-surface border border-surface-border text-slate-300">
+                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-lg bg-surface border border-surface-border text-slate-300">
                       📅 {report.report_date}
                     </span>
                   </div>
@@ -144,7 +144,7 @@ export default function EODReportsHub({ eodReports, users }) {
                   <span className="text-amber-400 font-bold flex items-center gap-1">
                     ⭐ {report.day_rating}/5
                   </span>
-                  <span className="text-slate-400 font-mono text-[11px]">
+                  <span className="text-slate-400 font-medium text-[11px]">
                     ⏱️ {report.hours_worked} hrs
                   </span>
                   <span className="text-indigo-400 font-medium text-xs flex items-center gap-1">
@@ -183,15 +183,15 @@ export default function EODReportsHub({ eodReports, users }) {
             <div className="grid grid-cols-3 gap-3 p-4 rounded-2xl bg-surface/80 border border-surface-border">
               <div>
                 <span className="text-[11px] text-slate-400 block">Completed Today</span>
-                <span className="text-lg font-bold text-emerald-400 font-mono">{selectedReport.completed_tasks?.length || 0} tasks</span>
+                <span className="text-lg font-bold text-emerald-400">{selectedReport.completed_tasks?.length || 0} tasks</span>
               </div>
               <div>
                 <span className="text-[11px] text-slate-400 block">Pending Rollover</span>
-                <span className="text-lg font-bold text-amber-400 font-mono">{selectedReport.pending_tasks?.length || 0} tasks</span>
+                <span className="text-lg font-bold text-amber-400">{selectedReport.pending_tasks?.length || 0} tasks</span>
               </div>
               <div>
                 <span className="text-[11px] text-slate-400 block">Productivity Rating</span>
-                <span className="text-lg font-bold text-amber-400 font-mono">⭐ {selectedReport.day_rating}/5</span>
+                <span className="text-lg font-bold text-amber-400">⭐ {selectedReport.day_rating}/5</span>
               </div>
             </div>
 

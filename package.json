@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "node server.js",
     "docs:pdf": "node scripts/generate_pdf.js",
-    "kill-port": "powershell -Command \"Stop-Process -Id (Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue).OwningProcess -Force -ErrorAction SilentlyContinue\""
+    "kill-port": "powershell -Command \"Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }\""
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",

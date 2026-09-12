@@ -649,7 +649,7 @@ export default function Home() {
   const currentUserTasks = (tasks || []).filter(t => t.assigned_to === currentUser?.id);
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex font-sans w-full">
+    <div className="min-h-screen bg-[#f1f5f9] text-slate-900 flex font-sans w-full">
       
       {/* Left Sidebar */}
       <Sidebar
@@ -753,10 +753,14 @@ export default function Home() {
 
         </main>
 
-        {/* Clean Footer */}
-        <footer className="border-t border-slate-200 py-3.5 px-6 text-center text-xs text-slate-500 bg-white mt-auto">
-          <div className="max-w-7xl mx-auto flex items-center justify-center">
-            <p>© 2026 UrbanGaon • Secure Enterprise Workspace</p>
+        {/* Clean Shaded Executive Footer */}
+        <footer className="border-t border-slate-200/90 py-3 px-6 text-xs text-slate-500 bg-white/80 backdrop-blur-sm mt-auto shadow-2xs">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-slate-600 font-semibold text-[11px]">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>UrbanGaon Enterprise Cloud Workspace</span>
+            </div>
+            <p className="text-[11px] text-slate-400">© 2026 UrbanGaon • Secure Enterprise Workspace</p>
           </div>
         </footer>
 

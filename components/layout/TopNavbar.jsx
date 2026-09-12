@@ -83,7 +83,7 @@ export default function TopNavbar({
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-9 pr-12 py-1.5 text-xs font-medium rounded-xl bg-slate-100/80 border border-slate-200/80 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/15 focus:bg-white transition-all shadow-2xs"
           />
-          <span className="hidden sm:inline-block absolute right-2.5 top-1/2 -translate-y-1/2 text-[9.5px] font-bold text-slate-400 border border-slate-200 px-1.5 py-0.5 rounded bg-white font-mono pointer-events-none shadow-2xs">
+          <span className="hidden sm:inline-block absolute right-2.5 top-1/2 -translate-y-1/2 text-[9.5px] font-bold text-slate-400 border border-slate-200 px-1.5 py-0.5 rounded bg-white pointer-events-none shadow-2xs">
             ⌘K
           </span>
         </div>

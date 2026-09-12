@@ -158,7 +158,7 @@ export default function TaskCard({
           <GripVertical className="w-3.5 h-3.5 text-slate-300 group-hover:text-slate-400 transition-colors shrink-0" />
 
           {itemNumber && (
-            <span className="px-1.5 py-0.5 rounded-md bg-slate-100 font-mono text-slate-600 font-bold text-[10px] shrink-0 border border-slate-200/80">
+            <span className="px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600 font-semibold text-[10px] shrink-0 border border-slate-200/80">
               #{itemNumber}
             </span>
           )}

@@ -7,6 +7,10 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Inter', 'Roboto', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'sans-serif'],
+        mono: ['Inter', 'Roboto', 'sans-serif'],
+      },
       colors: {
         background: '#f8fafc',
         surface: '#ffffff',

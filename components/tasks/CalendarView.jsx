@@ -127,7 +127,12 @@ export default function CalendarView({
           }
 
           const isToday = cell.dateStr === todayStr;
-          const dayTasks = baseTasks.filter(t => t.due_date === cell.dateStr);
+          const dayTasks = baseTasks.filter(t => {
+            if (t.due_date === cell.dateStr) return true;
+            if (t.start_date === cell.dateStr) return true;
+            if (t.start_date && t.due_date && cell.dateStr >= t.start_date && cell.dateStr <= t.due_date) return true;
+            return false;
+          });
 
           return (
             <div
@@ -181,7 +186,12 @@ export default function CalendarView({
                       }`}
                     >
                       <span className="truncate">{task.title}</span>
-                      <div className="flex items-center gap-0.5 shrink-0">
+                      <div className="flex items-center gap-1 shrink-0">
+                        {task.remarks?.length > 0 && (
+                          <span className="text-[7.5px] font-bold text-indigo-700 bg-white border border-indigo-200 px-1 rounded shadow-2xs">
+                            💬 {task.remarks.length}
+                          </span>
+                        )}
                         {isCompleted && <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />}
                         <span 
                           className="w-3.5 h-3.5 rounded-full text-[8px] flex items-center justify-center text-white font-extrabold"

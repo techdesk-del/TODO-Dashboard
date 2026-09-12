@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { 
   Users, 
   CheckCircle2, 
@@ -26,10 +26,7 @@ import {
   History,
   Award,
   MessageSquare,
-  ChevronLeft,
-  ChevronRight,
-  ChevronDown,
-  MoveHorizontal
+  ChevronDown
 } from 'lucide-react';
 import TaskRemarkModal from '@/components/tasks/TaskRemarkModal';
 import { sounds } from '@/lib/audio';
@@ -144,72 +141,6 @@ export default function CEODashboard({
 
   const pendingCount = allCompanyTasks.filter(t => t.status !== 'completed').length;
   const overdueCount = allCompanyTasks.filter(t => t.status !== 'completed' && t.due_date && new Date(t.due_date).getTime() < new Date(todayStr).getTime()).length;
-
-  // SDE-3 Enterprise Horizontal Matrix Scroll & Swipe Controller
-  const tableScrollContainerRef = useRef(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-
-  // Drag-to-scroll swipe state
-  const [isDragging, setIsDragging] = useState(false);
-  const dragStartX = useRef(0);
-  const dragScrollLeft = useRef(0);
-  const hasDragged = useRef(false);
-
-  const updateScrollIndicators = useCallback(() => {
-    const el = tableScrollContainerRef.current;
-    if (!el) return;
-    const { scrollLeft, scrollWidth, clientWidth } = el;
-    setCanScrollLeft(scrollLeft > 10);
-    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
-    setIsScrolled(scrollLeft > 10);
-  }, []);
-
-  useEffect(() => {
-    updateScrollIndicators();
-    const handleResize = () => updateScrollIndicators();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [filteredCompanyTasks.length, updateScrollIndicators]);
-
-  const handleTableScroll = () => {
-    updateScrollIndicators();
-  };
-
-  const scrollTable = (direction) => {
-    sounds.playClick();
-    const el = tableScrollContainerRef.current;
-    if (!el) return;
-    const scrollAmount = Math.max(340, Math.floor(el.clientWidth * 0.45));
-    el.scrollBy({
-      left: direction === 'left' ? -scrollAmount : scrollAmount,
-      behavior: 'smooth'
-    });
-  };
-
-  const handleMouseDown = (e) => {
-    if (e.button !== 0 || e.target.closest('button, select, input, a, [role="button"]')) return;
-    setIsDragging(true);
-    hasDragged.current = false;
-    dragStartX.current = e.pageX - (tableScrollContainerRef.current?.offsetLeft || 0);
-    dragScrollLeft.current = tableScrollContainerRef.current?.scrollLeft || 0;
-  };
-
-  const handleMouseMove = (e) => {
-    if (!isDragging || !tableScrollContainerRef.current) return;
-    const x = e.pageX - (tableScrollContainerRef.current.offsetLeft || 0);
-    const walk = (x - dragStartX.current) * 1.5;
-    if (Math.abs(walk) > 3) {
-      hasDragged.current = true;
-    }
-    tableScrollContainerRef.current.scrollLeft = dragScrollLeft.current - walk;
-    updateScrollIndicators();
-  };
-
-  const handleMouseUpOrLeave = () => {
-    setIsDragging(false);
-  };
 
   // Export report to CSV
   const handleExportCSV = () => {
@@ -630,142 +561,142 @@ export default function CEODashboard({
               </div>
             </div>
 
-            {/* Reading Grid Table */}
-            <div className="overflow-x-auto border border-slate-200 rounded-xl">
-              <table className="w-full text-left text-xs border-collapse">
+            {/* Reading Grid Table - Perfectly responsive, zero horizontal swipe */}
+            <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
+              <table className="w-full table-fixed text-left text-xs border-collapse">
+                <colgroup>
+                  <col style={{ width: '18%' }} />
+                  <col style={{ width: '22%' }} />
+                  <col style={{ width: '18%' }} />
+                  <col style={{ width: '13%' }} />
+                  <col style={{ width: '17%' }} />
+                  <col style={{ width: '12%' }} />
+                </colgroup>
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold">
-                    <th className="py-3 px-4">Team Member</th>
-                    <th className="py-3 px-4">Current Book & Author</th>
-                    <th className="py-3 px-3 text-center">Total Books</th>
-                    <th className="py-3 px-3 text-center">Completed</th>
-                    <th className="py-3 px-3 text-center">In Progress</th>
-                    <th className="py-3 px-3 text-center">Presented</th>
-                    <th className="py-3 px-4">Today's Status</th>
-                    <th className="py-3 px-4">Total Progress</th>
-                    <th className="py-3 px-4">Latest Insights</th>
-                    <th className="py-3 px-4 text-right">Timeline</th>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold text-[11px]">
+                    <th className="py-2.5 px-3">Team Member</th>
+                    <th className="py-2.5 px-3">Current Book & Author</th>
+                    <th className="py-2.5 px-3">Books Status</th>
+                    <th className="py-2.5 px-3">Today's Status</th>
+                    <th className="py-2.5 px-3">Total Progress</th>
+                    <th className="py-2.5 px-3 text-right">Insights / Logs</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 bg-white">
                   {memberReadingData.map(item => (
-                    <tr key={item.user.id} className="hover:bg-indigo-50/30 transition-colors">
-                      {/* Team Member */}
-                      <td className="py-3 px-4 font-bold text-slate-900 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
+                    <tr key={item.user.id} className="hover:bg-indigo-50/20 transition-colors">
+                      {/* 1. Team Member */}
+                      <td className="py-2.5 px-3 font-bold text-slate-900">
+                        <div className="flex items-center gap-2 min-w-0">
                           <div
                             className="w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-extrabold text-white shadow-2xs shrink-0"
                             style={{ backgroundColor: item.user.color || '#2563eb' }}
                           >
                             {item.user.avatar || '??'}
                           </div>
-                          <div>
-                            <div className="leading-snug">{item.user.name}</div>
-                            <div className="text-[10px] text-slate-400 font-normal">{item.user.role}</div>
+                          <div className="min-w-0 flex-1">
+                            <div className="leading-snug truncate text-[11.5px]" title={item.user.name}>{item.user.name}</div>
+                            <div className="text-[9.5px] text-slate-400 font-normal capitalize truncate">{item.user.role}</div>
                           </div>
                         </div>
                       </td>
 
-                      {/* Current Book & Author */}
-                      <td className="py-3 px-4 max-w-[180px]">
-                        <div className="font-bold text-indigo-950 truncate" title={item.bookTitle}>
+                      {/* 2. Current Book & Author */}
+                      <td className="py-2.5 px-3">
+                        <div className="font-bold text-indigo-950 truncate text-[11.5px]" title={item.bookTitle}>
                           {item.bookTitle}
                         </div>
-                        {item.author && (
-                          <div className="text-[10.5px] text-slate-500 truncate" title={item.author}>
+                        {item.author ? (
+                          <div className="text-[10px] text-slate-500 truncate mt-0.5" title={item.author}>
                             ✍️ {item.author}
                           </div>
+                        ) : (
+                          <div className="text-[10px] text-slate-400 italic">No author specified</div>
                         )}
                       </td>
 
-                      {/* Total Books */}
-                      <td className="py-3 px-3 text-center font-bold text-slate-800">
-                        <span className="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200">
-                          {item.totalBooks}
-                        </span>
+                      {/* 3. Books Status (Consolidated Badges) */}
+                      <td className="py-2.5 px-3">
+                        <div className="flex items-center gap-1 flex-wrap">
+                          <span className="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-slate-100 text-slate-700 border border-slate-200 shadow-2xs" title="Total books assigned">
+                            {item.totalBooks} book{item.totalBooks === 1 ? '' : 's'}
+                          </span>
+                          <span className="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs" title="Completed books">
+                            {item.completedBooks} done
+                          </span>
+                          {item.inProgressBooks > 0 && (
+                            <span className="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-blue-50 text-blue-700 border border-blue-200/80 shadow-2xs" title="In progress">
+                              {item.inProgressBooks} active
+                            </span>
+                          )}
+                          {item.presentedBooks > 0 && (
+                            <span className="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-purple-50 text-purple-700 border border-purple-200/80 shadow-2xs" title="Presented to team">
+                              🎤 {item.presentedBooks}
+                            </span>
+                          )}
+                        </div>
                       </td>
 
-                      {/* Completed Books */}
-                      <td className="py-3 px-3 text-center font-bold text-emerald-700">
-                        <span className="px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200">
-                          {item.completedBooks}
-                        </span>
-                      </td>
-
-                      {/* In Progress Books */}
-                      <td className="py-3 px-3 text-center font-bold text-blue-700">
-                        <span className="px-2 py-0.5 rounded-md bg-blue-50 border border-blue-200">
-                          {item.inProgressBooks}
-                        </span>
-                      </td>
-
-                      {/* Presented */}
-                      <td className="py-3 px-3 text-center font-bold text-purple-700">
-                        <span className="px-2 py-0.5 rounded-md bg-purple-50 border border-purple-200">
-                          {item.presentedBooks}
-                        </span>
-                      </td>
-
-                      {/* Today's Reading Status */}
-                      <td className="py-3 px-4 whitespace-nowrap">
+                      {/* 4. Today's Reading Status */}
+                      <td className="py-2.5 px-3">
                         {item.todayLog ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-900 font-black text-xs border border-emerald-300 shadow-2xs">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
-                            +{item.todayLog.pages_read} pgs
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-100 text-emerald-900 font-bold text-[10.5px] border border-emerald-300 shadow-2xs">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-700 shrink-0" />
+                            <span>+{item.todayLog.pages_read} pgs</span>
                           </span>
                         ) : item.isAllCompleted ? (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 font-bold text-xs border border-emerald-200">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                            Book Completed
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 font-bold text-[10.5px] border border-emerald-200">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
+                            <span>Finished</span>
                           </span>
                         ) : !item.task || item.totalBooks === 0 ? (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-50 text-slate-400 font-medium text-xs border border-slate-200">
-                            ⚪ No Active Book
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-50 text-slate-400 font-medium text-[10.5px] border border-slate-200">
+                            ⚪ Inactive
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 font-bold text-xs border border-amber-200">
-                            ⏳ Pending Today
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-50 text-amber-800 font-bold text-[10.5px] border border-amber-200">
+                            ⏳ Pending
                           </span>
                         )}
                       </td>
 
-                      {/* Overall Progress */}
-                      <td className="py-3 px-4 min-w-[130px]">
-                        <div className="flex items-center justify-between text-[11px] font-bold text-slate-700 mb-1">
-                          <span>{item.totalPagesRead} / {item.totalPages || '—'} pgs</span>
-                          <span className="text-indigo-600 font-black">{item.percent}%</span>
+                      {/* 5. Overall Progress */}
+                      <td className="py-2.5 px-3">
+                        <div className="flex items-center justify-between text-[10.5px] font-bold text-slate-700 mb-1">
+                          <span className="truncate">{item.totalPagesRead} / {item.totalPages || '—'} pgs</span>
+                          <span className="text-indigo-600 font-black ml-1 shrink-0">{item.percent}%</span>
                         </div>
                         <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200/60">
                           <div
-                            className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-full"
+                            className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-full transition-all duration-300"
                             style={{ width: `${item.percent}%` }}
                           />
                         </div>
                       </td>
 
-                      {/* Latest Insights / Learnings */}
-                      <td className="py-3 px-4 max-w-[160px]">
-                        {item.latestLog?.takeaways ? (
-                          <p className="text-[11px] text-slate-700 bg-slate-50 p-1.5 rounded-lg border border-slate-200/70 italic line-clamp-2" title={item.latestLog.takeaways}>
-                            "{item.latestLog.takeaways}"
-                          </p>
-                        ) : (
-                          <span className="text-[11px] text-slate-400 italic">—</span>
-                        )}
-                      </td>
-
-                      {/* History Action */}
-                      <td className="py-3 px-4 text-right whitespace-nowrap">
-                        <button
-                          onClick={() => {
-                            sounds.playClick();
-                            setSelectedReadingHistoryTask(item);
-                          }}
-                          className="px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs border border-indigo-200 transition-colors inline-flex items-center gap-1 cursor-pointer"
-                        >
-                          <History className="w-3 h-3" />
-                          <span>Logs ({item.logs.length})</span>
-                        </button>
+                      {/* 6. Insights & History Action */}
+                      <td className="py-2.5 px-3 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          {item.latestLog?.takeaways && (
+                            <span 
+                              className="cursor-pointer text-slate-400 hover:text-indigo-600 p-1 rounded hover:bg-indigo-50 transition-colors"
+                              title={`Latest Takeaway: "${item.latestLog.takeaways}"`}
+                            >
+                              <MessageSquare className="w-3.5 h-3.5 text-indigo-500" />
+                            </span>
+                          )}
+                          <button
+                            onClick={() => {
+                              sounds.playClick();
+                              setSelectedReadingHistoryTask(item);
+                            }}
+                            className="px-2 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[10.5px] border border-indigo-200 transition-all inline-flex items-center gap-1 cursor-pointer active:scale-95 shadow-2xs"
+                            title="View reading timeline and logs"
+                          >
+                            <History className="w-3 h-3 shrink-0" />
+                            <span>Logs ({item.logs.length})</span>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -857,298 +788,240 @@ export default function CEODashboard({
               </button>
             ))}
           </div>
-
-          {/* Minimalist Executive Column Navigator */}
-          {(canScrollLeft || canScrollRight) && (
-            <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium ml-auto">
-              <span className="text-[11px] text-slate-400 hidden sm:inline">Pan matrix:</span>
-              <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
-                <button
-                  onClick={() => scrollTable('left')}
-                  disabled={!canScrollLeft}
-                  className="p-1 rounded-md text-slate-600 hover:text-blue-600 hover:bg-white disabled:opacity-25 disabled:cursor-not-allowed transition-all cursor-pointer"
-                  title="Scroll Left"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  onClick={() => scrollTable('right')}
-                  disabled={!canScrollRight}
-                  className="p-1 rounded-md text-slate-600 hover:text-blue-600 hover:bg-white disabled:opacity-25 disabled:cursor-not-allowed transition-all cursor-pointer"
-                  title="Scroll Right"
-                >
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* Tasks Table with Dynamic Elevation & Floating Micro-Glide */}
-        <div className="relative border border-slate-200 rounded-xl overflow-hidden group/table shadow-2xs">
-          
-          {/* Floating Glide Left Arrow (Appears when scrolled right) */}
-          {canScrollLeft && (
-            <button
-              onClick={() => scrollTable('left')}
-              className="absolute left-[295px] top-1/2 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-md hover:bg-blue-600 hover:text-white hover:border-blue-600 text-slate-700 flex items-center justify-center transition-all duration-150 cursor-pointer hover:scale-105"
-              title="Scroll back left"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-          )}
-
-          {/* Floating Glide Right Arrow (Appears when more columns exist to the right) */}
-          {canScrollRight && (
-            <button
-              onClick={() => scrollTable('right')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-white/95 backdrop-blur-md border border-slate-200/90 shadow-md hover:bg-blue-600 hover:text-white hover:border-blue-600 text-slate-700 flex items-center justify-center transition-all duration-150 cursor-pointer hover:scale-105"
-              title="Scroll to view Status & Actions"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          )}
-
-          {/* Scrollable Matrix */}
-          <div 
-            ref={tableScrollContainerRef}
-            onScroll={handleTableScroll}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUpOrLeave}
-            onMouseLeave={handleMouseUpOrLeave}
-            className={`overflow-x-auto transition-all select-none ${
-              isDragging ? 'cursor-grabbing' : 'cursor-default'
-            }`}
-            style={{ scrollBehavior: isDragging ? 'auto' : 'smooth' }}
-          >
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-slate-50/90 text-slate-500 font-semibold border-b border-slate-200">
-                  <th className={`py-3.5 px-4 sticky left-0 z-20 bg-slate-50 min-w-[260px] max-w-[340px] text-xs font-bold text-slate-700 transition-shadow duration-200 ${
-                    isScrolled ? 'border-r border-slate-200 shadow-[4px_0_12px_-2px_rgba(0,0,0,0.08)]' : 'border-r border-slate-200/60'
-                  }`}>
-                    Task Title & Details
-                  </th>
-                  <th className="py-3.5 px-3.5 text-xs font-semibold whitespace-nowrap">Assignee</th>
-                  <th className="py-3.5 px-3 text-xs font-semibold whitespace-nowrap">Priority</th>
-                  <th className="py-3.5 px-3 text-xs font-semibold whitespace-nowrap">Due Date</th>
-                  <th className="py-3.5 px-3.5 text-xs font-semibold min-w-[160px]">💬 Remarks & Notes</th>
-                  <th className="py-3.5 px-3.5 text-xs font-semibold whitespace-nowrap">Status & Quick Change</th>
-                  <th className="py-3.5 px-4 text-xs font-semibold text-right whitespace-nowrap">Actions</th>
+        {/* Tasks Table - Zero-Scroll Executive Table-Fixed Layout */}
+        <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
+          <table className="w-full table-fixed text-left text-xs border-collapse">
+            <colgroup>
+              <col style={{ width: '27%' }} />
+              <col style={{ width: '13%' }} />
+              <col style={{ width: '10%' }} />
+              <col style={{ width: '12%' }} />
+              <col style={{ width: '15%' }} />
+              <col style={{ width: '13%' }} />
+              <col style={{ width: '10%' }} />
+            </colgroup>
+            <thead>
+              <tr className="bg-slate-50/90 text-slate-500 font-semibold border-b border-slate-200 text-[11px]">
+                <th className="py-3 px-3">Task Title & Details</th>
+                <th className="py-3 px-2.5">Assignee</th>
+                <th className="py-3 px-2">Priority</th>
+                <th className="py-3 px-2.5">Due Date</th>
+                <th className="py-3 px-2.5">💬 Remarks</th>
+                <th className="py-3 px-2">Status</th>
+                <th className="py-3 px-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 bg-white">
+              {filteredCompanyTasks.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="py-12 text-center text-slate-400">
+                    No tasks found matching your filter.
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredCompanyTasks.length === 0 ? (
-                  <tr>
-                    <td colSpan="7" className="py-12 text-center text-slate-400">
-                      No tasks found matching your filter.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredCompanyTasks.map(task => {
-                    const isCompleted = task.status === 'completed';
-                    const isOverdue = !isCompleted && task.due_date && new Date(task.due_date).getTime() < new Date(todayStr).getTime();
-                    const isBook = Boolean(task.is_book_reading);
-                    const booksList = Array.isArray(task.books_list) ? task.books_list : [];
-                    const totalBooks = Number(task.book_stats?.total_books) || booksList.length || 0;
-                    const completedBooks = Number(task.book_stats?.completed) || booksList.filter(b => b.status === 'completed').length || (task.status === 'completed' ? 1 : 0);
-                    const inProgressBooks = Number(task.book_stats?.in_progress) || booksList.filter(b => b.status === 'in_progress' || b.status !== 'completed').length || (task.status !== 'completed' ? 1 : 0);
-                    const totalPages = Number(task.book_stats?.total_pages) || 0;
-                    const totalPagesRead = Number(task.book_stats?.total_pages_read) || 0;
-                    const percent = totalPages > 0 ? Math.min(100, Math.round((totalPagesRead / totalPages) * 100)) : 0;
+              ) : (
+                filteredCompanyTasks.map(task => {
+                  const isCompleted = task.status === 'completed';
+                  const isOverdue = !isCompleted && task.due_date && new Date(task.due_date).getTime() < new Date(todayStr).getTime();
+                  const isBook = Boolean(task.is_book_reading);
+                  const booksList = Array.isArray(task.books_list) ? task.books_list : [];
+                  const totalBooks = Number(task.book_stats?.total_books) || booksList.length || 0;
+                  const completedBooks = Number(task.book_stats?.completed) || booksList.filter(b => b.status === 'completed').length || (task.status === 'completed' ? 1 : 0);
+                  const inProgressBooks = Number(task.book_stats?.in_progress) || booksList.filter(b => b.status === 'in_progress' || b.status !== 'completed').length || (task.status !== 'completed' ? 1 : 0);
+                  const totalPages = Number(task.book_stats?.total_pages) || 0;
+                  const totalPagesRead = Number(task.book_stats?.total_pages_read) || 0;
+                  const percent = totalPages > 0 ? Math.min(100, Math.round((totalPagesRead / totalPages) * 100)) : 0;
 
-                    return (
-                      <tr key={task.id} className="group hover:bg-slate-50/80 transition-colors">
-                        
-                        {/* Title & Description - Sticky on the left with dynamic elevation */}
-                        <td className={`py-3.5 px-4 min-w-[260px] max-w-[340px] sticky left-0 z-10 bg-white group-hover:bg-slate-50 transition-shadow duration-200 ${
-                          isScrolled ? 'border-r border-slate-200 shadow-[4px_0_12px_-2px_rgba(0,0,0,0.06)]' : 'border-r border-slate-100'
-                        }`}>
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <h4 className={`font-semibold text-xs tracking-tight leading-snug ${isCompleted ? 'line-through text-slate-400' : 'text-slate-900'}`}>
-                                {task.title}
-                              </h4>
-                              {isBook && (
-                                <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-2xs">
-                                  📚 Book Track
-                                </span>
-                              )}
-                            </div>
-                            {task.description && (
-                              <p className="text-[11px] text-slate-500 line-clamp-1 font-normal">
-                                {task.description}
-                              </p>
-                            )}
+                  return (
+                    <tr key={task.id} className="group hover:bg-slate-50/80 transition-colors">
+                      
+                      {/* 1. Title & Details */}
+                      <td className="py-3 px-3">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <h4 className={`font-semibold text-xs tracking-tight leading-snug truncate ${isCompleted ? 'line-through text-slate-400' : 'text-slate-900'}`} title={task.title}>
+                              {task.title}
+                            </h4>
                             {isBook && (
-                              <div className="flex items-center gap-2 pt-0.5 flex-wrap">
-                                <span className="inline-flex items-center gap-1 text-[10.5px] font-bold text-indigo-800 bg-indigo-50/90 px-2 py-0.5 rounded-md border border-indigo-200/70">
-                                  📖 {completedBooks}/{totalBooks} Books ({percent}%)
-                                </span>
-                                {totalPages > 0 && (
-                                  <span className="text-[10.5px] text-slate-500 font-medium">
-                                    {totalPagesRead}/{totalPages} pgs
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                            {!isBook && Array.isArray(task.tags) && task.tags.length > 0 && (
-                              <div className="flex flex-wrap gap-1 pt-0.5">
-                                {task.tags.map((t, idx) => (
-                                  <span key={idx} className="text-[9.5px] font-medium bg-slate-100/90 text-slate-600 px-2 py-0.5 rounded-full border border-slate-200/60">
-                                    #{t}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </td>
-
-                        {/* Assignee */}
-                        <td className="py-3.5 px-3.5 whitespace-nowrap">
-                          <div className="flex items-center gap-2">
-                            <div 
-                              className="w-6 h-6 rounded-full flex items-center justify-center font-extrabold text-white text-[10px] shadow-2xs shrink-0 ring-2 ring-white"
-                              style={{ backgroundColor: task.assignee_color || '#2563eb' }}
-                            >
-                              {task.assignee_avatar || '??'}
-                            </div>
-                            <span className="font-semibold text-slate-800 text-xs tracking-tight">{task.assignee_name}</span>
-                          </div>
-                        </td>
-
-                        {/* Priority */}
-                        <td className="py-3.5 px-3 whitespace-nowrap">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold capitalize ${
-                            task.priority === 'urgent' ? 'bg-rose-50 text-rose-700 border border-rose-200/70' :
-                            task.priority === 'high' ? 'bg-amber-50 text-amber-700 border border-amber-200/70' :
-                            task.priority === 'medium' ? 'bg-blue-50 text-blue-700 border border-blue-200/70' :
-                            'bg-slate-50 text-slate-600 border border-slate-200/70'
-                          }`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${
-                              task.priority === 'urgent' ? 'bg-rose-600 animate-pulse' :
-                              task.priority === 'high' ? 'bg-amber-500' :
-                              task.priority === 'medium' ? 'bg-blue-500' : 'bg-slate-400'
-                            }`} />
-                            {task.priority || 'Normal'}
-                          </span>
-                        </td>
-
-                        {/* Due Date & Overdue Badge */}
-                        <td className="py-3.5 px-3 whitespace-nowrap">
-                          <div className="space-y-1">
-                            <span className="text-slate-700 text-xs font-medium flex items-center gap-1.5">
-                              <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                              {task.due_date ? new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No Date'}
-                            </span>
-                            {isOverdue && (
-                              <span className="text-[10px] font-bold px-1.5 py-0.2 bg-rose-50 text-rose-700 border border-rose-200 rounded inline-flex items-center gap-1">
-                                <Flame className="w-2.5 h-2.5 text-rose-600 shrink-0" /> Overdue
+                              <span className="text-[9px] font-bold px-1 py-0.2 rounded bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-2xs shrink-0">
+                                📚 Book
                               </span>
                             )}
                           </div>
-                        </td>
-
-                        {/* Remarks & Notes */}
-                        <td className="py-3.5 px-3.5 max-w-[200px]">
-                          {task.latest_remark || task.remarks?.[0]?.text ? (
-                            <div 
-                              onClick={() => { sounds.playClick(); setActiveRemarkTask(task); }}
-                              className="p-2 rounded-xl bg-indigo-50/50 hover:bg-indigo-100/70 border border-indigo-100/80 text-xs text-indigo-950 cursor-pointer space-y-0.5 transition-all duration-150 hover:shadow-2xs"
-                              title="Click to view full remark history"
-                            >
-                              <div className="flex items-center justify-between text-[10px]">
-                                <span className="font-bold text-indigo-700 flex items-center gap-1">
-                                  <MessageSquare className="w-3 h-3 text-indigo-600" />
-                                  {task.remarks?.[0]?.author_name || 'Remark'}
-                                </span>
-                                {task.remarks?.length > 1 && (
-                                  <span className="px-1.5 py-0.2 rounded-full bg-indigo-200/90 font-extrabold text-[9px] text-indigo-900">
-                                    {task.remarks.length}
-                                  </span>
-                                )}
-                              </div>
-                              <p className="italic text-slate-600 truncate text-[11px]">
-                                "{task.latest_remark || task.remarks?.[0]?.text}"
-                              </p>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() => { sounds.playClick(); setActiveRemarkTask(task); }}
-                              className="px-2.5 py-1.5 rounded-xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50/70 border border-slate-200/80 hover:border-indigo-200 text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer transition-all duration-150"
-                            >
-                              <MessageSquare className="w-3.5 h-3.5" />
-                              <span>+ Add Note</span>
-                            </button>
+                          {task.description && (
+                            <p className="text-[10.5px] text-slate-500 truncate font-normal" title={task.description}>
+                              {task.description}
+                            </p>
                           )}
-                        </td>
+                          {isBook && (
+                            <div className="flex items-center gap-1.5 pt-0.5 flex-wrap">
+                              <span className="inline-flex items-center gap-1 text-[9.5px] font-bold text-indigo-800 bg-indigo-50/90 px-1.5 py-0.2 rounded border border-indigo-200/70">
+                                📖 {completedBooks}/{totalBooks} Books ({percent}%)
+                              </span>
+                              {totalPages > 0 && (
+                                <span className="text-[9.5px] text-slate-500 font-medium">
+                                  {totalPagesRead}/{totalPages} pgs
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          {!isBook && Array.isArray(task.tags) && task.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 pt-0.5">
+                              {task.tags.map((t, idx) => (
+                                <span key={idx} className="text-[9px] font-medium bg-slate-100/90 text-slate-600 px-1.5 py-0.2 rounded-full border border-slate-200/60">
+                                  #{t}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </td>
 
-                        {/* Status Dropdown (Direct Executive Modify with Custom Arrow) */}
-                        <td className="py-3.5 px-3.5 whitespace-nowrap">
-                          <div className="relative inline-block">
-                            <select
-                              value={task.status}
-                              onChange={(e) => {
-                                sounds.playClick();
-                                onStatusChange(task.id, e.target.value);
-                              }}
-                              className={`text-xs font-bold rounded-xl pl-3 pr-7 py-1.5 border appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-1 transition-all ${
-                                task.status === 'completed' ? 'bg-emerald-50 text-emerald-800 border-emerald-300/80 focus:ring-emerald-400' :
-                                task.status === 'in_progress' ? 'bg-blue-50 text-blue-800 border-blue-300/80 focus:ring-blue-400' :
-                                task.status === 'blocked' ? 'bg-rose-50 text-rose-800 border-rose-300/80 focus:ring-rose-400' :
-                                'bg-slate-50 text-slate-700 border-slate-300/80 focus:ring-slate-400'
-                              }`}
-                            >
-                              <option value="todo">To Do</option>
-                              <option value="in_progress">In Progress</option>
-                              <option value="blocked">Blocked</option>
-                              <option value="completed">Completed ✓</option>
-                            </select>
-                            <ChevronDown className="w-3.5 h-3.5 text-slate-500 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      {/* 2. Assignee */}
+                      <td className="py-3 px-2.5">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <div 
+                            className="w-5 h-5 rounded-full flex items-center justify-center font-extrabold text-white text-[9px] shadow-2xs shrink-0 ring-1 ring-white"
+                            style={{ backgroundColor: task.assignee_color || '#2563eb' }}
+                          >
+                            {task.assignee_avatar || '??'}
                           </div>
-                        </td>
+                          <span className="font-semibold text-slate-800 text-[11.5px] truncate" title={task.assignee_name}>{task.assignee_name}</span>
+                        </div>
+                      </td>
 
-                        {/* Action Buttons */}
-                        <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                          <div className="flex items-center justify-end gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
-                            <button
-                              onClick={() => { sounds.playClick(); setActiveRemarkTask(task); }}
-                              title={task.remarks?.length > 0 ? `${task.remarks.length} Remark(s)` : 'Add Remark'}
-                              className={`p-1.5 rounded-lg transition-all cursor-pointer ${
-                                task.remarks?.length > 0 
-                                  ? 'bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-2xs' 
-                                  : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-100'
-                              }`}
-                            >
-                              <MessageSquare className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => onEditTask(task)}
-                              title="Edit Task Details"
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all cursor-pointer"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => { sounds.playClick(); onDeleteTask(task.id); }}
-                              title="Delete Task"
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all cursor-pointer"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                      {/* 3. Priority */}
+                      <td className="py-3 px-2">
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold capitalize ${
+                          task.priority === 'urgent' ? 'bg-rose-50 text-rose-700 border border-rose-200/70' :
+                          task.priority === 'high' ? 'bg-amber-50 text-amber-700 border border-amber-200/70' :
+                          task.priority === 'medium' ? 'bg-blue-50 text-blue-700 border border-blue-200/70' :
+                          'bg-slate-50 text-slate-600 border border-slate-200/70'
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                            task.priority === 'urgent' ? 'bg-rose-600 animate-pulse' :
+                            task.priority === 'high' ? 'bg-amber-500' :
+                            task.priority === 'medium' ? 'bg-blue-500' : 'bg-slate-400'
+                          }`} />
+                          <span>{task.priority || 'Normal'}</span>
+                        </span>
+                      </td>
+
+                      {/* 4. Due Date */}
+                      <td className="py-3 px-2.5 text-[11px] text-slate-600">
+                        <div className="flex items-center gap-1 truncate" title={task.due_date ? new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No date'}>
+                          <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
+                          <span className="truncate">
+                            {task.due_date
+                              ? new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                              : (task.start_date ? `From ${new Date(task.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : 'No date')}
+                          </span>
+                        </div>
+                        {isOverdue && (
+                          <span className="text-[9px] font-bold px-1 py-0.2 bg-rose-50 text-rose-700 border border-rose-200 rounded inline-flex items-center gap-0.5 mt-0.5">
+                            <Flame className="w-2.5 h-2.5 text-rose-600 shrink-0" /> Overdue
+                          </span>
+                        )}
+                      </td>
+
+                      {/* 5. Remarks */}
+                      <td className="py-3 px-2.5">
+                        {task.latest_remark || task.remarks?.[0]?.text ? (
+                          <div 
+                            onClick={() => { sounds.playClick(); setActiveRemarkTask(task); }}
+                            className="p-1.5 rounded-lg bg-indigo-50/50 hover:bg-indigo-100/70 border border-indigo-100/80 text-xs text-indigo-950 cursor-pointer space-y-0.5 transition-all duration-150 hover:shadow-2xs"
+                            title="Click to view full remark history"
+                          >
+                            <div className="flex items-center justify-between text-[9.5px]">
+                              <span className="font-bold text-indigo-700 flex items-center gap-1 truncate">
+                                <MessageSquare className="w-2.5 h-2.5 text-indigo-600 shrink-0" />
+                                <span className="truncate">{task.remarks?.[0]?.author_name || 'Remark'}</span>
+                              </span>
+                              {task.remarks?.length > 1 && (
+                                <span className="px-1 py-0.1 rounded-full bg-indigo-200/90 font-extrabold text-[8.5px] text-indigo-900 shrink-0">
+                                  +{task.remarks.length - 1}
+                                </span>
+                              )}
+                            </div>
+                            <p className="italic text-slate-600 truncate text-[10.5px]">
+                              "{task.latest_remark || task.remarks?.[0]?.text}"
+                            </p>
                           </div>
-                        </td>
+                        ) : (
+                          <button
+                            onClick={() => { sounds.playClick(); setActiveRemarkTask(task); }}
+                            className="px-2 py-1 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50/70 border border-slate-200/80 hover:border-indigo-200 text-[10.5px] font-semibold inline-flex items-center gap-1 cursor-pointer transition-all"
+                          >
+                            <MessageSquare className="w-3 h-3 shrink-0" />
+                            <span>+ Note</span>
+                          </button>
+                        )}
+                      </td>
 
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+                      {/* 6. Status Dropdown */}
+                      <td className="py-3 px-2">
+                        <div className="relative inline-block w-full max-w-[110px]">
+                          <select
+                            value={task.status}
+                            onChange={(e) => {
+                              sounds.playClick();
+                              onStatusChange(task.id, e.target.value);
+                            }}
+                            className={`text-[10.5px] font-bold rounded-lg pl-2 pr-6 py-1 border appearance-none cursor-pointer focus:outline-none focus:ring-1 transition-all w-full truncate ${
+                              task.status === 'completed' ? 'bg-emerald-50 text-emerald-800 border-emerald-300/80' :
+                              task.status === 'in_progress' ? 'bg-blue-50 text-blue-800 border-blue-300/80' :
+                              task.status === 'blocked' ? 'bg-rose-50 text-rose-800 border-rose-300/80' :
+                              'bg-slate-50 text-slate-700 border-slate-300/80'
+                            }`}
+                          >
+                            <option value="todo">To Do</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="blocked">Blocked</option>
+                            <option value="completed">Done ✓</option>
+                          </select>
+                          <ChevronDown className="w-3 h-3 text-slate-500 absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        </div>
+                      </td>
+
+                      {/* 7. Action Buttons */}
+                      <td className="py-3 px-3 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => { sounds.playClick(); setActiveRemarkTask(task); }}
+                            title={task.remarks?.length > 0 ? `${task.remarks.length} Remark(s)` : 'Add Remark'}
+                            className={`p-1 rounded-md transition-all cursor-pointer ${
+                              task.remarks?.length > 0 
+                                ? 'bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-2xs' 
+                                : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-100'
+                            }`}
+                          >
+                            <MessageSquare className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => onEditTask(task)}
+                            title="Edit Task Details"
+                            className="p-1 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all cursor-pointer"
+                          >
+                            <Edit2 className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => { sounds.playClick(); onDeleteTask(task.id); }}
+                            title="Delete Task"
+                            className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all cursor-pointer"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
-    </div>
 
       {/* SECTION 2: TEAM ATTENDANCE & EOD BREAKDOWN */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -1161,66 +1034,75 @@ export default function CEODashboard({
           </span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
+        <div className="overflow-hidden">
+          <table className="w-full table-fixed text-left text-xs border-collapse">
+            <colgroup>
+              <col style={{ width: '26%' }} />
+              <col style={{ width: '13%' }} />
+              <col style={{ width: '13%' }} />
+              <col style={{ width: '10%' }} />
+              <col style={{ width: '10%' }} />
+              <col style={{ width: '16%' }} />
+              <col style={{ width: '12%' }} />
+            </colgroup>
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-100 text-slate-500 font-semibold">
-                <th className="py-3 px-4">Member</th>
-                <th className="py-3 px-4">Presence</th>
-                <th className="py-3 px-4">Role</th>
-                <th className="py-3 px-4 text-center">Completed</th>
-                <th className="py-3 px-4 text-center">Pending</th>
-                <th className="py-3 px-4">EOD ({selectedDate})</th>
-                <th className="py-3 px-4 text-right">Actions</th>
+              <tr className="bg-slate-50/90 border-b border-slate-100 text-slate-500 font-semibold text-[11px]">
+                <th className="py-3 px-3.5">Member</th>
+                <th className="py-3 px-2.5">Presence</th>
+                <th className="py-3 px-2.5">Role</th>
+                <th className="py-3 px-2 text-center">Completed</th>
+                <th className="py-3 px-2 text-center">Pending</th>
+                <th className="py-3 px-2.5">EOD ({selectedDate})</th>
+                <th className="py-3 px-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 bg-white">
               {memberList.map((member) => (
                 <tr 
                   key={member.id}
                   className="hover:bg-slate-50/70 transition-colors"
                 >
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-2.5">
+                  <td className="py-2.5 px-3.5">
+                    <div className="flex items-center gap-2 min-w-0">
                       <div 
-                        className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white shadow-xs shrink-0 text-xs"
+                        className="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-white shadow-2xs shrink-0 text-xs"
                         style={{ backgroundColor: member.color || '#2563eb' }}
                       >
                         {member.avatar}
                       </div>
-                      <div>
-                        <span className="font-bold text-slate-900 block">{member.name}</span>
-                        <span className="text-[11px] text-slate-400">{member.email}</span>
+                      <div className="min-w-0 flex-1">
+                        <span className="font-bold text-slate-900 block truncate text-xs" title={member.name}>{member.name}</span>
+                        <span className="text-[10px] text-slate-400 block truncate" title={member.email}>{member.email}</span>
                       </div>
                     </div>
                   </td>
 
-                  <td className="py-3 px-4">
+                  <td className="py-2.5 px-2.5">
                     {member.status === 'online' ? (
-                      <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full shadow-2xs">
+                      <span className="inline-flex items-center gap-1 text-[10.5px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full shadow-2xs">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                         Active
                       </span>
                     ) : member.status === 'logged_out' ? (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
-                        Away / Clocked Out
+                      <span className="inline-flex items-center gap-1 text-[10.5px] font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
+                        Away
                       </span>
                     ) : (
-                      <span className="inline-flex items-center text-[11px] font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+                      <span className="inline-flex items-center text-[10.5px] font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
                         Offline
                       </span>
                     )}
                   </td>
 
-                  <td className="py-3 px-4 text-slate-600 font-medium capitalize">
+                  <td className="py-2.5 px-2.5 text-slate-600 font-medium capitalize truncate text-xs" title={getCleanRole(member.role)}>
                     {getCleanRole(member.role)}
                   </td>
 
-                  <td className="py-3 px-4 text-center font-bold text-emerald-600">
+                  <td className="py-2.5 px-2 text-center font-bold text-emerald-600 text-xs">
                     {member.completed_tasks}
                   </td>
 
-                  <td className="py-3 px-4 text-center font-bold text-amber-600">
+                  <td className="py-2.5 px-2 text-center font-bold text-amber-600 text-xs">
                     <button
                       onClick={() => setTaskMemberFilter(member.id)}
                       className="hover:underline cursor-pointer"
@@ -1230,29 +1112,29 @@ export default function CEODashboard({
                     </button>
                   </td>
 
-                  <td className="py-3 px-4">
+                  <td className="py-2.5 px-2.5">
                     {member.has_submitted_eod ? (
                       <button
                         onClick={() => { sounds.playClick(); setActiveReportModal(member.eod_report); }}
-                        className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 px-2.5 py-1 rounded-lg transition-all cursor-pointer"
+                        className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 px-2 py-0.5 rounded-lg transition-all cursor-pointer shadow-2xs"
                       >
-                        <CheckCircle className="w-3.5 h-3.5" />
-                        <span>View EOD Report</span>
+                        <CheckCircle className="w-3 h-3 text-emerald-600 shrink-0" />
+                        <span>View EOD</span>
                       </button>
                     ) : (
-                      <span className="text-[11px] text-slate-400 italic">
-                        Not submitted on {selectedDate}
+                      <span className="text-[10.5px] text-slate-400 italic">
+                        Not submitted
                       </span>
                     )}
                   </td>
 
-                  <td className="py-3 px-4 text-right">
+                  <td className="py-2.5 px-3 text-right">
                     <button
                       onClick={() => onSelectMemberFilter(member.id)}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 font-bold hover:bg-blue-100 transition-all cursor-pointer text-xs"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 font-bold hover:bg-blue-100 transition-all cursor-pointer text-[11px] shadow-2xs active:scale-95"
                     >
-                      <Eye className="w-3.5 h-3.5" />
-                      <span>Open Board</span>
+                      <Eye className="w-3 h-3" />
+                      <span>Board</span>
                     </button>
                   </td>
                 </tr>

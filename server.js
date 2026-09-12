@@ -111,7 +111,7 @@ app.prepare().then(async () => {
     if (err.code === 'EADDRINUSE') {
       console.error(`\n❌ [PORT CONFLICT] Port ${port} is already in use by another process.`);
       console.error(`👉 Run this PowerShell command to free up port ${port}:`);
-      console.error(`   Stop-Process -Id (Get-NetTCPConnection -LocalPort ${port}).OwningProcess -Force\n`);
+      console.error(`   Get-NetTCPConnection -LocalPort ${port} -State Listen | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }\n`);
       process.exit(1);
     } else {
       console.error('Server error:', err);

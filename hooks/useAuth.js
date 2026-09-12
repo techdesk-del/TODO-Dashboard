@@ -28,7 +28,7 @@ export function useAuth() {
     setCurrentUser(user);
     try {
       localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(user));
-    } catch (e) {}
+    } catch (e) { }
   }, []);
 
   const logout = useCallback(() => {
@@ -38,13 +38,13 @@ export function useAuth() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId: currentUser.id })
-        }).catch(() => {});
-      } catch (e) {}
+        }).catch(() => { });
+      } catch (e) { }
     }
     setCurrentUser(null);
     try {
       localStorage.removeItem(STORAGE_KEYS.AUTH_USER);
-    } catch (e) {}
+    } catch (e) { }
   }, [currentUser?.id]);
 
   // Maintain heartbeat mesh
@@ -57,7 +57,7 @@ export function useAuth() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: currentUser.id })
-      }).catch(() => {});
+      }).catch(() => { });
     };
 
     sendHeartbeat();
@@ -74,7 +74,7 @@ export function useAuth() {
             headers: { 'Content-Type': 'application/json' },
             body: payload,
             keepalive: true
-          }).catch(() => {});
+          }).catch(() => { });
         }
       }
     };
