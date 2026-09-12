@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
+  Menu,
   Search, 
   Plus, 
   FolderGit2, 
@@ -24,7 +25,8 @@ export default function TopNavbar({
   searchQuery, 
   setSearchQuery,
   viewMode,
-  setViewMode
+  setViewMode,
+  onOpenMobileSidebar
 }) {
   const [eodStatus, setEodStatus] = useState(() => checkEodAllowed());
 
@@ -39,64 +41,87 @@ export default function TopNavbar({
   const isAakash = currentUser?.id === 'usr_aakash' || currentUser?.name?.toLowerCase().includes('aakash');
 
   return (
-    <header className="glass-header sticky top-0 z-40 h-14 px-4 sm:px-6 flex items-center justify-between gap-4 sm:gap-8 shadow-[0_1px_2px_rgba(0,0,0,0.03)] select-none">
+    <header className="glass-header sticky top-0 z-40 h-14 px-3 sm:px-5 lg:px-6 flex items-center justify-between gap-2 sm:gap-4 shadow-[0_1px_2px_rgba(0,0,0,0.03)] select-none">
       
-      {/* Left: View Mode Switch & Fixed-Width Search Bar */}
-      <div className="flex items-center gap-3 shrink-0">
+      {/* Left: Hamburger (Mobile), Logo (Mobile), View Mode Switch & Responsive Search */}
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         
+        {/* Mobile Hamburger Drawer Trigger (< lg) */}
+        {onOpenMobileSidebar && (
+          <button
+            onClick={() => { sounds.playClick(); onOpenMobileSidebar(); }}
+            className="lg:hidden p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200/80 transition-all cursor-pointer shrink-0"
+            title="Open Menu"
+            aria-label="Open Navigation Menu"
+          >
+            <Menu className="w-4 h-4" />
+          </button>
+        )}
+
+        {/* Small Screen Brand Logo (shown only when persistent sidebar is hidden) */}
+        <div className="lg:hidden flex items-center shrink-0 mr-0.5">
+          <img 
+            src="/urbangaon-logo.jpg" 
+            alt="UrbanGaon" 
+            className="h-7 w-auto object-contain max-w-[105px] hidden xs:block"
+          />
+        </div>
+
         {/* View Mode Toggle: [ Task Board | 📅 Sprint Calendar ] */}
         {setViewMode && (
           <div className="flex items-center bg-slate-100/90 p-0.5 rounded-xl border border-slate-200/80 shrink-0">
             <button
               onClick={() => { sounds.playClick(); setViewMode('kanban'); }}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 viewMode === 'kanban'
                   ? 'bg-white text-slate-900 shadow-xs'
                   : 'text-slate-500 hover:text-slate-800'
               }`}
+              title="Task Board"
             >
               <Layers className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Task Board</span>
+              <span className="hidden md:inline">Task Board</span>
             </button>
 
             <button
               onClick={() => { sounds.playClick(); setViewMode('calendar'); }}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 viewMode === 'calendar'
                   ? 'bg-white text-slate-900 shadow-xs'
                   : 'text-slate-500 hover:text-slate-800'
               }`}
+              title="Sprint Calendar"
             >
               <Calendar className="w-3.5 h-3.5 text-indigo-600" />
-              <span className="hidden sm:inline">Calendar</span>
+              <span className="hidden md:inline">Calendar</span>
             </button>
           </div>
         )}
 
-        {/* Global Search Bar */}
-        <div className="relative w-52 sm:w-64 md:w-72 lg:w-80 shrink-0">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+        {/* Responsive Global Search Bar */}
+        <div className="relative w-28 sm:w-44 md:w-56 lg:w-72 shrink-0">
+          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
-            placeholder="Search tasks, members..."
+            placeholder="Search tasks..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-12 py-1.5 text-xs font-medium rounded-xl bg-slate-100/80 border border-slate-200/80 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/15 focus:bg-white transition-all shadow-2xs"
+            className="w-full pl-8 pr-2 sm:pr-8 py-1.5 text-xs font-medium rounded-xl bg-slate-100/80 border border-slate-200/80 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/15 focus:bg-white transition-all shadow-2xs"
           />
-          <span className="hidden sm:inline-block absolute right-2.5 top-1/2 -translate-y-1/2 text-[9.5px] font-bold text-slate-400 border border-slate-200 px-1.5 py-0.5 rounded bg-white pointer-events-none shadow-2xs">
+          <span className="hidden md:inline-block absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-bold text-slate-400 border border-slate-200 px-1.5 py-0.5 rounded bg-white pointer-events-none shadow-2xs">
             ⌘K
           </span>
         </div>
 
       </div>
 
-      {/* Right: Actions, Live Badge & Status */}
-      <div className="flex items-center gap-2.5 shrink-0 ml-auto">
+      {/* Right: EOD Checkout Action & Profile Badges */}
+      <div className="flex items-center gap-2 shrink-0 ml-auto">
         
-        {/* + EOD Checkout (Protected by 6:15 PM Rule) */}
+        {/* + EOD Checkout (Adaptive text for mobile & desktop) */}
         <button
           onClick={() => { sounds.playClick(); openEODModal(); }}
-          className={`flex items-center gap-1.5 px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold shadow-xs transition-all active:scale-95 cursor-pointer shrink-0 whitespace-nowrap ${
+          className={`flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-xs transition-all active:scale-95 cursor-pointer shrink-0 whitespace-nowrap ${
             eodSubmittedToday
               ? 'bg-emerald-50 text-emerald-800 border border-emerald-300'
               : !eodStatus.isAllowed
@@ -118,7 +143,16 @@ export default function TopNavbar({
           ) : (
             <Clock className="w-3.5 h-3.5 shrink-0" />
           )}
-          <span>
+          
+          {/* Text adapts smoothly: short on phone, complete on tablet/desktop */}
+          <span className="inline sm:hidden">
+            {eodSubmittedToday 
+              ? '✓ EOD' 
+              : !eodStatus.isAllowed 
+              ? '6:15 PM' 
+              : '+ EOD'}
+          </span>
+          <span className="hidden sm:inline">
             {eodSubmittedToday 
               ? '✓ EOD Logged' 
               : !eodStatus.isAllowed 
@@ -127,18 +161,18 @@ export default function TopNavbar({
           </span>
         </button>
 
-        {/* Live Pulse Indicator Badge */}
+        {/* Live Pulse Indicator Badge (hidden on mobile to prevent overcrowding) */}
         <div 
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-50/80 border border-emerald-200/80 text-emerald-800 text-[11px] font-bold shrink-0"
+          className="hidden md:flex items-center gap-1.5 px-2 py-1.5 rounded-xl bg-emerald-50/80 border border-emerald-200/80 text-emerald-800 text-[11px] font-bold shrink-0"
           title="Connected: Real-Time Sync Active"
         >
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-          <span className="hidden 2xl:inline">Real-Time Sync</span>
+          <span className="hidden xl:inline">Real-Time Sync</span>
         </div>
 
         {/* Logged-in User Badge */}
         <div 
-          className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-slate-100/90 border border-slate-200/80 shrink-0"
+          className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1.5 rounded-xl bg-slate-100/90 border border-slate-200/80 shrink-0"
           title={`Authenticated as ${currentUser?.name} (${isAakash ? 'Admin' : 'Member'})`}
         >
           <div 
@@ -147,7 +181,7 @@ export default function TopNavbar({
           >
             {currentUser?.avatar || '??'}
           </div>
-          <span className="text-xs font-bold text-slate-800 hidden 2xl:inline max-w-[100px] truncate">
+          <span className="text-xs font-bold text-slate-800 hidden xl:inline max-w-[90px] truncate">
             {currentUser?.name}
           </span>
           {currentUser?.role && (
@@ -162,8 +196,6 @@ export default function TopNavbar({
             </span>
           )}
         </div>
-
-
 
       </div>
 

@@ -267,14 +267,14 @@ export default function CEODashboard({
     <div className="space-y-6 animate-fade-in">
       
       {/* Top Banner */}
-      <div className="rounded-2xl bg-white border border-slate-200 p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="rounded-2xl bg-white border border-slate-200 p-4 sm:p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-800 border border-blue-200">
               Workforce Command Center
             </span>
           </div>
-          <h2 className="text-xl font-bold text-slate-900">
+          <h2 className="text-lg sm:text-xl font-bold text-slate-900">
             Executive Overview & Task Control Matrix
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
@@ -283,7 +283,7 @@ export default function CEODashboard({
         </div>
 
         {/* Date Selector & Export Actions */}
-        <div className="flex items-center gap-2.5 flex-wrap">
+        <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap">
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700 shadow-xs">
             <Calendar className="w-4 h-4 text-blue-600 shrink-0" />
             <input
@@ -297,15 +297,15 @@ export default function CEODashboard({
           <button
             onClick={handleExportPDF}
             disabled={isExportingPDF}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold shadow-sm transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-bold shadow-sm transition-all cursor-pointer active:scale-95 disabled:opacity-50"
           >
             <FileText className="w-4 h-4 text-rose-600" />
-            <span>{isExportingPDF ? 'Generating PDF...' : 'Export PDF'}</span>
+            <span>{isExportingPDF ? 'Generating...' : 'Export PDF'}</span>
           </button>
 
           <button
             onClick={handleExportCSV}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold shadow-sm transition-all cursor-pointer active:scale-95"
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold shadow-sm transition-all cursor-pointer active:scale-95"
           >
             <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
             <span>Export CSV</span>
@@ -314,7 +314,7 @@ export default function CEODashboard({
       </div>
 
       {/* KPI Cards Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
         
         {/* Total Members */}
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
@@ -561,9 +561,9 @@ export default function CEODashboard({
               </div>
             </div>
 
-            {/* Reading Grid Table - Perfectly responsive, zero horizontal swipe */}
-            <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
-              <table className="w-full table-fixed text-left text-xs border-collapse">
+            {/* Reading Grid Table - Smooth horizontal scroll on mobile */}
+            <div className="border border-slate-200 rounded-xl overflow-x-auto matrix-scroll touch-scroll shadow-2xs">
+              <table className="w-full min-w-[760px] table-fixed text-left text-xs border-collapse">
                 <colgroup>
                   <col style={{ width: '18%' }} />
                   <col style={{ width: '22%' }} />
@@ -764,8 +764,8 @@ export default function CEODashboard({
         </div>
 
         {/* Status Filter Tabs & Column Navigator */}
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex items-center justify-between gap-2 overflow-x-auto matrix-scroll touch-scroll py-1">
+          <div className="flex items-center gap-1.5 flex-nowrap">
             {[
               { id: 'all', label: `All (${allCompanyTasks.length})` },
               { id: 'pending', label: `Pending Active (${pendingCount})` },
@@ -778,7 +778,7 @@ export default function CEODashboard({
               <button
                 key={tab.id}
                 onClick={() => { sounds.playClick(); setTaskStatusFilter(tab.id); }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                   taskStatusFilter === tab.id
                     ? 'bg-blue-600 text-white shadow-xs'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -790,9 +790,9 @@ export default function CEODashboard({
           </div>
         </div>
 
-        {/* Tasks Table - Zero-Scroll Executive Table-Fixed Layout */}
-        <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
-          <table className="w-full table-fixed text-left text-xs border-collapse">
+        {/* Tasks Table - Smooth horizontal scroll on mobile */}
+        <div className="border border-slate-200 rounded-xl overflow-x-auto matrix-scroll touch-scroll shadow-2xs">
+          <table className="w-full min-w-[880px] table-fixed text-left text-xs border-collapse">
             <colgroup>
               <col style={{ width: '27%' }} />
               <col style={{ width: '13%' }} />
@@ -1034,8 +1034,8 @@ export default function CEODashboard({
           </span>
         </div>
 
-        <div className="overflow-hidden">
-          <table className="w-full table-fixed text-left text-xs border-collapse">
+        <div className="overflow-x-auto matrix-scroll touch-scroll">
+          <table className="w-full min-w-[760px] table-fixed text-left text-xs border-collapse">
             <colgroup>
               <col style={{ width: '26%' }} />
               <col style={{ width: '13%' }} />
@@ -1146,8 +1146,8 @@ export default function CEODashboard({
 
       {/* EOD Report View Modal */}
       {activeReportModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-scale-up">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-4 sm:p-6 shadow-2xl border border-slate-200 space-y-4 animate-scale-up max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
                 <h4 className="text-base font-bold text-slate-900">
@@ -1223,8 +1223,8 @@ export default function CEODashboard({
 
       {/* Member Reading History Modal */}
       {selectedReadingHistoryTask && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-          <div className="relative w-full max-w-lg my-6 bg-white border border-slate-200 rounded-3xl shadow-2xl p-6 space-y-4 animate-slide-up">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+          <div className="relative w-full max-w-lg my-auto bg-white border border-slate-200 rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-6 space-y-4 animate-slide-up max-h-[90vh] overflow-y-auto">
             
             {/* Header */}
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">

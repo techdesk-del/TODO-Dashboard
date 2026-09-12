@@ -469,17 +469,17 @@ export default function KanbanBoard({
     <div className="space-y-4 w-full">
       
       {/* Subheader / Filter Bar */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+      <div className="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         
         {/* Left: Title + 1-Click Status Filter Tabs */}
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
           <div className="flex items-center gap-2">
             {isAakash ? (
               <Crown className="w-4 h-4 text-amber-500 shrink-0" />
             ) : (
               <Layers className="w-4 h-4 text-blue-600 shrink-0" />
             )}
-            <h2 className="text-sm font-bold text-slate-800 whitespace-nowrap">
+            <h2 className="text-sm font-bold text-slate-800 truncate max-w-[240px] sm:max-w-none">
               {boardTitle}
             </h2>
             {isAakash && (
@@ -492,7 +492,7 @@ export default function KanbanBoard({
           <div className="h-4 w-px bg-slate-200 hidden sm:block" />
 
           {/* Interactive 1-Click Status Filter Tabs */}
-          <div className="flex items-center gap-1.5 p-1 bg-slate-100/90 rounded-xl border border-slate-200/80 flex-wrap">
+          <div className="flex items-center gap-1 sm:gap-1.5 p-1 bg-slate-100/90 rounded-xl border border-slate-200/80 flex-wrap">
             <button
               onClick={() => {
                 sounds.playClick();
@@ -666,54 +666,54 @@ export default function KanbanBoard({
         </div>
       ) : (
         /* EXCEL SPREADSHEET 4-STATUS MATRIX (To Do, In Progress, Blocked, Completed Columns) */
-        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm w-full">
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm w-full overflow-x-auto matrix-scroll">
           <table className="w-full table-fixed text-left text-xs border-collapse">
             <colgroup>
-              <col style={{ width: '3%' }} />
-              <col style={{ width: '14%' }} />
-              <col style={{ width: '20.5%' }} />
+              <col style={{ width: '2.5%' }} />
+              <col style={{ width: '13.5%' }} />
               <col style={{ width: '21.5%' }} />
-              <col style={{ width: '12%' }} />
-              <col style={{ width: '13%' }} />
-              <col style={{ width: '16%' }} />
+              <col style={{ width: '23.5%' }} />
+              <col style={{ width: '10.5%' }} />
+              <col style={{ width: '11.5%' }} />
+              <col style={{ width: '17%' }} />
             </colgroup>
-            {/* Executive Sticky Table Header - Anchored when scrolling */}
-            <thead className="sticky top-14 z-30 shadow-md">
+            {/* Executive Table Header - Perfectly aligned with colgroup */}
+            <thead>
               <tr className="bg-slate-900 text-white font-bold text-[10.5px]">
-                <th style={{ width: '3%' }} className="sticky top-14 z-30 py-2.5 px-1 text-center border-r border-slate-800 border-b-2 border-b-slate-700 bg-slate-900 font-semibold text-slate-400 rounded-tl-2xl shadow-xs">
+                <th style={{ width: '2.5%' }} className="py-2.5 px-1 text-center border-r border-slate-800 border-b-2 border-b-slate-700 bg-slate-900 font-semibold text-slate-400 rounded-tl-2xl">
                   #
                 </th>
-                <th style={{ width: '14%' }} className="sticky top-14 z-30 py-2.5 px-2 border-r border-slate-800 border-b-2 border-b-slate-500 bg-slate-900 shadow-xs">
+                <th style={{ width: '13.5%' }} className="py-2.5 px-2 border-r border-slate-800 border-b-2 border-b-slate-500 bg-slate-900">
                   <div className="flex items-center gap-1.5 text-slate-200">
                     <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <span>Candidate / Member</span>
+                    <span className="truncate">Candidate / Member</span>
                   </div>
                 </th>
-                <th style={{ width: '20.5%' }} className="sticky top-14 z-30 py-2.5 px-2 border-r border-slate-800 border-b-2 border-b-slate-400 bg-slate-900 shadow-xs">
+                <th style={{ width: '21.5%' }} className="py-2.5 px-2 border-r border-slate-800 border-b-2 border-b-slate-400 bg-slate-900">
                   <div className="flex items-center gap-1.5 text-slate-200">
                     <span className="w-2 h-2 rounded-full bg-slate-400 ring-2 ring-slate-400/30 shrink-0" />
                     <span>To Do</span>
                   </div>
                 </th>
-                <th style={{ width: '21.5%' }} className="sticky top-14 z-30 py-2.5 px-2 border-r border-slate-800 border-b-2 border-b-blue-500 bg-slate-900 shadow-xs">
+                <th style={{ width: '23.5%' }} className="py-2.5 px-2 border-r border-slate-800 border-b-2 border-b-blue-500 bg-slate-900">
                   <div className="flex items-center gap-1.5 text-blue-300">
                     <span className="w-2 h-2 rounded-full bg-blue-400 ring-2 ring-blue-400/30 animate-pulse shrink-0" />
                     <span>In Progress</span>
                   </div>
                 </th>
-                <th style={{ width: '12%' }} className="sticky top-14 z-30 py-2.5 px-1.5 border-r border-slate-800 border-b-2 border-b-indigo-500 bg-slate-900 text-center shadow-xs">
+                <th style={{ width: '10.5%' }} className="py-2.5 px-1 border-r border-slate-800 border-b-2 border-b-indigo-500 bg-slate-900 text-center">
                   <div className="flex items-center justify-center gap-1 text-indigo-300">
                     <Layers className="w-3 h-3 text-indigo-400 shrink-0" />
                     <span>Workload</span>
                   </div>
                 </th>
-                <th style={{ width: '13%' }} className="sticky top-14 z-30 py-2.5 px-2 border-r border-slate-800 border-b-2 border-b-rose-500 bg-slate-900 shadow-xs">
+                <th style={{ width: '11.5%' }} className="py-2.5 px-1.5 border-r border-slate-800 border-b-2 border-b-rose-500 bg-slate-900">
                   <div className="flex items-center gap-1.5 text-rose-300">
                     <span className="w-2 h-2 rounded-full bg-rose-400 ring-2 ring-rose-400/30 shrink-0" />
                     <span>Blocked</span>
                   </div>
                 </th>
-                <th style={{ width: '16%' }} className="sticky top-14 z-30 py-2.5 px-2 border-b-2 border-slate-800 border-b-emerald-500 bg-slate-900 rounded-tr-2xl shadow-xs">
+                <th style={{ width: '17%' }} className="py-2.5 px-2 border-b-2 border-slate-800 border-b-emerald-500 bg-slate-900 rounded-tr-2xl">
                   <div className="flex items-center gap-1.5 text-emerald-300">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-emerald-400/30 shrink-0" />
                     <span>Completed</span>
@@ -1641,8 +1641,8 @@ export default function KanbanBoard({
                 })}
               </tbody>
             </table>
-        </div>
-      )}
+          </div>
+        )}
 
       {/* Task Remark Modal */}
       {activeRemarkTask && (

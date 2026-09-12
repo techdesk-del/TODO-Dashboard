@@ -51,6 +51,7 @@ export default function Home() {
   const [selectedMemberFilter, setSelectedMemberFilter] = useState('all');
   const [boardStatusFilter, setBoardStatusFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // Notifications State (Point 4)
   const [notifications, setNotifications] = useState([
@@ -651,7 +652,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#f1f5f9] text-slate-900 flex font-sans w-full">
       
-      {/* Left Sidebar */}
+      {/* Left Sidebar (Desktop Persistent & Mobile Drawer) */}
       <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -661,12 +662,14 @@ export default function Home() {
         selectedMemberFilter={selectedMemberFilter}
         setSelectedMemberFilter={setSelectedMemberFilter}
         onLogout={handleLogout}
+        mobileOpen={mobileSidebarOpen}
+        onCloseMobile={() => setMobileSidebarOpen(false)}
       />
 
       {/* Main App Container */}
       <div className="flex-1 flex flex-col min-w-0 overflow-x-clip">
         
-        {/* Top Navbar with Notification Center & Sprint Calendar Toggle */}
+        {/* Top Navbar with Responsive Navigation & Hamburger Drawer Trigger */}
         <TopNavbar
           totalTasks={tasks.length}
           currentUser={currentUser}
@@ -677,11 +680,12 @@ export default function Home() {
           setSearchQuery={setSearchQuery}
           viewMode={viewMode}
           setViewMode={setViewMode}
+          onOpenMobileSidebar={() => setMobileSidebarOpen(true)}
         />
 
         {/* Real-time Toast Notification */}
         {toastMessage && (
-          <div className="fixed top-16 right-6 z-50 animate-slide-up max-w-sm">
+          <div className="fixed top-16 right-4 sm:right-6 z-50 animate-slide-up max-w-sm">
             <div className="p-3.5 rounded-2xl border shadow-xl bg-white border-slate-200 flex items-start gap-3">
               <div className="p-2 rounded-xl bg-blue-50 text-blue-600 shrink-0">
                 <Bell className="w-4 h-4" />
@@ -694,8 +698,8 @@ export default function Home() {
           </div>
         )}
 
-        {/* Main Content Area */}
-        <main className="flex-1 px-3 sm:px-5 py-5 space-y-5 w-full mx-auto max-w-[1920px]">
+        {/* Main Content Area - Responsive padding */}
+        <main className="flex-1 px-2 sm:px-3 lg:px-4 xl:px-6 py-3.5 sm:py-4 space-y-4 sm:space-y-5 w-full mx-auto max-w-[1920px]">
           {/* View Tab 1: Task Board Workspace (Kanban or Sprint Calendar) */}
           {activeTab === 'workspace' && (
             <div className="w-full">

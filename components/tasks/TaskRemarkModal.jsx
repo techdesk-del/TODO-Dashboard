@@ -311,7 +311,7 @@ export default function TaskRemarkModal({
         </div>
 
         {/* Quick Suggestion Chips */}
-        <div className="px-4 py-2 bg-slate-50 border-t border-slate-200/80 flex items-center gap-1.5 overflow-x-auto text-[11px]">
+        <div className="px-3 sm:px-4 py-2 bg-slate-50 border-t border-slate-200/80 flex items-center gap-1.5 overflow-x-auto no-scrollbar touch-scroll text-[11px]">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0 flex items-center gap-1">
             <Sparkles className="w-3 h-3 text-indigo-500" /> Quick:
           </span>

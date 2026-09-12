@@ -229,11 +229,11 @@ export default function TaskModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-      <div className="relative w-full max-w-lg my-6 bg-white border border-slate-200 rounded-2xl shadow-2xl p-6 space-y-4 animate-slide-up">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+      <div className="relative w-full max-w-lg my-auto bg-white border border-slate-200 rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-6 space-y-4 animate-slide-up max-h-[92vh] flex flex-col">
         
         {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3 shrink-0">
           <div>
             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
               {isBookReading && <BookOpen className="w-4 h-4 text-indigo-600" />}
@@ -246,14 +246,15 @@ export default function TaskModal({
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Task Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+          <div className="space-y-4 overflow-y-auto flex-1 pr-1 touch-scroll pb-2">
           
           {/* If NOT book reading, render normal Task Title & Description */}
           {!isBookReading ? (
@@ -681,9 +682,10 @@ export default function TaskModal({
               </div>
             </>
           )}
+          </div>
 
-          {/* Form Actions */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2.5">
+          {/* Form Actions - Fixed at bottom of modal */}
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2.5 shrink-0 bg-white">
             {initialTask?.id && onDelete ? (
               <button
                 type="button"

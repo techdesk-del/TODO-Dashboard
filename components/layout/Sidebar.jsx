@@ -8,7 +8,8 @@ import {
   CheckCircle2, 
   Sparkles,
   BookOpen,
-  AlertCircle
+  AlertCircle,
+  X
 } from 'lucide-react';
 import { sounds } from '@/lib/audio';
 import { checkEodAllowed } from '@/lib/timeUtils';
@@ -21,7 +22,9 @@ export default function Sidebar({
   currentUser, 
   selectedMemberFilter, 
   setSelectedMemberFilter,
-  onLogout 
+  onLogout,
+  mobileOpen = false,
+  onCloseMobile = () => {}
 }) {
   // EXECUTIVE ACCESS: Exclusively for Aakash Das (Admin)
   const isExecutive = currentUser?.role?.toLowerCase() === 'admin' ||
@@ -74,20 +77,28 @@ export default function Sidebar({
     return { total, completed, pending, overdue, percent, activeBook };
   }, [userTasks]);
 
-  return (
-    <aside className="w-64 bg-white border-r border-slate-200 flex flex-col h-screen sticky top-0 shrink-0 z-30 select-none">
-      
+  const renderSidebarContent = (isMobile = false) => (
+    <>
       {/* Brand Header with Exact UrbanGaon Logo */}
-      <div className="p-4 border-b border-slate-100 flex items-center justify-center">
+      <div className={`p-4 border-b border-slate-100 flex items-center ${isMobile ? 'justify-between' : 'justify-center'}`}>
         <img 
           src="/urbangaon-logo.jpg" 
           alt="UrbanGaon — a perfect balance" 
-          className="h-10 w-auto object-contain max-w-[210px]"
+          className="h-10 w-auto object-contain max-w-[200px]"
         />
+        {isMobile && (
+          <button
+            onClick={() => { sounds.playClick(); onCloseMobile(); }}
+            className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all cursor-pointer shrink-0"
+            title="Close navigation"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
       </div>
 
-      {/* Navigation Menu & Productive Widgets (No awkward empty spaces) */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+      {/* Navigation Menu & Productive Widgets */}
+      <div className="flex-1 overflow-y-auto p-3 space-y-3 touch-scroll">
         
         {/* Main Links */}
         <div className="space-y-1">
@@ -96,6 +107,7 @@ export default function Sidebar({
               sounds.playClick(); 
               setActiveTab('workspace'); 
               setSelectedMemberFilter(currentUser?.id || 'all'); 
+              if (isMobile) onCloseMobile();
             }}
             className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === 'workspace' && selectedMemberFilter === currentUser?.id
@@ -125,6 +137,7 @@ export default function Sidebar({
                 sounds.playClick(); 
                 setActiveTab('workspace'); 
                 setSelectedMemberFilter('all'); 
+                if (isMobile) onCloseMobile();
               }}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 activeTab === 'workspace' && selectedMemberFilter === 'all'
@@ -137,12 +150,13 @@ export default function Sidebar({
             </button>
           )}
 
-          {/* Executive Overview (Visible ONLY to Executive / Aakash Das - completely hidden for others) */}
+          {/* Executive Overview (Visible ONLY to Executive / Aakash Das) */}
           {isExecutive && (
             <button
               onClick={() => { 
                 sounds.playClick(); 
                 setActiveTab('ceo'); 
+                if (isMobile) onCloseMobile();
               }}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 activeTab === 'ceo'
@@ -270,6 +284,7 @@ export default function Sidebar({
             sounds.playClick();
             if (currentUser?.id) setSelectedMemberFilter(currentUser.id);
             setActiveTab('workspace');
+            if (isMobile) onCloseMobile();
           }}
           className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer group"
           title="Click to view your private tasks"
@@ -308,7 +323,31 @@ export default function Sidebar({
           <span className="hidden sm:inline">Sign out</span>
         </button>
       </div>
+    </>
+  );
 
-    </aside>
+  return (
+    <>
+      {/* Desktop Persistent Sidebar (lg and above) */}
+      <aside className="hidden lg:flex w-60 xl:w-64 bg-white border-r border-slate-200 flex-col h-screen sticky top-0 shrink-0 z-30 select-none">
+        {renderSidebarContent(false)}
+      </aside>
+
+      {/* Mobile & Tablet Slide-over Drawer (< lg) */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          {/* Backdrop Blur Overlay */}
+          <div 
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity animate-fade-in"
+            onClick={() => { sounds.playClick(); onCloseMobile(); }}
+          />
+          
+          {/* Slide-out Drawer Panel */}
+          <aside className="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-white border-r border-slate-200 flex flex-col h-full shadow-2xl animate-drawer-in select-none">
+            {renderSidebarContent(true)}
+          </aside>
+        </div>
+      )}
+    </>
   );
 }

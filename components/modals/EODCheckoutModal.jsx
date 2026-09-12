@@ -188,7 +188,7 @@ export default function EODCheckoutModal({
           )}
 
           {/* Quick Metrics Summary Bar */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
             <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
               <span className="text-[11px] font-medium text-slate-500 block">Completed Today</span>
               <span className="text-lg font-semibold text-slate-900 mt-0.5 block">{completedTasks.length}</span>

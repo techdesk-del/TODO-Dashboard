@@ -66,22 +66,22 @@ export default function CalendarView({
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4 animate-fade-in w-full">
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-3.5 sm:p-5 space-y-4 animate-fade-in w-full">
       
       {/* Calendar Header - Always Fixed to Current Month */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 sm:pb-4 border-b border-slate-100">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
-            <CalendarIcon className="w-5 h-5" />
+          <div className="p-2 sm:p-2.5 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 shrink-0">
+            <CalendarIcon className="w-4 sm:w-5 h-4 sm:h-5" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-base font-extrabold text-slate-900 tracking-tight">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight">
                 {monthNames[month]} {year}
               </h3>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-extrabold">
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-extrabold">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                Current Active Month
+                Active Sprint
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
@@ -91,10 +91,10 @@ export default function CalendarView({
         </div>
 
         {/* Controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 self-end sm:self-auto">
           <button
             onClick={() => { sounds.playClick(); openNewTaskModal('todo'); }}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition-all cursor-pointer shrink-0"
           >
             <Plus className="w-4 h-4" />
             <span>Create Task</span>
@@ -102,22 +102,25 @@ export default function CalendarView({
         </div>
       </div>
 
-      {/* Day of Week Headers */}
-      <div className="grid grid-cols-7 gap-1 text-center font-bold text-xs text-slate-500 uppercase tracking-wider pb-1">
-        <span className="text-rose-500">Sun</span>
-        <span>Mon</span>
-        <span>Tue</span>
-        <span>Wed</span>
-        <span>Thu</span>
-        <span>Fri</span>
-        <span>Sat</span>
-      </div>
+      {/* Calendar Scroll Wrapper for Mobile/Tablet Devices */}
+      <div className="overflow-x-auto matrix-scroll touch-scroll">
+        <div className="min-w-[620px] space-y-1">
+          {/* Day of Week Headers */}
+          <div className="grid grid-cols-7 gap-1 text-center font-bold text-xs text-slate-500 uppercase tracking-wider pb-1">
+            <span className="text-rose-500">Sun</span>
+            <span>Mon</span>
+            <span>Tue</span>
+            <span>Wed</span>
+            <span>Thu</span>
+            <span>Fri</span>
+            <span>Sat</span>
+          </div>
 
-      {/* Monthly Grid */}
-      <div className="grid grid-cols-7 gap-1.5 border-t border-slate-100 pt-2">
-        {calendarCells.map((cell, idx) => {
-          // If cell is empty (before 1st or after last day), render blank slot
-          if (!cell.day) {
+          {/* Monthly Grid */}
+          <div className="grid grid-cols-7 gap-1.5 border-t border-slate-100 pt-2">
+            {calendarCells.map((cell, idx) => {
+              // If cell is empty (before 1st or after last day), render blank slot
+              if (!cell.day) {
             return (
               <div
                 key={idx}
@@ -208,7 +211,8 @@ export default function CalendarView({
           );
         })}
       </div>
-
     </div>
-  );
+  </div>
+</div>
+);
 }

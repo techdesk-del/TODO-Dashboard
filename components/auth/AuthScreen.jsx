@@ -55,12 +55,12 @@ export default function AuthScreen({ users, onLoginSuccess }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-indigo-50/40 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-indigo-50/40 flex items-center justify-center p-3 sm:p-4 relative overflow-hidden">
       {/* Subtle Ambient Decorative Glows */}
       <div className="absolute -top-40 -left-40 w-96 h-96 bg-indigo-200/40 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-blue-200/30 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="w-full max-w-md bg-white rounded-3xl border border-slate-200/80 shadow-[0_20px_50px_-12px_rgba(15,23,42,0.1)] p-8 space-y-6 relative z-10 animate-slide-up">
+      <div className="w-full max-w-md bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-[0_20px_50px_-12px_rgba(15,23,42,0.1)] p-5 sm:p-8 space-y-5 sm:space-y-6 relative z-10 animate-slide-up">
         
         {/* Brand Logo Header */}
         <div className="text-center space-y-3">
