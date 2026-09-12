@@ -667,7 +667,7 @@ export default function Home() {
       />
 
       {/* Main App Container */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-x-clip">
+      <div className="flex-1 flex flex-col min-w-0">
         
         {/* Top Navbar with Responsive Navigation & Hamburger Drawer Trigger */}
         <TopNavbar
