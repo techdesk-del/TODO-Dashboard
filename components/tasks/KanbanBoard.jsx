@@ -582,54 +582,54 @@ export default function KanbanBoard({
         </div>
       ) : (
         /* EXCEL SPREADSHEET 4-STATUS MATRIX (To Do, In Progress, Blocked, Completed Columns) */
-        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.06)] w-full p-0">
-          <table className="w-full table-fixed text-left text-xs border-separate border-spacing-0">
+        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm w-full overflow-hidden">
+          <table className="w-full table-fixed text-left text-xs border-collapse">
             <colgroup>
-              <col style={{ width: '3.5%' }} />
-              <col style={{ width: '15%' }} />
-              <col style={{ width: '21%' }} />
-              <col style={{ width: '22%' }} />
-              <col style={{ width: '11.5%' }} />
+              <col style={{ width: '3%' }} />
+              <col style={{ width: '14%' }} />
+              <col style={{ width: '20.5%' }} />
+              <col style={{ width: '21.5%' }} />
               <col style={{ width: '12%' }} />
-              <col style={{ width: '15%' }} />
+              <col style={{ width: '13%' }} />
+              <col style={{ width: '16%' }} />
             </colgroup>
-            {/* Executive Table Header - Sticky to top directly beneath top navbar */}
+            {/* Executive Table Header - Anchored at the top of the table */}
             <thead>
               <tr className="bg-slate-900 text-white font-bold text-[10.5px]">
-                <th className="sticky top-[53px] z-20 py-2 px-1 text-center border-r border-b border-slate-800 bg-slate-900 rounded-tl-2xl font-semibold text-slate-400">
+                <th style={{ width: '3%' }} className="py-2.5 px-1 text-center border-r border-slate-800 border-b-2 border-b-slate-700 bg-slate-900 font-semibold text-slate-400">
                   #
                 </th>
-                <th className="sticky top-[53px] z-20 py-2 px-2 border-r border-b border-slate-800 bg-slate-900">
+                <th style={{ width: '14%' }} className="py-2.5 px-2 border-r border-slate-800 border-b-2 border-b-slate-500 bg-slate-900">
                   <div className="flex items-center gap-1.5 text-slate-200">
                     <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                     <span>Candidate / Member</span>
                   </div>
                 </th>
-                <th className="sticky top-[53px] z-20 py-2 px-2 border-r border-b border-slate-800 bg-slate-900">
+                <th style={{ width: '20.5%' }} className="py-2.5 px-2 border-r border-slate-800 border-b-2 border-b-slate-400 bg-slate-900">
                   <div className="flex items-center gap-1.5 text-slate-200">
                     <span className="w-2 h-2 rounded-full bg-slate-400 ring-2 ring-slate-400/30 shrink-0" />
                     <span>To Do</span>
                   </div>
                 </th>
-                <th className="sticky top-[53px] z-20 py-2 px-2 border-r border-b border-slate-800 bg-slate-900">
+                <th style={{ width: '21.5%' }} className="py-2.5 px-2 border-r border-slate-800 border-b-2 border-b-blue-500 bg-slate-900">
                   <div className="flex items-center gap-1.5 text-blue-300">
                     <span className="w-2 h-2 rounded-full bg-blue-400 ring-2 ring-blue-400/30 animate-pulse shrink-0" />
                     <span>In Progress</span>
                   </div>
                 </th>
-                <th className="sticky top-[53px] z-20 py-2 px-1.5 border-r border-b border-slate-800 bg-slate-900 text-center">
+                <th style={{ width: '12%' }} className="py-2.5 px-1.5 border-r border-slate-800 border-b-2 border-b-indigo-500 bg-slate-900 text-center">
                   <div className="flex items-center justify-center gap-1 text-indigo-300">
                     <Layers className="w-3 h-3 text-indigo-400 shrink-0" />
                     <span>Workload</span>
                   </div>
                 </th>
-                <th className="sticky top-[53px] z-20 py-2 px-2 border-r border-b border-slate-800 bg-slate-900">
+                <th style={{ width: '13%' }} className="py-2.5 px-2 border-r border-slate-800 border-b-2 border-b-rose-500 bg-slate-900">
                   <div className="flex items-center gap-1.5 text-rose-300">
                     <span className="w-2 h-2 rounded-full bg-rose-400 ring-2 ring-rose-400/30 shrink-0" />
                     <span>Blocked</span>
                   </div>
                 </th>
-                <th className="sticky top-[53px] z-20 py-2 px-2 border-b border-slate-800 bg-slate-900 rounded-tr-2xl">
+                <th style={{ width: '16%' }} className="py-2.5 px-2 border-b-2 border-slate-800 border-b-emerald-500 bg-slate-900">
                   <div className="flex items-center gap-1.5 text-emerald-300">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-emerald-400/30 shrink-0" />
                     <span>Completed</span>
@@ -637,7 +637,7 @@ export default function KanbanBoard({
                 </th>
               </tr>
             </thead>
-              <tbody className="bg-white">
+            <tbody className="bg-white">
                 {memberMatrixData.map((member, idx) => {
                   const user = member.user;
                   const isLastRow = idx === memberMatrixData.length - 1;
@@ -655,18 +655,16 @@ export default function KanbanBoard({
                   return (
                     <tr 
                       key={user.id} 
-                      className={`hover:bg-indigo-50/15 transition-colors ${
-                        idx % 2 === 1 ? 'bg-slate-50/50' : 'bg-white'
-                      }`}
+                      className="hover:brightness-[0.98] transition-all"
                     >
                       {/* 1. Row # */}
-                      <td className={`py-2 px-1 text-center font-semibold text-slate-400 border-r border-slate-200/70 bg-slate-50/70 align-top ${borderBottomClass} ${isLastRow ? 'rounded-bl-2xl' : ''}`}>
+                      <td className={`py-2 px-1 text-center font-semibold text-slate-400 border-r border-slate-200/70 bg-gradient-to-b from-slate-100/90 to-slate-50/60 align-top ${borderBottomClass}`}>
                         {idx + 1}
                       </td>
 
                       {/* 2. Candidate / Team Member Profile + Quick Action Buttons */}
-                      <td className={`py-2 px-2 border-r border-slate-200/70 bg-white/70 align-top ${borderBottomClass}`}>
-                        <div className="h-full min-h-[110px] flex flex-col justify-between space-y-2">
+                      <td className={`py-2 px-2 border-r border-slate-200/70 align-top bg-gradient-to-b from-slate-100/70 via-slate-50/40 to-slate-100/30 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:16px_16px] ${borderBottomClass}`}>
+                        <div className="h-full min-h-[110px] flex flex-col justify-between space-y-2 p-2 rounded-xl bg-white/85 backdrop-blur-xs border border-slate-200/80 shadow-2xs min-w-0 overflow-hidden">
                           <div className="space-y-2">
                             <div className="flex items-center gap-2">
                               <div className="relative shrink-0">
@@ -757,14 +755,14 @@ export default function KanbanBoard({
                       </td>
 
                       {/* 3. TO DO COLUMN */}
-                      <td className={`py-2 px-2 border-r border-slate-200/70 align-top bg-[#f8fafc] ${borderBottomClass}`}>
+                      <td className={`py-2 px-2 border-r border-slate-200/70 align-top bg-gradient-to-b from-slate-100/70 via-slate-50/40 to-slate-100/30 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:16px_16px] ${borderBottomClass}`}>
                         {member.todoTasks.length === 0 ? (
-                          <div className="h-full min-h-[110px] flex flex-col items-center justify-center p-2 rounded-lg bg-slate-100/50 border border-dashed border-slate-200 text-center space-y-0.5 transition-all">
-                            <div className="w-5 h-5 rounded-md bg-white border border-slate-200 text-slate-400 flex items-center justify-center text-[10px] shadow-2xs">
+                          <div className="h-full min-h-[140px] flex flex-col items-center justify-center p-3 rounded-xl bg-white/80 backdrop-blur-xs border border-dashed border-slate-300 text-center space-y-1 shadow-2xs transition-all">
+                            <div className="w-6 h-6 rounded-lg bg-slate-100 border border-slate-200 text-slate-500 flex items-center justify-center text-xs shadow-2xs font-bold">
                               📝
                             </div>
-                            <span className="font-semibold text-slate-500 text-[10.5px]">No tasks queued</span>
-                            <span className="text-[8.5px] text-slate-400">All caught up</span>
+                            <span className="font-bold text-slate-700 text-xs">No tasks queued</span>
+                            <span className="text-[9px] text-slate-400 font-medium">All caught up</span>
                           </div>
                         ) : (
                           <div className="w-full h-full min-h-[110px] space-y-1.5 flex flex-col justify-between">
@@ -785,15 +783,15 @@ export default function KanbanBoard({
                                 {member.todoTasks.map((t, tIdx) => (
                                   <div 
                                     key={t.id} 
-                                    className="w-full p-2 rounded-lg bg-white border border-slate-200/80 border-l-2 border-l-slate-300 hover:border-l-blue-500 shadow-2xs hover:shadow-xs space-y-1 flex flex-col justify-between transition-all overflow-hidden"
+                                    className="w-full p-2 rounded-lg bg-white border border-slate-200/80 border-l-2 border-l-slate-300 hover:border-l-blue-500 shadow-2xs hover:shadow-xs space-y-1 flex flex-col justify-between transition-all overflow-hidden min-w-0"
                                   >
-                                    <div>
-                                      <div className="flex items-start justify-between gap-1">
-                                        <span className="font-semibold text-slate-800 leading-tight text-[11px]" title={t.title}>
-                                          <span className="text-slate-400 font-semibold text-[10px] mr-1">#{tIdx + 1}</span>
-                                          {t.title}
+                                    <div className="min-w-0">
+                                      <div className="flex items-start justify-between gap-1.5 min-w-0">
+                                        <span className="font-semibold text-slate-800 leading-tight text-[11px] min-w-0 flex-1 break-words line-clamp-2" title={t.title}>
+                                          <span className="text-slate-400 font-semibold text-[10px] mr-1 shrink-0">#{tIdx + 1}</span>
+                                          <span className="break-words">{t.title}</span>
                                         </span>
-                                        <span className={`text-[8px] font-semibold px-1 py-0.2 rounded uppercase shrink-0 shadow-2xs ${
+                                        <span className={`text-[8px] font-semibold px-1 py-0.2 rounded uppercase shrink-0 shadow-2xs whitespace-nowrap ${
                                           t.priority === 'urgent' ? 'bg-rose-50 text-rose-700 ring-1 ring-rose-200/80' :
                                           t.priority === 'high' ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200/80' :
                                           t.priority === 'medium' ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-200/80' : 'bg-slate-50 text-slate-600 ring-1 ring-slate-200'
@@ -802,7 +800,7 @@ export default function KanbanBoard({
                                         </span>
                                       </div>
                                       {t.description && (
-                                        <p className="text-[9.5px] text-slate-500 line-clamp-2 mt-0.5" title={t.description}>{t.description}</p>
+                                        <p className="text-[9.5px] text-slate-500 line-clamp-2 mt-0.5 break-words" title={t.description}>{t.description}</p>
                                       )}
 
                                       {/* Remark Preview */}
@@ -888,20 +886,20 @@ export default function KanbanBoard({
                       </td>
 
                       {/* 4. IN PROGRESS COLUMN */}
-                      <td className={`py-2 px-2 border-r border-slate-200/70 align-top bg-blue-50/20 ${borderBottomClass}`}>
+                      <td className={`py-2 px-2 border-r border-slate-200/70 align-top bg-gradient-to-b from-blue-50/50 via-blue-50/20 to-slate-50/30 bg-[radial-gradient(#bfdbfe_1px,transparent_1px)] [background-size:16px_16px] ${borderBottomClass}`}>
                         {member.inProgressTasks.length === 0 && (!member.bookTask || member.inProgressBooks.length === 0) ? (
-                          <div className="h-full min-h-[110px] flex flex-col items-center justify-center p-2 rounded-lg bg-blue-50/40 border border-dashed border-blue-200/70 text-center space-y-0.5 transition-all">
-                            <div className="w-5 h-5 rounded-md bg-white border border-blue-200/80 text-blue-500 flex items-center justify-center text-[10px] shadow-2xs">
-                              📖
+                          <div className="h-full min-h-[140px] flex flex-col items-center justify-center p-3 rounded-xl bg-white/80 backdrop-blur-xs border border-dashed border-blue-200 text-center space-y-1 shadow-2xs transition-all">
+                            <div className="w-6 h-6 rounded-lg bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center text-xs shadow-2xs font-bold">
+                              ⚡
                             </div>
-                            <span className="font-semibold text-slate-700 text-[10.5px]">No active tasks</span>
-                            <span className="text-[8.5px] text-slate-400">Ready for next assignment</span>
+                            <span className="font-bold text-slate-700 text-xs">No active tasks</span>
+                            <span className="text-[9px] text-slate-400 font-medium">Ready for next assignment</span>
                             <button
                               type="button"
                               onClick={() => { sounds.playClick(); openNewTaskModal('in_progress', user.id); }}
-                              className="mt-1 py-0.5 px-2 rounded-md border border-dashed border-blue-300/80 hover:border-blue-500 hover:bg-white text-blue-600 font-semibold text-[8.5px] flex items-center justify-center gap-1 transition-all cursor-pointer opacity-80 hover:opacity-100"
+                              className="mt-1 py-1 px-2.5 rounded-lg border border-dashed border-blue-300 hover:border-blue-500 bg-white hover:bg-blue-50 text-blue-700 font-bold text-[9px] flex items-center justify-center gap-1 transition-all cursor-pointer shadow-2xs"
                             >
-                              <Play className="w-2 h-2 fill-blue-600 text-blue-600" />
+                              <Play className="w-2.5 h-2.5 fill-blue-600 text-blue-600" />
                               <span>+ Start Task</span>
                             </button>
                           </div>
@@ -932,15 +930,15 @@ export default function KanbanBoard({
                                   return (
                                     <div 
                                       key={t.id} 
-                                      className="w-full p-2 rounded-lg bg-white border border-slate-200/80 border-l-2 border-l-blue-500 hover:border-blue-300 shadow-2xs space-y-1 flex flex-col justify-between transition-all overflow-hidden"
+                                      className="w-full p-2 rounded-lg bg-white border border-slate-200/80 border-l-2 border-l-blue-500 hover:border-blue-300 shadow-2xs space-y-1 flex flex-col justify-between transition-all overflow-hidden min-w-0"
                                     >
-                                      <div>
-                                        <div className="flex items-start justify-between gap-1">
-                                          <span className="font-semibold text-slate-900 leading-snug text-[11px] flex items-start gap-1 min-w-0 flex-1 break-words" title={t.title}>
+                                      <div className="min-w-0">
+                                        <div className="flex items-start justify-between gap-1.5 min-w-0">
+                                          <span className="font-semibold text-slate-900 leading-snug text-[11px] flex items-start gap-1 min-w-0 flex-1 break-words line-clamp-2" title={t.title}>
                                             <span className="text-[10px] text-blue-600 font-semibold shrink-0 mt-0.5">#{tIdx + 1}</span>
                                             <span className="break-words">{t.title}</span>
                                           </span>
-                                          <span className={`text-[8px] font-semibold px-1 py-0.2 rounded uppercase shrink-0 ${
+                                          <span className={`text-[8px] font-semibold px-1 py-0.2 rounded uppercase shrink-0 whitespace-nowrap ${
                                             t.priority === 'urgent' ? 'bg-rose-50 text-rose-700 border border-rose-200/70' :
                                             t.priority === 'high' ? 'bg-amber-50 text-amber-700 border border-amber-200/70' :
                                             t.priority === 'medium' ? 'bg-blue-50 text-blue-700 border border-blue-200/70' : 'bg-slate-50 text-slate-600 border border-slate-200/70'
@@ -949,7 +947,7 @@ export default function KanbanBoard({
                                           </span>
                                         </div>
                                         {t.description && (
-                                          <p className="text-[9.5px] text-slate-500 line-clamp-2 mt-0.5 pl-3" title={t.description}>
+                                          <p className="text-[9.5px] text-slate-500 line-clamp-2 mt-0.5 pl-3 break-words" title={t.description}>
                                             {t.description}
                                           </p>
                                         )}
@@ -1123,12 +1121,12 @@ export default function KanbanBoard({
                       </td>
 
                       {/* 5. Workload Summary & KPI */}
-                      <td className={`py-2 px-1.5 border-r border-slate-200/70 align-top bg-slate-50/40 ${borderBottomClass}`}>
-                        <div className="h-full min-h-[110px] flex flex-col justify-between p-2 rounded-lg bg-white border border-slate-200/80 shadow-2xs space-y-1.5">
+                      <td className={`py-2 px-1.5 border-r border-slate-200/70 align-top bg-gradient-to-b from-indigo-50/50 via-indigo-50/20 to-slate-50/30 bg-[radial-gradient(#e0e7ff_1px,transparent_1px)] [background-size:16px_16px] ${borderBottomClass}`}>
+                        <div className="h-full min-h-[110px] flex flex-col justify-between p-2 rounded-lg bg-white border border-slate-200/80 shadow-2xs space-y-1.5 min-w-0 overflow-hidden">
                           <div>
-                            <div className="flex items-center justify-between pb-1 border-b border-slate-100">
-                              <span className="text-[8.5px] font-semibold text-slate-400 uppercase tracking-wide">Velocity</span>
-                              <span className={`text-[8.5px] font-bold px-1 py-0.2 rounded ${
+                            <div className="flex items-center justify-between pb-1 border-b border-slate-100 min-w-0">
+                              <span className="text-[8.5px] font-semibold text-slate-400 uppercase tracking-wide truncate">Velocity</span>
+                              <span className={`text-[8.5px] font-bold px-1 py-0.2 rounded shrink-0 ${
                                 completionRate >= 80 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60' :
                                 completionRate >= 40 ? 'bg-blue-50 text-blue-700 border border-blue-200/60' :
                                 'bg-slate-50 text-slate-600 border border-slate-200/60'
@@ -1137,10 +1135,10 @@ export default function KanbanBoard({
                               </span>
                             </div>
 
-                            <div className="mt-1.5 space-y-1">
-                              <div className="flex items-center justify-between text-[10.5px] font-bold text-slate-800">
-                                <span>Delivered</span>
-                                <span className="text-slate-900 font-bold">{member.totalCompletedCount} <span className="text-slate-400 font-normal text-[9px]">/ {member.total}</span></span>
+                            <div className="mt-1.5 space-y-1 min-w-0">
+                              <div className="flex items-center justify-between text-[10.5px] font-bold text-slate-800 min-w-0">
+                                <span className="truncate">Delivered</span>
+                                <span className="text-slate-900 font-bold shrink-0">{member.totalCompletedCount} <span className="text-slate-400 font-normal text-[9px]">/ {member.total}</span></span>
                               </div>
                               <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden border border-slate-200/50">
                                 <div
@@ -1151,70 +1149,70 @@ export default function KanbanBoard({
                             </div>
                           </div>
 
-                          <div className="space-y-1 pt-1 border-t border-slate-100">
+                          <div className="space-y-1 pt-1 border-t border-slate-100 min-w-0">
                             {member.totalPages > 0 && (
-                              <div className="text-[8px] font-medium text-indigo-900 bg-indigo-50/80 px-1 py-0.5 rounded border border-indigo-100/70 truncate flex items-center justify-between">
-                                <span>📖 Reading</span>
-                                <span className="font-bold">{member.pagesRead}/{member.totalPages} pgs</span>
+                              <div className="text-[8px] font-medium text-indigo-900 bg-indigo-50/80 px-1 py-0.5 rounded border border-indigo-100/70 truncate flex items-center justify-between min-w-0">
+                                <span className="truncate">📖 Reading</span>
+                                <span className="font-bold shrink-0 ml-1">{member.pagesRead}/{member.totalPages} pgs</span>
                               </div>
                             )}
-                            <div className="flex items-center justify-center gap-1.5 text-[8px] text-slate-500 font-medium">
-                              <span className="text-emerald-700 font-semibold">{completedCount} done</span>
-                              <span className="text-slate-300">•</span>
-                              <span className="text-slate-500">{member.total - completedCount} open</span>
+                            <div className="flex items-center justify-center gap-1 text-[8px] text-slate-500 font-medium truncate">
+                              <span className="text-emerald-700 font-semibold shrink-0">{completedCount} done</span>
+                              <span className="text-slate-300 shrink-0">•</span>
+                              <span className="text-slate-500 shrink-0">{member.total - completedCount} open</span>
                             </div>
                           </div>
                         </div>
                       </td>
 
                       {/* 6. BLOCKED COLUMN */}
-                      <td className={`py-2 px-2 border-r border-slate-200/70 align-top bg-rose-50/20 ${borderBottomClass}`}>
+                      <td className={`py-2 px-2 border-r border-slate-200/70 align-top bg-gradient-to-b from-rose-50/50 via-rose-50/20 to-slate-50/30 bg-[radial-gradient(#fecdd3_1px,transparent_1px)] [background-size:16px_16px] ${borderBottomClass}`}>
                         {member.blockedTasks.length === 0 ? (
-                          <div className="h-full min-h-[110px] flex flex-col items-center justify-center p-2 rounded-lg bg-emerald-50/30 border border-dashed border-emerald-200/70 text-center space-y-0.5 transition-all">
-                            <div className="w-5 h-5 rounded-md bg-white border border-emerald-200 text-emerald-600 flex items-center justify-center text-[10px] shadow-2xs font-bold">
+                          <div className="h-full min-h-[140px] flex flex-col items-center justify-center p-2.5 rounded-xl bg-white/80 backdrop-blur-xs border border-dashed border-emerald-200 text-center space-y-1 shadow-2xs transition-all min-w-0 overflow-hidden">
+                            <div className="w-6 h-6 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center text-xs shadow-2xs font-bold shrink-0">
                               ✓
                             </div>
-                            <span className="font-semibold text-emerald-950 text-[10.5px]">Pipeline Clear</span>
-                            <span className="text-[8.5px] text-slate-400">Zero blockers reported</span>
+                            <span className="font-bold text-emerald-950 text-xs truncate max-w-full">Pipeline Clear</span>
+                            <span className="text-[9px] text-slate-400 font-medium truncate max-w-full">Zero blockers</span>
                           </div>
                         ) : (
-                          <div className="w-full h-full min-h-[110px] space-y-1.5 flex flex-col justify-between">
-                            <div className="space-y-1.5">
+                          <div className="w-full h-full min-h-[110px] space-y-1.5 flex flex-col justify-between min-w-0">
+                            <div className="space-y-1.5 min-w-0">
                               {/* Track Sub-header */}
-                              <div className="flex items-center justify-between text-[9px] text-rose-950 font-semibold px-0.5 pb-0.5 border-b border-rose-100">
-                                <span className="flex items-center gap-1">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                                  <span className="text-[9px] font-semibold text-slate-500">Attention Needed</span>
+                              <div className="flex items-center justify-between text-[9px] text-rose-950 font-semibold px-0.5 pb-0.5 border-b border-rose-100 min-w-0">
+                                <span className="flex items-center gap-1 min-w-0">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
+                                  <span className="text-[9px] font-semibold text-slate-500 truncate">Attention Needed</span>
                                 </span>
-                                <span className="text-[8.5px] font-bold text-rose-700 bg-white border border-rose-200/80 px-1 py-0.2 rounded shadow-2xs">
+                                <span className="text-[8.5px] font-bold text-rose-700 bg-white border border-rose-200/80 px-1 py-0.2 rounded shadow-2xs shrink-0">
                                   {member.blockedTasks.length}
                                 </span>
                               </div>
 
                               {/* Cards */}
-                              <div className="flex flex-col gap-1.5 w-full">
+                              <div className="flex flex-col gap-1.5 w-full min-w-0">
                                 {member.blockedTasks.map((t, tIdx) => (
                                   <div 
                                     key={t.id} 
-                                    className="w-full p-2 rounded-lg bg-white border border-slate-200/80 border-l-2 border-l-rose-500 hover:border-rose-300 shadow-2xs space-y-1 flex flex-col justify-between transition-all overflow-hidden"
+                                    className="w-full p-2 rounded-lg bg-white border border-slate-200/80 border-l-2 border-l-rose-500 hover:border-rose-300 shadow-2xs space-y-1 flex flex-col justify-between transition-all overflow-hidden min-w-0"
                                   >
-                                    <div>
-                                      <div className="flex items-start justify-between gap-1">
-                                        <span className="font-semibold text-slate-900 leading-snug text-[11px] flex items-start gap-1" title={t.title}>
+                                    <div className="min-w-0">
+                                      <div className="flex items-start justify-between gap-1 min-w-0">
+                                        <span className="font-semibold text-slate-900 leading-snug text-[11px] flex items-start gap-1 min-w-0 flex-1 break-words line-clamp-2" title={t.title}>
                                           <span className="text-[10px] text-rose-600 font-semibold shrink-0 mt-0.5">#{tIdx + 1}</span>
-                                          <span>{t.title}</span>
+                                          <span className="break-words">{t.title}</span>
                                         </span>
-                                        <span className="text-[8px] font-semibold px-1 py-0.2 rounded bg-rose-50 text-rose-700 border border-rose-200/70 shrink-0 uppercase">
+                                        <span className="text-[8px] font-semibold px-1 py-0.2 rounded bg-rose-50 text-rose-700 border border-rose-200/70 shrink-0 uppercase whitespace-nowrap">
                                           Blocked
                                         </span>
                                       </div>
-                                      <p className="text-[9.5px] text-rose-700 line-clamp-2 mt-0.5 pl-3 font-medium">{t.description || 'Action required'}</p>
+                                      <p className="text-[9.5px] text-rose-700 line-clamp-2 mt-0.5 pl-3 font-medium break-words">{t.description || 'Action required'}</p>
 
                                       {/* Remark Preview */}
                                       {(t.latest_remark || t.remarks?.[0]?.text) && (
                                         <div
                                           onClick={() => { sounds.playClick(); setActiveRemarkTask(t); setActiveRemarkCandidateTasks(candidateTasks); }}
-                                          className="mt-1 p-1 rounded-md bg-rose-50/60 hover:bg-rose-100/60 border border-rose-200/70 text-[8.5px] text-rose-950 flex items-center gap-1 cursor-pointer transition-colors"
+                                          className="mt-1 p-1 rounded-md bg-rose-50/60 hover:bg-rose-100/60 border border-rose-200/70 text-[8.5px] text-rose-950 flex items-center gap-1 cursor-pointer transition-colors min-w-0"
                                           title="Click to view blocker remark"
                                         >
                                           <MessageSquare className="w-2 h-2 text-rose-600 shrink-0" />
@@ -1228,12 +1226,12 @@ export default function KanbanBoard({
                                       )}
                                     </div>
 
-                                    <div className="flex flex-wrap items-center justify-between pt-1 border-t border-slate-100 text-[8.5px] gap-1">
-                                      <div className="flex items-center gap-1 shrink-0">
+                                    <div className="flex flex-wrap items-center justify-between pt-1 border-t border-slate-100 text-[8.5px] gap-1 min-w-0">
+                                      <div className="flex items-center gap-1 shrink-0 min-w-0">
                                         <button
                                           type="button"
                                           onClick={() => { sounds.playClick(); setActiveRemarkTask(t); setActiveRemarkCandidateTasks(candidateTasks); }}
-                                          className={`inline-flex items-center gap-0.5 text-[8px] px-1 py-0.2 rounded cursor-pointer transition-colors ${
+                                          className={`inline-flex items-center gap-0.5 text-[8px] px-1 py-0.2 rounded cursor-pointer transition-colors shrink-0 ${
                                             t.remarks?.length > 0
                                               ? 'bg-rose-50 text-rose-800 font-semibold border border-rose-200/80'
                                               : 'text-slate-400 hover:text-rose-600 hover:bg-slate-50'
@@ -1244,18 +1242,20 @@ export default function KanbanBoard({
                                           <span>{t.remarks?.length > 0 ? t.remarks.length : 'Remark'}</span>
                                         </button>
                                         {(t.due_date || t.start_date) && (
-                                          <span className="text-[8px] text-slate-400 font-medium">📅 {formatDateRange(t.start_date, t.due_date)}</span>
+                                          <span className="text-[8px] text-slate-400 font-medium truncate max-w-[80px]" title={formatDateRange(t.start_date, t.due_date)}>
+                                            📅 {formatDateRange(t.start_date, t.due_date)}
+                                          </span>
                                         )}
                                         <button
                                           onClick={() => { sounds.playClick(); onEditTask(t); }}
-                                          className="text-slate-400 hover:text-blue-600 cursor-pointer p-0.5"
+                                          className="text-slate-400 hover:text-blue-600 cursor-pointer p-0.5 shrink-0"
                                           title="Edit Task"
                                         >
                                           <Edit2 className="w-2 h-2" />
                                         </button>
                                         <button
                                           onClick={() => { sounds.playTrash(); onDeleteTask(t.id); }}
-                                          className="text-slate-400 hover:text-rose-600 cursor-pointer p-0.5"
+                                          className="text-slate-400 hover:text-rose-600 cursor-pointer p-0.5 shrink-0"
                                           title="Delete"
                                         >
                                           <Trash2 className="w-2 h-2" />
@@ -1263,7 +1263,7 @@ export default function KanbanBoard({
                                       </div>
                                       <button
                                         onClick={() => { sounds.playClick(); onStatusChange(t.id, 'in_progress'); }}
-                                        className="text-[8.5px] text-blue-600 font-semibold hover:underline cursor-pointer shrink-0"
+                                        className="text-[8.5px] text-blue-600 font-semibold hover:underline cursor-pointer shrink-0 ml-auto"
                                       >
                                         Unblock →
                                       </button>
@@ -1277,61 +1277,61 @@ export default function KanbanBoard({
                       </td>
 
                       {/* 7. COMPLETED COLUMN */}
-                      <td className={`py-2 px-2 align-top bg-emerald-50/20 ${borderBottomClass} ${isLastRow ? 'rounded-br-2xl' : ''}`}>
+                      <td className={`py-2 px-2 align-top bg-gradient-to-b from-emerald-50/50 via-emerald-50/20 to-slate-50/30 bg-[radial-gradient(#a7f3d0_1px,transparent_1px)] [background-size:16px_16px] ${borderBottomClass}`}>
                         {member.regularCompletedTasks.length === 0 && member.completedBooks.length === 0 ? (
-                          <div className="h-full min-h-[110px] flex flex-col items-center justify-center p-2 rounded-lg bg-slate-50/60 border border-dashed border-slate-200/80 text-center space-y-0.5 transition-all">
-                            <div className="w-5 h-5 rounded-md bg-white border border-slate-200 text-slate-400 flex items-center justify-center text-[10px] shadow-2xs">
+                          <div className="h-full min-h-[140px] flex flex-col items-center justify-center p-3 rounded-xl bg-white/80 backdrop-blur-xs border border-dashed border-slate-200 text-center space-y-1 shadow-2xs transition-all min-w-0 overflow-hidden">
+                            <div className="w-6 h-6 rounded-lg bg-slate-100 border border-slate-200 text-slate-400 flex items-center justify-center text-xs shadow-2xs">
                               ⏳
                             </div>
-                            <span className="font-semibold text-slate-600 text-[10.5px]">0 Completed</span>
-                            <span className="text-[8.5px] text-slate-400">Tasks in progress</span>
+                            <span className="font-bold text-slate-600 text-xs">0 Completed</span>
+                            <span className="text-[9px] text-slate-400 font-medium">Tasks in progress</span>
                           </div>
                         ) : (
-                          <div className="w-full h-full min-h-[110px] space-y-1.5 flex flex-col justify-between">
-                            <div className="space-y-1.5">
+                          <div className="w-full h-full min-h-[110px] space-y-1.5 flex flex-col justify-between min-w-0">
+                            <div className="space-y-1.5 min-w-0">
                               {/* Track Sub-header */}
-                              <div className="flex items-center justify-between text-[9px] text-emerald-950 font-semibold px-0.5 pb-0.5 border-b border-emerald-100">
-                                <span className="flex items-center gap-1">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                  <span className="text-[9px] font-semibold text-slate-500">Delivered</span>
+                              <div className="flex items-center justify-between text-[9px] text-emerald-950 font-semibold px-0.5 pb-0.5 border-b border-emerald-100 min-w-0">
+                                <span className="flex items-center gap-1 min-w-0">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                                  <span className="text-[9px] font-semibold text-slate-500 truncate">Delivered</span>
                                 </span>
-                                <span className="text-[8.5px] font-bold text-emerald-700 bg-white border border-emerald-200/80 px-1 py-0.2 rounded shadow-2xs">
+                                <span className="text-[8.5px] font-bold text-emerald-700 bg-white border border-emerald-200/80 px-1 py-0.2 rounded shadow-2xs shrink-0">
                                   {(member.regularCompletedTasks?.length || 0) + (member.completedBooks?.length || 0)}
                                 </span>
                               </div>
 
                               {/* Stacked Cards */}
-                              <div className="flex flex-col gap-1.5 w-full">
+                              <div className="flex flex-col gap-1.5 w-full min-w-0">
                                 {/* Regular Finished Tasks */}
                                 {member.regularCompletedTasks.map((t, tIdx) => (
                                   <div 
                                     key={t.id} 
-                                    className="w-full p-2 rounded-lg bg-white border border-slate-200/80 border-l-2 border-l-emerald-500 hover:border-emerald-300 shadow-2xs space-y-1 flex flex-col justify-between transition-all overflow-hidden"
+                                    className="w-full p-2 rounded-lg bg-white border border-slate-200/80 border-l-2 border-l-emerald-500 hover:border-emerald-300 shadow-2xs space-y-1 flex flex-col justify-between transition-all overflow-hidden min-w-0"
                                   >
-                                    <div>
-                                      <div className="flex items-start justify-between gap-1">
-                                        <div className="flex items-start gap-1 min-w-0">
+                                    <div className="min-w-0">
+                                      <div className="flex items-start justify-between gap-1.5 min-w-0">
+                                        <div className="flex items-start gap-1 min-w-0 flex-1">
                                           <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0 mt-0.5" />
-                                          <span className="font-semibold text-slate-800 text-[11px] leading-snug" title={t.title}>
-                                            <span className="text-[10px] text-emerald-700 font-semibold mr-1">#{tIdx + 1}</span>
-                                            {t.title}
+                                          <span className="font-semibold text-slate-800 text-[11px] leading-snug break-words line-clamp-2 min-w-0" title={t.title}>
+                                            <span className="text-[10px] text-emerald-700 font-semibold mr-1 shrink-0">#{tIdx + 1}</span>
+                                            <span className="break-words">{t.title}</span>
                                           </span>
                                         </div>
-                                        <span className="text-[8px] font-semibold px-1 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200/70 shrink-0">
+                                        <span className="text-[8px] font-semibold px-1 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200/70 shrink-0 whitespace-nowrap">
                                           ✓ Done
                                         </span>
                                       </div>
                                       {t.description && (
-                                        <p className="text-[9.5px] text-slate-500 line-clamp-2 mt-0.5 pl-4">{t.description}</p>
+                                        <p className="text-[9.5px] text-slate-500 line-clamp-2 mt-0.5 pl-4 break-words">{t.description}</p>
                                       )}
                                     </div>
-                                    <div className="flex flex-wrap items-center justify-between text-[8.5px] pt-1 border-t border-slate-100 text-slate-400 gap-1">
-                                      <div className="flex items-center gap-1 shrink-0">
+                                    <div className="flex flex-wrap items-center justify-between text-[8.5px] pt-1 border-t border-slate-100 text-slate-400 gap-1 min-w-0">
+                                      <div className="flex items-center gap-1 shrink-0 min-w-0">
                                         <button
                                           type="button"
                                           onClick={() => { sounds.playClick(); setActiveRemarkTask(t); setActiveRemarkCandidateTasks(candidateTasks); }}
-                                          className={`inline-flex items-center gap-0.5 text-[8px] px-1 py-0.2 rounded cursor-pointer ${
-                                            t.remarks?.length > 0 ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'hover:text-indigo-600'
+                                          className={`inline-flex items-center gap-0.5 text-[8px] px-1 py-0.2 rounded cursor-pointer shrink-0 ${
+                                            t.remarks?.length > 0 ? 'bg-indigo-50 text-indigo-700 font-semibold border border-indigo-200/70' : 'hover:text-indigo-600'
                                           }`}
                                           title="Remarks"
                                         >
@@ -1339,23 +1339,30 @@ export default function KanbanBoard({
                                           <span>{t.remarks?.length || '0'}</span>
                                         </button>
                                         {(t.due_date || t.start_date) && (
-                                          <span className="text-[8px] text-slate-400">📅 {formatDateRange(t.start_date, t.due_date)}</span>
+                                          <span className="text-[8px] text-slate-400 truncate max-w-[80px]" title={formatDateRange(t.start_date, t.due_date)}>
+                                            📅 {formatDateRange(t.start_date, t.due_date)}
+                                          </span>
                                         )}
                                       </div>
-                                      <div className="flex items-center gap-1 shrink-0">
+                                      <div className="flex items-center gap-1 shrink-0 ml-auto">
                                         <button
                                           onClick={() => { sounds.playClick(); onStatusChange(t.id, 'in_progress'); }}
-                                          className="text-[8.5px] text-blue-600 font-semibold hover:underline cursor-pointer"
+                                          className="text-[8.5px] text-blue-600 font-semibold hover:underline cursor-pointer shrink-0"
                                           title="Reopen task"
                                         >
                                           Reopen
                                         </button>
                                         <button
-                                          onClick={() => { sounds.playTrash(); onDeleteTask(t.id); }}
-                                          className="text-slate-400 hover:text-rose-600 cursor-pointer p-0.5"
-                                          title="Delete"
+                                          type="button"
+                                          onClick={() => {
+                                            if (sounds.playTrash) sounds.playTrash();
+                                            else sounds.playClick();
+                                            onDeleteTask(t.id);
+                                          }}
+                                          className="text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded p-0.5 cursor-pointer transition-colors shrink-0"
+                                          title="Delete Task"
                                         >
-                                          <Trash2 className="w-2 h-2" />
+                                          <Trash2 className="w-2.5 h-2.5" />
                                         </button>
                                       </div>
                                     </div>
@@ -1366,37 +1373,37 @@ export default function KanbanBoard({
                                 {member.completedBooks.map((b, bIdx) => (
                                   <div 
                                     key={b.id || bIdx} 
-                                    className="w-full p-2 rounded-lg bg-white border border-slate-200/80 border-l-2 border-l-emerald-500 shadow-2xs space-y-1 flex flex-col justify-between transition-all"
+                                    className="w-full p-2 rounded-lg bg-white border border-slate-200/80 border-l-2 border-l-emerald-500 shadow-2xs space-y-1 flex flex-col justify-between transition-all min-w-0 overflow-hidden"
                                   >
-                                    <div className="space-y-0.5">
-                                      <div className="flex items-start justify-between gap-1">
-                                        <span className="font-semibold text-slate-800 text-[11px] line-clamp-1 flex items-center gap-1" title={b.title}>
+                                    <div className="space-y-0.5 min-w-0">
+                                      <div className="flex items-start justify-between gap-1.5 min-w-0">
+                                        <span className="font-semibold text-slate-800 text-[11px] line-clamp-1 flex items-center gap-1 min-w-0 flex-1 break-words" title={b.title}>
                                           <BookOpen className="w-3 h-3 text-emerald-600 shrink-0" />
-                                          <span className="text-[9.5px] text-emerald-700 font-semibold mr-1">#{bIdx + 1}</span>
-                                          <span>{b.title}</span>
+                                          <span className="text-[9.5px] text-emerald-700 font-semibold mr-1 shrink-0">#{bIdx + 1}</span>
+                                          <span className="truncate">{b.title}</span>
                                         </span>
-                                        <span className="text-[8px] font-semibold px-1 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200/70 shrink-0">
+                                        <span className="text-[8px] font-semibold px-1 py-0.2 rounded bg-emerald-50 text-emerald-700 border border-emerald-200/70 shrink-0 whitespace-nowrap">
                                           Finished
                                         </span>
                                       </div>
-                                      <div className="text-[8.5px] text-slate-500 font-medium">
+                                      <div className="text-[8.5px] text-slate-500 font-medium truncate">
                                         Author: {b.author || 'N/A'} • {b.total_pages || 0} pgs
                                       </div>
                                       <div className="flex items-center gap-1 flex-wrap">
                                         {b.completion_date && (
-                                          <span className="text-[8px] text-emerald-700 font-medium">
+                                          <span className="text-[8px] text-emerald-700 font-medium truncate">
                                             Completed: {formatFriendlyDate(b.completion_date)}
                                           </span>
                                         )}
                                         {b.presented && (
-                                          <span className="text-[7.5px] px-1 py-0.2 rounded bg-purple-100 text-purple-800 font-semibold">
+                                          <span className="text-[7.5px] px-1 py-0.2 rounded bg-purple-100 text-purple-800 font-semibold shrink-0">
                                             🎤 Presented
                                           </span>
                                         )}
                                       </div>
                                     </div>
                                     {member.bookTask && (
-                                      <div className="flex flex-wrap items-center justify-between text-[8.5px] pt-1 border-t border-slate-100 text-slate-400 gap-1">
+                                      <div className="flex flex-wrap items-center justify-between text-[8.5px] pt-1 border-t border-slate-100 text-slate-400 gap-1 min-w-0">
                                         <button
                                           onClick={() => { sounds.playClick(); onEditTask(member.bookTask); }}
                                           className="text-emerald-800 hover:text-emerald-950 font-semibold hover:underline cursor-pointer inline-flex items-center gap-0.5"
@@ -1418,12 +1425,12 @@ export default function KanbanBoard({
                               </div>
 
                               {/* Completed Bottom Velocity Pill */}
-                              <div className="mt-1.5 py-1 px-1.5 rounded-md bg-emerald-50 border border-emerald-200/70 text-[8.5px] font-semibold text-emerald-800 flex items-center justify-between shadow-2xs">
-                                <span className="flex items-center gap-1">
-                                  <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
-                                  <span>Velocity</span>
+                              <div className="mt-1.5 py-1 px-1.5 rounded-md bg-emerald-50 border border-emerald-200/70 text-[8.5px] font-semibold text-emerald-800 flex items-center justify-between shadow-2xs min-w-0">
+                                <span className="flex items-center gap-1 min-w-0">
+                                  <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600 shrink-0" />
+                                  <span className="truncate">Velocity</span>
                                 </span>
-                                <span className="font-bold text-emerald-700 bg-white px-1 py-0.2 rounded border border-emerald-200/60 shadow-2xs">
+                                <span className="font-bold text-emerald-700 bg-white px-1 py-0.2 rounded border border-emerald-200/60 shadow-2xs shrink-0 whitespace-nowrap">
                                   {completionRate}% Delivered
                                 </span>
                               </div>
