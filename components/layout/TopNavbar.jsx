@@ -39,7 +39,7 @@ export default function TopNavbar({
   const isAakash = currentUser?.id === 'usr_aakash' || currentUser?.name?.toLowerCase().includes('aakash');
 
   return (
-    <header className="glass-header sticky top-0 z-40 px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4 sm:gap-8 shadow-[0_1px_2px_rgba(0,0,0,0.03)] select-none">
+    <header className="glass-header sticky top-0 z-40 h-14 px-4 sm:px-6 flex items-center justify-between gap-4 sm:gap-8 shadow-[0_1px_2px_rgba(0,0,0,0.03)] select-none">
       
       {/* Left: View Mode Switch & Fixed-Width Search Bar */}
       <div className="flex items-center gap-3 shrink-0">

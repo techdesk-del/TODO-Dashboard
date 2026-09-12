@@ -16,7 +16,7 @@
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     letter-spacing: -0.011em;
-    overflow-x: hidden;
+    overflow-x: clip;
   }
 }
 
