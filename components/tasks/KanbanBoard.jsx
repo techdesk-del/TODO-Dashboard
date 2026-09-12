@@ -728,21 +728,33 @@ export default function KanbanBoard({
                         <button
                           type="button"
                           onClick={() => { sounds.playClick(); openNewTaskModal('todo', user.id); }}
-                          className="py-1 px-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs flex items-center gap-1 shadow-xs cursor-pointer"
+                          className="py-1 px-2.5 rounded-md bg-slate-900 hover:bg-slate-800 active:scale-95 text-white font-medium text-xs flex items-center gap-1 border border-slate-900 shadow-2xs transition-colors cursor-pointer"
+                          title={`Add task for ${user.name}`}
                         >
-                          <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                          <span>Task</span>
+                          <Plus className="w-3 h-3 stroke-[2.5] text-slate-300" />
+                          <span>+ Task</span>
                         </button>
                         {member.bookTask ? (
                           <button
                             type="button"
                             onClick={() => { sounds.playClick(); onEditTask(member.bookTask); }}
-                            className="py-1 px-2 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border border-indigo-200 text-xs font-bold flex items-center gap-1 cursor-pointer"
+                            className="py-1 px-2 rounded-md bg-white hover:bg-slate-50 active:scale-95 text-slate-700 hover:text-slate-900 border border-slate-300 text-xs font-medium flex items-center gap-1 shadow-2xs transition-colors cursor-pointer"
                             title="Manage Books"
                           >
-                            <BookOpen className="w-3.5 h-3.5 text-indigo-600" />
+                            <BookOpen className="w-3.5 h-3.5 text-slate-600" />
+                            <span className="text-[11px] font-medium">({member.bookTask.books_list?.length || 1})</span>
                           </button>
-                        ) : null}
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => { sounds.playClick(); openNewTaskModal('in_progress', user.id); }}
+                            className="py-1 px-2 rounded-md bg-slate-50 hover:bg-slate-100 active:scale-95 text-slate-600 hover:text-slate-800 border border-dashed border-slate-300 text-xs font-medium flex items-center gap-1 transition-colors cursor-pointer"
+                            title="Assign Book"
+                          >
+                            <BookOpen className="w-3 h-3 text-slate-400" />
+                            <span>+ Book</span>
+                          </button>
+                        )}
                       </div>
                     </div>
 
@@ -1092,18 +1104,18 @@ export default function KanbanBoard({
                             </div>
 
                             {/* Quick Actions */}
-                            <div className="flex flex-col gap-1 pt-0.5 w-full">
+                            <div className="grid grid-cols-2 gap-1.5 pt-1 w-full">
                               <button
                                 type="button"
                                 onClick={() => {
                                   sounds.playClick();
                                   openNewTaskModal('todo', user.id);
                                 }}
-                                className="w-full py-1 px-2 rounded-md bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-semibold text-[10px] flex items-center justify-center gap-1 shadow-xs shadow-blue-500/20 transition-all cursor-pointer"
+                                className="w-full py-1 px-1 rounded-md bg-slate-900 hover:bg-slate-800 active:scale-95 text-white font-medium text-[9.5px] flex items-center justify-center gap-1 border border-slate-900 shadow-2xs transition-colors cursor-pointer"
                                 title={`Add task for ${user.name}`}
                               >
-                                <Plus className="w-3 h-3 stroke-[2.5] shrink-0" />
-                                <span>Add Task</span>
+                                <Plus className="w-2.5 h-2.5 stroke-[2.5] text-slate-300 shrink-0" />
+                                <span>+ Task</span>
                               </button>
 
                               {member.bookTask ? (
@@ -1113,11 +1125,11 @@ export default function KanbanBoard({
                                     sounds.playClick();
                                     onEditTask(member.bookTask);
                                   }}
-                                  className="w-full py-1 px-2 rounded-md bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border border-indigo-200/90 active:scale-95 font-semibold text-[10px] flex items-center justify-center gap-1 transition-all cursor-pointer shadow-2xs"
-                                  title="Manage books"
+                                  className="w-full py-1 px-1 rounded-md bg-white hover:bg-slate-50 active:scale-95 text-slate-700 hover:text-slate-900 border border-slate-300 font-medium text-[9.5px] flex items-center justify-center gap-1 shadow-2xs transition-colors cursor-pointer min-w-0"
+                                  title={`Manage books for ${user.name}`}
                                 >
-                                  <BookOpen className="w-3 h-3 text-indigo-600 shrink-0" />
-                                  <span>Books ({member.bookTask.books_list?.length || 1})</span>
+                                  <BookOpen className="w-2.5 h-2.5 text-slate-600 shrink-0" />
+                                  <span className="truncate">Books ({member.bookTask.books_list?.length || 1})</span>
                                 </button>
                               ) : (
                                 <button
@@ -1126,10 +1138,10 @@ export default function KanbanBoard({
                                     sounds.playClick();
                                     openNewTaskModal('in_progress', user.id);
                                   }}
-                                  className="w-full py-1 px-2 rounded-md bg-slate-100/90 hover:bg-slate-200/80 text-slate-700 border border-slate-200/80 active:scale-95 font-semibold text-[10px] flex items-center justify-center gap-1 transition-all cursor-pointer"
-                                  title="Assign a book reading task"
+                                  className="w-full py-1 px-1 rounded-md bg-slate-50 hover:bg-slate-100 active:scale-95 text-slate-600 hover:text-slate-800 border border-dashed border-slate-300 font-medium text-[9.5px] flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                                  title={`Assign a book reading task for ${user.name}`}
                                 >
-                                  <BookOpen className="w-3 h-3 text-slate-500 shrink-0" />
+                                  <BookOpen className="w-2.5 h-2.5 text-slate-400 shrink-0" />
                                   <span>+ Book</span>
                                 </button>
                               )}
@@ -1538,19 +1550,19 @@ export default function KanbanBoard({
                                       </div>
 
                                       {/* Action Buttons */}
-                                      <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-[8.5px] gap-1 flex-wrap">
+                                      <div className="flex items-center justify-between pt-1 border-t border-slate-200/80 text-[8.5px] gap-1 flex-wrap">
                                         <div className="flex items-center gap-1">
                                           <button
                                             type="button"
                                             onClick={() => { sounds.playClick(); setActiveDailyTask(t); }}
-                                            className="px-1 py-0.2 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold border border-indigo-200/70 inline-flex items-center gap-0.5 cursor-pointer shadow-2xs text-[8px]"
+                                            className="px-1.5 py-0.5 rounded bg-slate-900 hover:bg-slate-800 text-white font-medium border border-slate-900 inline-flex items-center gap-1 cursor-pointer shadow-2xs text-[8px] transition-colors"
                                           >
-                                            <Sparkles className="w-2 h-2" /> Log
+                                            <Sparkles className="w-2 h-2 text-slate-300" /> Log
                                           </button>
                                           <button
                                             type="button"
                                             onClick={() => { sounds.playClick(); onEditTask(t); }}
-                                            className="px-1 py-0.2 rounded bg-white hover:bg-slate-50 text-slate-700 font-semibold border border-slate-200 inline-flex items-center gap-0.5 cursor-pointer shadow-2xs text-[8px]"
+                                            className="px-1.5 py-0.5 rounded bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 font-medium border border-slate-300 inline-flex items-center gap-1 cursor-pointer shadow-2xs text-[8px] transition-colors"
                                             title="Manage books"
                                           >
                                             <Edit2 className="w-2 h-2 text-slate-500" /> Books
@@ -1562,7 +1574,7 @@ export default function KanbanBoard({
                                             sounds.playClick();
                                             setBookToFinish(t);
                                           }}
-                                          className="text-emerald-700 font-bold hover:underline cursor-pointer text-[8.5px]"
+                                          className="px-1.5 py-0.5 rounded text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 font-semibold border border-transparent hover:border-emerald-200 cursor-pointer text-[8.5px] transition-colors"
                                         >
                                           Finish ✓
                                         </button>
