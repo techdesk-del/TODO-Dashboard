@@ -267,7 +267,7 @@ export default function CEODashboard({
     <div className="space-y-6 animate-fade-in">
       
       {/* Top Banner */}
-      <div className="rounded-2xl bg-white border border-slate-200 p-4 sm:p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="rounded-2xl bg-white border-2 border-slate-300 p-4 sm:p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-800 border border-blue-200">
@@ -317,15 +317,17 @@ export default function CEODashboard({
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
         
         {/* Total Members */}
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <span className="text-xs font-semibold text-slate-500 block mb-1">Total Team Members</span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-slate-900">{userStats.total}</span>
-            <span className="text-xs font-semibold text-emerald-600">({userStats.online} online)</span>
+        <div className="bg-white p-4 rounded-xl border-2 border-slate-300 border-t-4 border-t-blue-500 shadow-sm flex flex-col justify-between">
+          <div>
+            <span className="text-xs font-semibold text-slate-500 block mb-1">Total Team Members</span>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-slate-900">{userStats.total}</span>
+              <span className="text-xs font-semibold text-emerald-600">({userStats.online} online)</span>
+            </div>
           </div>
-          <span className="text-[11px] text-slate-400 mt-1 block">
+          <div className="pt-2 mt-2 border-t border-slate-200 text-[11px] text-slate-500">
             {userStats.checked_out} clocked out
-          </span>
+          </div>
         </div>
 
         {/* Pending Active Workload */}
@@ -336,15 +338,17 @@ export default function CEODashboard({
             const el = document.getElementById('ceo-tasks-section');
             if (el) el.scrollIntoView({ behavior: 'smooth' });
           }}
-          className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm cursor-pointer hover:border-amber-400 hover:shadow-md transition-all group"
+          className="bg-white p-4 rounded-xl border-2 border-slate-300 border-t-4 border-t-amber-500 shadow-sm cursor-pointer hover:border-amber-400 hover:shadow-md transition-all group flex flex-col justify-between"
           title="Click to view all pending tasks"
         >
-          <span className="text-xs font-semibold text-slate-500 group-hover:text-amber-700 block mb-1">Active Pending Tasks</span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-amber-600">{pendingCount}</span>
-            <span className="text-xs font-semibold text-slate-500">of {stats.total}</span>
+          <div>
+            <span className="text-xs font-semibold text-slate-500 group-hover:text-amber-700 block mb-1">Active Pending Tasks</span>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-amber-600">{pendingCount}</span>
+              <span className="text-xs font-semibold text-slate-500">of {stats.total}</span>
+            </div>
           </div>
-          <div className="mt-1">
+          <div className="pt-2 mt-2 border-t border-slate-200 text-[11px]">
             {overdueCount > 0 ? (
               <button
                 type="button"
@@ -355,40 +359,44 @@ export default function CEODashboard({
                   const el = document.getElementById('ceo-tasks-section');
                   if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="text-[11px] font-bold text-rose-600 hover:text-rose-800 hover:underline inline-flex items-center gap-1 cursor-pointer"
+                className="font-bold text-rose-600 hover:text-rose-800 hover:underline inline-flex items-center gap-1 cursor-pointer"
                 title="Click to view overdue tasks"
               >
                 🔥 {overdueCount} overdue (Click to view)
               </button>
             ) : (
-              <span className="text-[11px] text-slate-400 block">All tasks on schedule</span>
+              <span className="text-slate-400 block">All tasks on schedule</span>
             )}
           </div>
         </div>
 
         {/* Sprint Completion Rate */}
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <span className="text-xs font-semibold text-slate-500 block mb-1">Completion Rate</span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-blue-600">{stats.completion_rate}%</span>
-            <span className="text-xs font-semibold text-slate-500">({stats.completed} done)</span>
+        <div className="bg-white p-4 rounded-xl border-2 border-slate-300 border-t-4 border-t-emerald-500 shadow-sm flex flex-col justify-between">
+          <div>
+            <span className="text-xs font-semibold text-slate-500 block mb-1">Completion Rate</span>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-blue-600">{stats.completion_rate}%</span>
+              <span className="text-xs font-semibold text-slate-500">({stats.completed} done)</span>
+            </div>
           </div>
-          <span className="text-[11px] text-slate-400 mt-1 block">
+          <div className="pt-2 mt-2 border-t border-slate-200 text-[11px] text-slate-500">
             {stats.in_progress} in progress
-          </span>
+          </div>
         </div>
 
         {/* EOD Attendance */}
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-          <span className="text-xs font-semibold text-slate-500 block mb-1">EOD Checkouts ({selectedDate})</span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-purple-600">
-              {filteredEodReports.length}/{userStats.total}
-            </span>
+        <div className="bg-white p-4 rounded-xl border-2 border-slate-300 border-t-4 border-t-purple-500 shadow-sm flex flex-col justify-between">
+          <div>
+            <span className="text-xs font-semibold text-slate-500 block mb-1">EOD Checkouts ({selectedDate})</span>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-purple-600">
+                {filteredEodReports.length}/{userStats.total}
+              </span>
+            </div>
           </div>
-          <span className="text-[11px] text-slate-400 mt-1 block">
+          <div className="pt-2 mt-2 border-t border-slate-200 text-[11px] text-slate-500">
             Avg rating: {avgRating} ⭐
-          </span>
+          </div>
         </div>
 
       </div>
@@ -464,8 +472,8 @@ export default function CEODashboard({
           : 0;
 
         return (
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+          <div className="bg-white rounded-2xl border-2 border-slate-300 shadow-sm p-5 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b-2 border-slate-300">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-600 flex items-center justify-center font-bold shadow-2xs">
                   <BookOpen className="w-4 h-4" />
@@ -499,7 +507,7 @@ export default function CEODashboard({
             {/* 6 EXECUTIVE KPI CARDS FOR BOOK READING */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
               {/* Total Books */}
-              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-indigo-50/80 to-slate-50 border border-indigo-100 shadow-2xs">
+              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-indigo-50/80 to-slate-50 border-2 border-slate-200 shadow-2xs">
                 <div className="flex items-center justify-between text-indigo-600 mb-1">
                   <span className="text-[10.5px] font-bold uppercase tracking-wider text-slate-500">Total Books</span>
                   <BookOpen className="w-3.5 h-3.5" />
@@ -509,7 +517,7 @@ export default function CEODashboard({
               </div>
 
               {/* Completed */}
-              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-emerald-50/80 to-slate-50 border border-emerald-100 shadow-2xs">
+              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-emerald-50/80 to-slate-50 border-2 border-slate-200 shadow-2xs">
                 <div className="flex items-center justify-between text-emerald-600 mb-1">
                   <span className="text-[10.5px] font-bold uppercase tracking-wider text-slate-500">Completed</span>
                   <CheckCircle2 className="w-3.5 h-3.5" />
@@ -519,7 +527,7 @@ export default function CEODashboard({
               </div>
 
               {/* In Progress */}
-              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-blue-50/80 to-slate-50 border border-blue-100 shadow-2xs">
+              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-blue-50/80 to-slate-50 border-2 border-slate-200 shadow-2xs">
                 <div className="flex items-center justify-between text-blue-600 mb-1">
                   <span className="text-[10.5px] font-bold uppercase tracking-wider text-slate-500">In Progress</span>
                   <Clock className="w-3.5 h-3.5" />
@@ -529,7 +537,7 @@ export default function CEODashboard({
               </div>
 
               {/* Books Presented */}
-              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-purple-50/80 to-slate-50 border border-purple-100 shadow-2xs">
+              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-purple-50/80 to-slate-50 border-2 border-slate-200 shadow-2xs">
                 <div className="flex items-center justify-between text-purple-600 mb-1">
                   <span className="text-[10.5px] font-bold uppercase tracking-wider text-slate-500">Presented</span>
                   <Award className="w-3.5 h-3.5" />
@@ -539,7 +547,7 @@ export default function CEODashboard({
               </div>
 
               {/* Total Pages */}
-              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-amber-50/80 to-slate-50 border border-amber-100 shadow-2xs">
+              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-amber-50/80 to-slate-50 border-2 border-slate-200 shadow-2xs">
                 <div className="flex items-center justify-between text-amber-600 mb-1">
                   <span className="text-[10.5px] font-bold uppercase tracking-wider text-slate-500">Total Pages</span>
                   <Layers className="w-3.5 h-3.5" />
@@ -549,7 +557,7 @@ export default function CEODashboard({
               </div>
 
               {/* Total Pages Read */}
-              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-teal-50/80 to-slate-50 border border-teal-100 shadow-2xs">
+              <div className="p-3.5 rounded-2xl bg-gradient-to-br from-teal-50/80 to-slate-50 border-2 border-slate-200 shadow-2xs">
                 <div className="flex items-center justify-between text-teal-600 mb-1">
                   <span className="text-[10.5px] font-bold uppercase tracking-wider text-slate-500">Pages Read</span>
                   <TrendingUp className="w-3.5 h-3.5" />
@@ -562,7 +570,7 @@ export default function CEODashboard({
             </div>
 
             {/* Reading Grid Table - Smooth horizontal scroll on mobile */}
-            <div className="border border-slate-200 rounded-xl overflow-x-auto matrix-scroll touch-scroll shadow-2xs">
+            <div className="border-2 border-slate-300 rounded-xl overflow-x-auto matrix-scroll touch-scroll shadow-2xs">
               <table className="w-full min-w-[760px] table-fixed text-left text-xs border-collapse">
                 <colgroup>
                   <col style={{ width: '18%' }} />
@@ -573,20 +581,20 @@ export default function CEODashboard({
                   <col style={{ width: '12%' }} />
                 </colgroup>
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold text-[11px]">
-                    <th className="py-2.5 px-3">Team Member</th>
-                    <th className="py-2.5 px-3">Current Book & Author</th>
-                    <th className="py-2.5 px-3">Books Status</th>
-                    <th className="py-2.5 px-3">Today's Status</th>
-                    <th className="py-2.5 px-3">Total Progress</th>
+                  <tr className="bg-slate-900 border-b-2 border-slate-700 text-slate-200 font-semibold text-[11px]">
+                    <th className="py-2.5 px-3 border-r border-slate-700">Team Member</th>
+                    <th className="py-2.5 px-3 border-r border-slate-700">Current Book & Author</th>
+                    <th className="py-2.5 px-3 border-r border-slate-700">Books Status</th>
+                    <th className="py-2.5 px-3 border-r border-slate-700">Today's Status</th>
+                    <th className="py-2.5 px-3 border-r border-slate-700">Total Progress</th>
                     <th className="py-2.5 px-3 text-right">Insights / Logs</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 bg-white">
+                <tbody className="divide-y-2 divide-slate-200 bg-white">
                   {memberReadingData.map(item => (
-                    <tr key={item.user.id} className="hover:bg-indigo-50/20 transition-colors">
+                    <tr key={item.user.id} className="hover:bg-indigo-50/20 transition-colors border-b border-slate-300">
                       {/* 1. Team Member */}
-                      <td className="py-2.5 px-3 font-bold text-slate-900">
+                      <td className="py-2.5 px-3 font-bold text-slate-900 border-r border-slate-200">
                         <div className="flex items-center gap-2 min-w-0">
                           <div
                             className="w-6 h-6 rounded-md flex items-center justify-center text-[10px] font-extrabold text-white shadow-2xs shrink-0"
@@ -602,7 +610,7 @@ export default function CEODashboard({
                       </td>
 
                       {/* 2. Current Book & Author */}
-                      <td className="py-2.5 px-3">
+                      <td className="py-2.5 px-3 border-r border-slate-200">
                         <div className="font-bold text-indigo-950 truncate text-[11.5px]" title={item.bookTitle}>
                           {item.bookTitle}
                         </div>
@@ -616,7 +624,7 @@ export default function CEODashboard({
                       </td>
 
                       {/* 3. Books Status (Consolidated Badges) */}
-                      <td className="py-2.5 px-3">
+                      <td className="py-2.5 px-3 border-r border-slate-200">
                         <div className="flex items-center gap-1 flex-wrap">
                           <span className="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-slate-100 text-slate-700 border border-slate-200 shadow-2xs" title="Total books assigned">
                             {item.totalBooks} book{item.totalBooks === 1 ? '' : 's'}
@@ -638,7 +646,7 @@ export default function CEODashboard({
                       </td>
 
                       {/* 4. Today's Reading Status */}
-                      <td className="py-2.5 px-3">
+                      <td className="py-2.5 px-3 border-r border-slate-200">
                         {item.todayLog ? (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-100 text-emerald-900 font-bold text-[10.5px] border border-emerald-300 shadow-2xs">
                             <CheckCircle2 className="w-3 h-3 text-emerald-700 shrink-0" />
@@ -661,7 +669,7 @@ export default function CEODashboard({
                       </td>
 
                       {/* 5. Overall Progress */}
-                      <td className="py-2.5 px-3">
+                      <td className="py-2.5 px-3 border-r border-slate-200">
                         <div className="flex items-center justify-between text-[10.5px] font-bold text-slate-700 mb-1">
                           <span className="truncate">{item.totalPagesRead} / {item.totalPages || '—'} pgs</span>
                           <span className="text-indigo-600 font-black ml-1 shrink-0">{item.percent}%</span>
@@ -708,10 +716,10 @@ export default function CEODashboard({
       })()}
 
       {/* SECTION 1: LIVE TASK QUEUE & EXECUTIVE MODIFICATION MATRIX */}
-      <div id="ceo-tasks-section" className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+      <div id="ceo-tasks-section" className="bg-white rounded-2xl border-2 border-slate-300 shadow-sm p-5 space-y-4">
         
         {/* Header & Controls */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b-2 border-slate-300">
           <div>
             <div className="flex items-center gap-2">
               <Layers className="w-4 h-4 text-blue-600" />
@@ -791,7 +799,7 @@ export default function CEODashboard({
         </div>
 
         {/* Tasks Table - Smooth horizontal scroll on mobile */}
-        <div className="border border-slate-200 rounded-xl overflow-x-auto matrix-scroll touch-scroll shadow-2xs">
+        <div className="border-2 border-slate-300 rounded-xl overflow-x-auto matrix-scroll touch-scroll shadow-2xs">
           <table className="w-full min-w-[880px] table-fixed text-left text-xs border-collapse">
             <colgroup>
               <col style={{ width: '27%' }} />
@@ -803,20 +811,20 @@ export default function CEODashboard({
               <col style={{ width: '10%' }} />
             </colgroup>
             <thead>
-              <tr className="bg-slate-50/90 text-slate-500 font-semibold border-b border-slate-200 text-[11px]">
-                <th className="py-3 px-3">Task Title & Details</th>
-                <th className="py-3 px-2.5">Assignee</th>
-                <th className="py-3 px-2">Priority</th>
-                <th className="py-3 px-2.5">Due Date</th>
-                <th className="py-3 px-2.5">💬 Remarks</th>
-                <th className="py-3 px-2">Status</th>
+              <tr className="bg-slate-900 text-slate-200 font-semibold border-b-2 border-slate-700 text-[11px]">
+                <th className="py-3 px-3 border-r border-slate-700">Task Title & Details</th>
+                <th className="py-3 px-2.5 border-r border-slate-700">Assignee</th>
+                <th className="py-3 px-2 border-r border-slate-700">Priority</th>
+                <th className="py-3 px-2.5 border-r border-slate-700">Due Date</th>
+                <th className="py-3 px-2.5 border-r border-slate-700">💬 Remarks</th>
+                <th className="py-3 px-2 border-r border-slate-700">Status</th>
                 <th className="py-3 px-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 bg-white">
+            <tbody className="divide-y-2 divide-slate-200 bg-white">
               {filteredCompanyTasks.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="py-12 text-center text-slate-400">
+                  <td colSpan="7" className="py-12 text-center text-slate-400 border-b border-slate-300">
                     No tasks found matching your filter.
                   </td>
                 </tr>
@@ -834,10 +842,10 @@ export default function CEODashboard({
                   const percent = totalPages > 0 ? Math.min(100, Math.round((totalPagesRead / totalPages) * 100)) : 0;
 
                   return (
-                    <tr key={task.id} className="group hover:bg-slate-50/80 transition-colors">
+                    <tr key={task.id} className="group hover:bg-slate-50/80 transition-colors border-b border-slate-300">
                       
                       {/* 1. Title & Details */}
-                      <td className="py-3 px-3">
+                      <td className="py-3 px-3 border-r border-slate-200">
                         <div className="space-y-0.5">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <h4 className={`font-semibold text-xs tracking-tight leading-snug truncate ${isCompleted ? 'line-through text-slate-400' : 'text-slate-900'}`} title={task.title}>
@@ -879,7 +887,7 @@ export default function CEODashboard({
                       </td>
 
                       {/* 2. Assignee */}
-                      <td className="py-3 px-2.5">
+                      <td className="py-3 px-2.5 border-r border-slate-200">
                         <div className="flex items-center gap-1.5 min-w-0">
                           <div 
                             className="w-5 h-5 rounded-full flex items-center justify-center font-extrabold text-white text-[9px] shadow-2xs shrink-0 ring-1 ring-white"
@@ -892,7 +900,7 @@ export default function CEODashboard({
                       </td>
 
                       {/* 3. Priority */}
-                      <td className="py-3 px-2">
+                      <td className="py-3 px-2 border-r border-slate-200">
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold capitalize ${
                           task.priority === 'urgent' ? 'bg-rose-50 text-rose-700 border border-rose-200/70' :
                           task.priority === 'high' ? 'bg-amber-50 text-amber-700 border border-amber-200/70' :
@@ -909,7 +917,7 @@ export default function CEODashboard({
                       </td>
 
                       {/* 4. Due Date */}
-                      <td className="py-3 px-2.5 text-[11px] text-slate-600">
+                      <td className="py-3 px-2.5 text-[11px] text-slate-600 border-r border-slate-200">
                         <div className="flex items-center gap-1 truncate" title={task.due_date ? new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No date'}>
                           <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
                           <span className="truncate">
@@ -926,7 +934,7 @@ export default function CEODashboard({
                       </td>
 
                       {/* 5. Remarks */}
-                      <td className="py-3 px-2.5">
+                      <td className="py-3 px-2.5 border-r border-slate-200">
                         {task.latest_remark || task.remarks?.[0]?.text ? (
                           <div 
                             onClick={() => { sounds.playClick(); setActiveRemarkTask(task); }}
@@ -960,7 +968,7 @@ export default function CEODashboard({
                       </td>
 
                       {/* 6. Status Dropdown */}
-                      <td className="py-3 px-2">
+                      <td className="py-3 px-2 border-r border-slate-200">
                         <div className="relative inline-block w-full max-w-[110px]">
                           <select
                             value={task.status}
@@ -1024,8 +1032,8 @@ export default function CEODashboard({
       </div>
 
       {/* SECTION 2: TEAM ATTENDANCE & EOD BREAKDOWN */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+      <div className="bg-white rounded-2xl border-2 border-slate-300 shadow-sm overflow-hidden">
+        <div className="p-4 border-b-2 border-slate-300 flex items-center justify-between">
           <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
             Team Workload & Attendance for {selectedDate}
           </h3>
@@ -1046,23 +1054,23 @@ export default function CEODashboard({
               <col style={{ width: '12%' }} />
             </colgroup>
             <thead>
-              <tr className="bg-slate-50/90 border-b border-slate-100 text-slate-500 font-semibold text-[11px]">
-                <th className="py-3 px-3.5">Member</th>
-                <th className="py-3 px-2.5">Presence</th>
-                <th className="py-3 px-2.5">Role</th>
-                <th className="py-3 px-2 text-center">Completed</th>
-                <th className="py-3 px-2 text-center">Pending</th>
-                <th className="py-3 px-2.5">EOD ({selectedDate})</th>
+              <tr className="bg-slate-900 border-b-2 border-slate-700 text-slate-200 font-semibold text-[11px]">
+                <th className="py-3 px-3.5 border-r border-slate-700">Member</th>
+                <th className="py-3 px-2.5 border-r border-slate-700">Presence</th>
+                <th className="py-3 px-2.5 border-r border-slate-700">Role</th>
+                <th className="py-3 px-2 text-center border-r border-slate-700">Completed</th>
+                <th className="py-3 px-2 text-center border-r border-slate-700">Pending</th>
+                <th className="py-3 px-2.5 border-r border-slate-700">EOD ({selectedDate})</th>
                 <th className="py-3 px-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 bg-white">
+            <tbody className="divide-y-2 divide-slate-200 bg-white">
               {memberList.map((member) => (
                 <tr 
                   key={member.id}
-                  className="hover:bg-slate-50/70 transition-colors"
+                  className="hover:bg-slate-50/70 transition-colors border-b border-slate-300"
                 >
-                  <td className="py-2.5 px-3.5">
+                  <td className="py-2.5 px-3.5 border-r border-slate-200">
                     <div className="flex items-center gap-2 min-w-0">
                       <div 
                         className="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-white shadow-2xs shrink-0 text-xs"
@@ -1077,7 +1085,7 @@ export default function CEODashboard({
                     </div>
                   </td>
 
-                  <td className="py-2.5 px-2.5">
+                  <td className="py-2.5 px-2.5 border-r border-slate-200">
                     {member.status === 'online' ? (
                       <span className="inline-flex items-center gap-1 text-[10.5px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full shadow-2xs">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -1094,15 +1102,15 @@ export default function CEODashboard({
                     )}
                   </td>
 
-                  <td className="py-2.5 px-2.5 text-slate-600 font-medium capitalize truncate text-xs" title={getCleanRole(member.role)}>
+                  <td className="py-2.5 px-2.5 text-slate-600 font-medium capitalize truncate text-xs border-r border-slate-200" title={getCleanRole(member.role)}>
                     {getCleanRole(member.role)}
                   </td>
 
-                  <td className="py-2.5 px-2 text-center font-bold text-emerald-600 text-xs">
+                  <td className="py-2.5 px-2 text-center font-bold text-emerald-600 text-xs border-r border-slate-200">
                     {member.completed_tasks}
                   </td>
 
-                  <td className="py-2.5 px-2 text-center font-bold text-amber-600 text-xs">
+                  <td className="py-2.5 px-2 text-center font-bold text-amber-600 text-xs border-r border-slate-200">
                     <button
                       onClick={() => setTaskMemberFilter(member.id)}
                       className="hover:underline cursor-pointer"
@@ -1112,7 +1120,7 @@ export default function CEODashboard({
                     </button>
                   </td>
 
-                  <td className="py-2.5 px-2.5">
+                  <td className="py-2.5 px-2.5 border-r border-slate-200">
                     {member.has_submitted_eod ? (
                       <button
                         onClick={() => { sounds.playClick(); setActiveReportModal(member.eod_report); }}

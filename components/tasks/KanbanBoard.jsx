@@ -1036,7 +1036,7 @@ export default function KanbanBoard({
                 {memberMatrixData.map((member, idx) => {
                   const user = member.user;
                   const isLastRow = idx === memberMatrixData.length - 1;
-                  const borderBottomClass = isLastRow ? '' : 'border-b border-slate-300';
+                  const borderBottomClass = 'border-b-2 border-slate-400';
                   const candidateTasks = [
                     ...member.todoTasks,
                     ...member.inProgressTasks,
@@ -1137,7 +1137,7 @@ export default function KanbanBoard({
                           </div>
 
                           {/* Stat Pill */}
-                          <div className="pt-1.5 border-t border-slate-200/60 mt-auto space-y-0.5">
+                          <div className="pt-2 border-t-2 border-slate-300 mt-auto space-y-0.5">
                             <div className="px-1.5 py-0.5 rounded-md bg-slate-50 border border-slate-200/70 flex items-center justify-between text-[9px]">
                               <span className="text-slate-500 font-medium">Sprint Total</span>
                               <span className="font-bold text-slate-800 bg-white px-1 py-0.2 rounded shadow-2xs border border-slate-200/60">{member.total} tasks</span>
@@ -1163,7 +1163,7 @@ export default function KanbanBoard({
                           <div className="w-full h-full min-h-[110px] space-y-1.5 flex flex-col justify-between">
                             <div className="space-y-1.5">
                               {/* Track Header */}
-                              <div className="flex items-center justify-between text-[9.5px] text-slate-700 font-semibold px-0.5 pb-0.5 border-b border-slate-200/70">
+                              <div className="flex items-center justify-between text-[9.5px] text-slate-700 font-semibold px-0.5 pb-1 border-b-2 border-slate-300">
                                 <span className="flex items-center gap-1">
                                   <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
                                   <span>To Do Queue</span>
@@ -1178,8 +1178,10 @@ export default function KanbanBoard({
                                 {(() => {
                                   const todoGroups = groupTasksByDate(member.todoTasks, todayStr);
 
-                                  return todoGroups.map(group => (
-                                    <div key={group.dateKey} className="space-y-1 w-full min-w-0">
+                                  return todoGroups.map((group, gIdx) => (
+                                    <React.Fragment key={group.dateKey}>
+                                      {gIdx > 0 && <div className="w-full border-t-2 border-slate-300 my-1" />}
+                                      <div className="space-y-1 w-full min-w-0">
                                       {group.dateKey !== 'all' && (
                                         <div className="flex items-center justify-between px-1.5 py-0.5 rounded-md bg-slate-100/90 border border-slate-200/90 text-[8.5px] font-semibold text-slate-700">
                                           <span className="flex items-center gap-1 min-w-0">
@@ -1292,16 +1294,18 @@ export default function KanbanBoard({
                                         ))}
                                       </div>
                                     </div>
+                                    </React.Fragment>
                                   ));
                                 })()}
                               </div>
                             </div>
 
                             {/* Minimalist Quick Add Slot */}
+                            <div className="w-full border-t border-slate-300 mt-2 mb-1" />
                             <button
                               type="button"
                               onClick={() => { sounds.playClick(); openNewTaskModal('todo', user.id); }}
-                              className="w-full mt-1.5 py-1 px-2 rounded-md border border-dashed border-slate-300/80 hover:border-blue-400 hover:bg-white text-slate-400 hover:text-blue-600 font-semibold text-[9px] flex items-center justify-center gap-1 transition-all cursor-pointer opacity-75 hover:opacity-100"
+                              className="w-full py-1 px-2 rounded-md border border-dashed border-slate-300/80 hover:border-blue-400 hover:bg-white text-slate-400 hover:text-blue-600 font-semibold text-[9px] flex items-center justify-center gap-1 transition-all cursor-pointer opacity-75 hover:opacity-100"
                               title={`Add task for ${user.name}`}
                             >
                               <Plus className="w-2.5 h-2.5 stroke-[2.5]" />
@@ -1333,7 +1337,7 @@ export default function KanbanBoard({
                           <div className="w-full h-full min-h-[110px] space-y-1.5 flex flex-col justify-between">
                             <div className="space-y-1.5">
                               {/* Track Sub-header */}
-                              <div className="flex items-center justify-between text-[9px] text-blue-900 font-semibold px-0.5 pb-0.5 border-b border-blue-100">
+                              <div className="flex items-center justify-between text-[9px] text-blue-900 font-semibold px-0.5 pb-1 border-b-2 border-slate-300">
                                 <span className="flex items-center gap-1">
                                   <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
                                   <span className="text-[9px] font-semibold text-slate-500">In Execution</span>
@@ -1348,8 +1352,10 @@ export default function KanbanBoard({
                                 {(() => {
                                   const inProgressGroups = groupTasksByDate(member.inProgressTasks, todayStr);
 
-                                  return inProgressGroups.map(group => (
-                                    <div key={group.dateKey} className="space-y-1 w-full min-w-0">
+                                  return inProgressGroups.map((group, gIdx) => (
+                                    <React.Fragment key={group.dateKey}>
+                                      {gIdx > 0 && <div className="w-full border-t-2 border-slate-300 my-1" />}
+                                      <div className="space-y-1 w-full min-w-0">
                                       {group.dateKey !== 'all' && (
                                         <div className="flex items-center justify-between px-1.5 py-0.5 rounded-md bg-blue-50/80 border border-blue-200/80 text-[8.5px] font-semibold text-blue-900">
                                           <span className="flex items-center gap-1 min-w-0">
@@ -1471,6 +1477,7 @@ export default function KanbanBoard({
                                         })}
                                       </div>
                                     </div>
+                                    </React.Fragment>
                                   ));
                                 })()}
                               </div>
@@ -1484,10 +1491,12 @@ export default function KanbanBoard({
                                   const pct = totalP > 0 ? Math.min(100, Math.round((readP / totalP) * 100)) : 0;
 
                                   return (
-                                    <div 
-                                      key={t.id} 
-                                      className="w-full p-2 rounded-lg bg-white border border-slate-200/80 border-l-2 border-l-indigo-500 hover:border-indigo-300 shadow-2xs space-y-1 flex flex-col justify-between transition-all"
-                                    >
+                                    <>
+                                      {member.inProgressTasks.length > 0 && <div className="w-full border-t-2 border-slate-300 my-1" />}
+                                      <div 
+                                        key={t.id} 
+                                        className="w-full p-2 rounded-lg bg-white border border-slate-200/80 border-l-2 border-l-indigo-500 hover:border-indigo-300 shadow-2xs space-y-1 flex flex-col justify-between transition-all"
+                                      >
                                       <div>
                                         <div className="flex items-start justify-between gap-1">
                                           <span className="font-semibold text-indigo-950 leading-snug flex items-center gap-1 text-[11px]">
@@ -1559,15 +1568,17 @@ export default function KanbanBoard({
                                         </button>
                                       </div>
                                     </div>
+                                    </>
                                   );
                                 })()}
                               </div>
 
                             {/* Minimalist Quick Add Slot */}
+                            <div className="w-full border-t border-slate-300 mt-2 mb-1" />
                             <button
                               type="button"
                               onClick={() => { sounds.playClick(); openNewTaskModal('in_progress', user.id); }}
-                              className="w-full mt-1.5 py-1 px-2 rounded-md border border-dashed border-blue-300/80 hover:border-blue-500 hover:bg-white text-blue-600 font-semibold text-[9px] flex items-center justify-center gap-1 transition-all cursor-pointer opacity-75 hover:opacity-100"
+                              className="w-full py-1 px-2 rounded-md border border-dashed border-blue-300/80 hover:border-blue-500 hover:bg-white text-blue-600 font-semibold text-[9px] flex items-center justify-center gap-1 transition-all cursor-pointer opacity-75 hover:opacity-100"
                               title="Assign an in-progress task"
                             >
                               <Play className="w-2 h-2 fill-blue-600 text-blue-600" />
@@ -1581,7 +1592,7 @@ export default function KanbanBoard({
                       <td className={`py-2 px-1.5 border-r border-slate-300 align-top bg-gradient-to-b from-indigo-50/50 via-indigo-50/20 to-slate-50/30 bg-[radial-gradient(#e0e7ff_1px,transparent_1px)] [background-size:16px_16px] ${borderBottomClass}`}>
                         <div className="h-full min-h-[110px] flex flex-col justify-between p-2 rounded-lg bg-white border border-slate-200/80 shadow-2xs space-y-1.5 min-w-0 overflow-hidden">
                           <div>
-                            <div className="flex items-center justify-between pb-1 border-b border-slate-100 min-w-0">
+                            <div className="flex items-center justify-between pb-1 border-b-2 border-slate-300 min-w-0">
                               <span className="text-[8.5px] font-semibold text-slate-400 uppercase tracking-wide truncate">Velocity</span>
                               <span className={`text-[8.5px] font-bold px-1 py-0.2 rounded shrink-0 ${
                                 completionRate >= 80 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60' :
@@ -1606,7 +1617,7 @@ export default function KanbanBoard({
                             </div>
                           </div>
 
-                          <div className="space-y-1 pt-1 border-t border-slate-100 min-w-0">
+                          <div className="space-y-1 pt-1.5 border-t-2 border-slate-300 min-w-0">
                             {member.totalPages > 0 && (
                               <div className="text-[8px] font-medium text-indigo-900 bg-indigo-50/80 px-1 py-0.5 rounded border border-indigo-100/70 truncate flex items-center justify-between min-w-0">
                                 <span className="truncate">📖 Reading</span>
@@ -1636,7 +1647,7 @@ export default function KanbanBoard({
                           <div className="w-full h-full min-h-[110px] space-y-1.5 flex flex-col justify-between min-w-0">
                             <div className="space-y-1.5 min-w-0">
                               {/* Track Sub-header */}
-                              <div className="flex items-center justify-between text-[9px] text-rose-950 font-semibold px-0.5 pb-0.5 border-b border-rose-100 min-w-0">
+                              <div className="flex items-center justify-between text-[9px] text-rose-950 font-semibold px-0.5 pb-1 border-b-2 border-slate-300 min-w-0">
                                 <span className="flex items-center gap-1 min-w-0">
                                   <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
                                   <span className="text-[9px] font-semibold text-slate-500 truncate">Attention Needed</span>
@@ -1651,8 +1662,10 @@ export default function KanbanBoard({
                                 {(() => {
                                   const blockedGroups = groupTasksByDate(member.blockedTasks, todayStr);
 
-                                  return blockedGroups.map(group => (
-                                    <div key={group.dateKey} className="space-y-1 w-full min-w-0">
+                                  return blockedGroups.map((group, gIdx) => (
+                                    <React.Fragment key={group.dateKey}>
+                                      {gIdx > 0 && <div className="w-full border-t-2 border-slate-300 my-1" />}
+                                      <div className="space-y-1 w-full min-w-0">
                                       {group.dateKey !== 'all' && (
                                         <div className="flex items-center justify-between px-1.5 py-0.5 rounded-md bg-rose-50/80 border border-rose-200/80 text-[8.5px] font-semibold text-rose-900">
                                           <span className="flex items-center gap-1 min-w-0">
@@ -1756,8 +1769,9 @@ export default function KanbanBoard({
                                         ))}
                                       </div>
                                     </div>
-                                  ));
-                                })()}
+                                  </React.Fragment>
+                              ));
+                            })()}
                               </div>
                             </div>
                           </div>
@@ -1778,7 +1792,7 @@ export default function KanbanBoard({
                           <div className="w-full h-full min-h-[110px] space-y-1.5 flex flex-col justify-between min-w-0">
                             <div className="space-y-1.5 min-w-0">
                               {/* Track Sub-header */}
-                              <div className="flex items-center justify-between text-[9px] text-emerald-950 font-semibold px-0.5 pb-0.5 border-b border-emerald-100 min-w-0">
+                              <div className="flex items-center justify-between text-[9px] text-emerald-950 font-semibold px-0.5 pb-1 border-b-2 border-slate-300 min-w-0">
                                 <span className="flex items-center gap-1 min-w-0">
                                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-700 shrink-0" />
                                   <span className="truncate">Delivered</span>
@@ -1791,8 +1805,10 @@ export default function KanbanBoard({
                               {/* Regular Finished Tasks with Date Grouping */}
                               {(() => {
                                 const completedGroups = groupTasksByDate(member.regularCompletedTasks, todayStr, true);
-                                return completedGroups.map(group => (
-                                  <div key={group.dateKey} className="space-y-1">
+                                return completedGroups.map((group, gIdx) => (
+                                  <React.Fragment key={group.dateKey}>
+                                    {gIdx > 0 && <div className="w-full border-t-2 border-slate-300 my-1" />}
+                                    <div className="space-y-1">
                                     <div className="flex items-center justify-between px-1.5 py-0.5 rounded bg-emerald-100/70 border border-emerald-200/60 text-[8px] font-bold text-emerald-950 min-w-0">
                                       <span className="flex items-center gap-1 truncate">
                                         <Calendar className="w-2.5 h-2.5 text-emerald-700 shrink-0" />
@@ -1876,10 +1892,14 @@ export default function KanbanBoard({
                                       ))}
                                     </div>
                                   </div>
+                                </React.Fragment>
                                 ));
                               })()}
 
                               {/* Completed Books */}
+                                {member.completedBooks.length > 0 && member.regularCompletedTasks.length > 0 && (
+                                  <div className="w-full border-t-2 border-slate-300 my-1" />
+                                )}
                                 {member.completedBooks.map((b, bIdx) => (
                                   <div 
                                     key={b.id || bIdx} 
@@ -1935,7 +1955,8 @@ export default function KanbanBoard({
                               </div>
 
                               {/* Completed Bottom Velocity Pill */}
-                              <div className="mt-1.5 py-1 px-1.5 rounded-md bg-emerald-50 border border-emerald-200/70 text-[8.5px] font-semibold text-emerald-800 flex items-center justify-between shadow-2xs min-w-0">
+                              <div className="w-full border-t border-slate-300 mt-2 mb-1" />
+                              <div className="py-1 px-1.5 rounded-md bg-emerald-50 border border-emerald-200/70 text-[8.5px] font-semibold text-emerald-800 flex items-center justify-between shadow-2xs min-w-0">
                                 <span className="flex items-center gap-1 min-w-0">
                                   <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600 shrink-0" />
                                   <span className="truncate">Velocity</span>
